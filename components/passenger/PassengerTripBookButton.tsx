@@ -61,7 +61,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [seats, setSeats] = useState<{ id: string; seatNumber: number }[]>([]);
-  const [luggageRows, setLuggageRows] = useState<LuggageFormRow[]>([emptyRow()]);
+  const [luggageRows, setLuggageRows] = useState<LuggageFormRow[]>([]);
   const [pending, start] = useTransition();
 
   function loadSeats() {
@@ -87,7 +87,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
         setOpen(o);
         if (o) {
           loadSeats();
-          setLuggageRows([emptyRow()]);
+          setLuggageRows([]);
         }
       }}
     >
@@ -100,15 +100,15 @@ export default function PassengerTripBookButton({ tripId }: Props) {
         <DialogHeader>
           <DialogTitle>حجز مقعد</DialogTitle>
           <p className="text-sm text-muted-foreground text-right pt-1">
-            عرّف الأمتعة أو الحقائب المرافقة (يمكنك إضافة أكثر من غرض). للحقيبة
-            أو الكرتون: الوزن والحجم مطلوبان. للكيس: عدد الأكياس مطلوب، والوزن
-            اختياري.
+            يمكنك السفر دون أمتعة. إن رغبت بتسجيل أغراض، اضغط «إضافة غرض» ثم املأ
+            الحقول. للحقيبة أو الكرتون: الوزن والحجم مطلوبان. للكيس: عدد الأكياس
+            مطلوب والوزن اختياري.
           </p>
         </DialogHeader>
 
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
-          <div className="flex items-center justify-between gap-2">
-            <Label className="text-base">الأمتعة المرافقة</Label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label className="text-base">أمتعة مرافقة (اختياري)</Label>
             <Button
               type="button"
               variant="outline"
@@ -121,6 +121,13 @@ export default function PassengerTripBookButton({ tripId }: Props) {
             </Button>
           </div>
 
+          {luggageRows.length === 0 && (
+            <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/25 bg-muted/20 px-3 py-4 text-center">
+              لا توجد أغراض مضافة — اختر مقعداً بالأسفل للحجز بدون أمتعة، أو أضف
+              غرضاً أولاً.
+            </p>
+          )}
+
           {luggageRows.map((row, idx) => {
             const isSack = row.kind === "SACK";
             return (
@@ -132,20 +139,18 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                   <span className="text-xs text-muted-foreground">
                     غرض {idx + 1}
                   </span>
-                  {luggageRows.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-destructive gap-1"
-                      onClick={() =>
-                        setLuggageRows((p) => p.filter((r) => r.key !== row.key))
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      حذف
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-destructive gap-1"
+                    onClick={() =>
+                      setLuggageRows((p) => p.filter((r) => r.key !== row.key))
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    حذف
+                  </Button>
                 </div>
 
                 <div className="space-y-2">

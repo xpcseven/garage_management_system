@@ -448,6 +448,7 @@ export async function startTripInProgress(tripId: string) {
     revalidatePath("/trips");
     revalidatePath("/passenger/trips");
     revalidatePath("/passenger/garages");
+    revalidatePath("/passenger/freelance-trips");
     revalidatePath("/home");
     return { success: true };
   } catch {
@@ -506,6 +507,7 @@ export async function completeTripAtDestination(tripId: string) {
     revalidatePath("/trips");
     revalidatePath("/passenger/trips");
     revalidatePath("/passenger/garages");
+    revalidatePath("/passenger/freelance-trips");
     revalidatePath("/home");
     return { success: true };
   } catch {
@@ -533,8 +535,7 @@ export async function cancelTrip(tripId: string) {
     allowed = true;
   else if (
     session.user.role === UserRole.DRIVER &&
-    trip.driverId === session.user.id &&
-    !trip.garageId
+    trip.driverId === session.user.id
   )
     allowed = true;
 
@@ -552,6 +553,7 @@ export async function cancelTrip(tripId: string) {
     revalidatePath("/trips");
     revalidatePath("/passenger/trips");
     revalidatePath("/passenger/garages");
+    revalidatePath("/passenger/freelance-trips");
     revalidatePath("/home");
     return { success: true };
   } catch {

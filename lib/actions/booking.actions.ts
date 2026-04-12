@@ -65,8 +65,14 @@ function parseLuggageForCreate(raw: unknown):
       }[];
     }
   | { ok: false; error: string } {
-  if (!Array.isArray(raw) || raw.length === 0) {
-    return { ok: false, error: "أضف غرضاً واحداً على الأقل من الأمتعة" };
+  if (raw === undefined || raw === null) {
+    return { ok: true, items: [] };
+  }
+  if (!Array.isArray(raw)) {
+    return { ok: false, error: "بيانات أمتعة غير صالحة" };
+  }
+  if (raw.length === 0) {
+    return { ok: true, items: [] };
   }
   if (raw.length > MAX_LUGGAGE_ITEMS) {
     return { ok: false, error: "عدد قطع الأمتعة كبير جداً" };
@@ -295,15 +301,17 @@ export async function bookSeatOnTrip(
         },
       });
 
-      await tx.bookingLuggageItem.createMany({
-        data: parsed.items.map((item) => ({
-          bookingId: booking.id,
-          kind: item.kind,
-          weightKg: item.weightKg,
-          dimensions: item.dimensions,
-          quantity: item.quantity,
-        })),
-      });
+      if (parsed.items.length > 0) {
+        await tx.bookingLuggageItem.createMany({
+          data: parsed.items.map((item) => ({
+            bookingId: booking.id,
+            kind: item.kind,
+            weightKg: item.weightKg,
+            dimensions: item.dimensions,
+            quantity: item.quantity,
+          })),
+        });
+      }
 
       await tx.seat.update({
         where: { id: seatId },
