@@ -1,26 +1,49 @@
 import * as z from "zod";
 
 export const LoginSchema = z.object({
-  username: z.string().min(1, {
-    message: "Username is required",
-  }),
-
+  email: z.string().email({ message: "البريد الإلكتروني غير صالح" }),
   password: z.string().min(1, {
-    message: "Password is required",
+    message: "كلمة المرور مطلوبة",
   }),
 });
 
-export const RegisterSchema = z.object({
-  email: z.string().email({
-    message: "Email is required",
-  }),
-  password: z.string().min(6, {
-    message: "Minimum 6 characters required",
-  }),
-  name: z.string().min(1, {
-    message: "Name is required",
-  }),
-  username: z.string().min(1, {
-    message: "Username is required",
-  }),
-});
+/** أدوار التسجيل الذاتي — بدون SUPER_ADMIN */
+export const SelfRegisterRoleSchema = z.enum([
+  "GARAGE_OWNER",
+  "USER",
+  "DRIVER",
+]);
+
+export const RegisterJobTypeSchema = z.enum([
+  "PASSENGERS",
+  "CARGO",
+  "DELIVERY",
+]);
+
+export const RegisterSchema = z
+  .object({
+    email: z.string().email({
+      message: "البريد الإلكتروني غير صالح",
+    }),
+    password: z.string().min(6, {
+      message: "الحد الأدنى 6 أحرف",
+    }),
+    name: z.string().min(1, {
+      message: "الاسم مطلوب",
+    }),
+    role: SelfRegisterRoleSchema,
+    /** أنواع النقل (اختيار متعدد) — تُستخدم لصاحب الكراج والسائق فقط */
+    jobTypes: z.array(RegisterJobTypeSchema).default([]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.role === "GARAGE_OWNER" || data.role === "DRIVER") {
+      const unique = [...new Set(data.jobTypes)];
+      if (unique.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "اختر نوعاً واحداً على الأقل من أنواع النقل",
+          path: ["jobTypes"],
+        });
+      }
+    }
+  });

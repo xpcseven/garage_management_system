@@ -1,9 +1,6 @@
 import NextAuth from "next-auth";
 import authConfig from "@/auth.config";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-
-import { prisma } from "./lib/prisma";
-import { UserRole } from "./prisma/UserRole.enum";
+import { UserRole } from "@/prisma/UserRole.enum";
 import { getUserAuthById } from "./lib/action/user.action";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -19,9 +16,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (token.role && session.user) {
         session.user.role = token.role as UserRole;
       }
-
-      if (token.username && session.user) {
-        session.user.username = token.username as string;
+      if (token.email && session.user) {
+        session.user.email = token.email as string;
+      }
+      if (token.name && session.user) {
+        session.user.name = token.name as string;
       }
       return session;
     },
@@ -30,13 +29,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const existingUser = await getUserAuthById(token.sub);
 
       if (!existingUser) return token;
-      token.username = existingUser.name;
+      token.name = existingUser.name;
+      token.email = existingUser.email;
       token.role = existingUser.role;
 
       return token;
     },
   },
-  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   ...authConfig,
 });

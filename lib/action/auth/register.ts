@@ -5,48 +5,78 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { getUserByEmail, getUserByUsername } from "../user.action";
+import { getUserByEmail } from "../user.action";
+import { JobType, Role } from "@prisma/client";
 
 export async function register(values: z.infer<typeof RegisterSchema>) {
   try {
-    // Connect to the database
-
-    // Validate input fields
     const validateFields = RegisterSchema.safeParse(values);
 
     if (!validateFields.success) {
-      return { error: "Invalid fields" };
+      const first = validateFields.error.flatten().fieldErrors;
+      const msg =
+        first.jobTypes?.[0] ||
+        first.role?.[0] ||
+        Object.values(first).flat()[0] ||
+        "بيانات غير صالحة";
+      return { error: msg };
     }
 
-    const { email, name, password, username } = validateFields.data;
+    const { email, name, password, role, jobTypes } = validateFields.data;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Check if a user with the same email already exists
     const existingUserEmail = await getUserByEmail(email);
     if (existingUserEmail) {
-      return { error: "Email already exists!" };
-    }
-    const existingUserUsername = await getUserByUsername(username);
-    if (existingUserUsername) {
-      return { error: "Username already exists!" };
+      return { error: "البريد مستخدم مسبقاً" };
     }
 
-    await prisma.user.create({
-      data: {
-        email,
-        
-        name,
-        password: hashedPassword,
-        username,
-        role: "STAFF",
-        isActive: true,
-      
-      },
+    const prismaRole = role as Role;
+    const uniqueJobTypes = [...new Set(jobTypes)] as JobType[];
+
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          name,
+          password: hashedPassword,
+          role: prismaRole,
+          isActive: true,
+        },
+      });
+
+      if (prismaRole === Role.GARAGE_OWNER && uniqueJobTypes.length > 0) {
+        await tx.userJobPreference.createMany({
+          data: uniqueJobTypes.map((jobType) => ({
+            userId: user.id,
+            jobType,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      if (prismaRole === Role.DRIVER && uniqueJobTypes.length > 0) {
+        const profile = await tx.driverProfile.create({
+          data: {
+            userId: user.id,
+            isFreelancer: true,
+            isVerified: false,
+            isActive: true,
+          },
+        });
+        await tx.driverJob.createMany({
+          data: uniqueJobTypes.map((jobType) => ({
+            driverId: profile.id,
+            jobType,
+            isActive: true,
+          })),
+          skipDuplicates: true,
+        });
+      }
     });
 
-    return { success: "User created successfully!" };
+    return { success: "تم إنشاء الحساب بنجاح. يمكنك تسجيل الدخول." };
   } catch (error) {
     console.error(error);
-    return { error: "Failed to create user." };
+    return { error: "تعذر إنشاء الحساب. تحقق من الاتصال بقاعدة البيانات." };
   }
 }

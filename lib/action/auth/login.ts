@@ -12,11 +12,11 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     return { error: "Invalid  fields" };
   }
 
-  const { username, password } = validateFields.data;
+  const { email, password } = validateFields.data;
 
   try {
     await signIn("credentials", {
-      username,
+      email,
       password,
       redirectTo: DEFAULT_LOGIN_REDIRECT,
     });
@@ -25,7 +25,7 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
-          return { error: "Invalid username or password" };
+          return { error: "البريد أو كلمة المرور غير صحيحة" };
 
         default:
           return { error: "An error occurred while logging in" };

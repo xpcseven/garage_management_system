@@ -9,102 +9,142 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import Link from "next/link";
 import { logout } from "@/lib/action/auth/logout";
+import {
+  canManageCities,
+  canManageGarages,
+  canManageTrips,
+  canManageVehicles,
+  canUsePassengerPortal,
+  canViewBookings,
+} from "@/lib/permissions";
 
-function NavBar({ currentUserManage }: any) {
-  // تحليل البيانات القادمة من السيرفر
+export type NavBarUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
 
-  // const parseCurrentUser = JSON.parse(currentUserManage);
+type Props = {
+  user: NavBarUser | null;
+};
 
+function NavBar({ user }: Props) {
   const { setTheme } = useTheme();
+  const role = user?.role;
 
   return (
-    <div className="flex justify-between items-center p-4 border-b border-sky-200 bg-white shadow-sm print:hidden">
-      
-      {/* Left Section - Theme Toggle & Role */}
-      <div className="flex items-center space-x-4">
-        {/* Theme Toggle Button */}
+    <div className="flex justify-between items-center p-4 border-b border-sky-200 bg-white dark:bg-card shadow-sm print:hidden gap-4 flex-wrap">
+      <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" className="bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors duration-200">
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-lg border-sky-200"
+            >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white border border-orange-200 shadow-lg rounded-lg">
-            <DropdownMenuItem
-              className="hover:bg-orange-50 text-gray-700"
-              onClick={() => setTheme("light")}
-            >
-              <Sun className="h-4 w-4 mr-2" />
-              Light Mode
+          <DropdownMenuContent align="end" className="rounded-lg">
+            <DropdownMenuItem onClick={() => setTheme("light")}>
+              <Sun className="h-4 w-4 ml-2" />
+              فاتح
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="hover:bg-orange-50 text-gray-700"
-              onClick={() => setTheme("dark")}
-            >
-              <Moon className="h-4 w-4 mr-2" />
-              Dark Mode
+            <DropdownMenuItem onClick={() => setTheme("dark")}>
+              <Moon className="h-4 w-4 ml-2" />
+              داكن
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="hover:bg-orange-50 text-gray-700"
-              onClick={() => setTheme("system")}
-            >
-              <span className="h-4 w-4 mr-2">⚙️</span>
-              System
+            <DropdownMenuItem onClick={() => setTheme("system")}>
+              النظام
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Role Display */}
       </div>
 
-      {/* Center Section - Logo/Title */}
-      <div className="flex-1 flex justify-center">
-        <h1 className="text-xl font-bold text-sky-600">
-         System
-        </h1>
+      <div className="flex-1 flex justify-center min-w-0">
+        <Link href="/home" className="text-xl font-bold text-sky-600 truncate">
+          كراج السيارات
+        </Link>
       </div>
 
-      {/* Right Section - Status & User Menu */}
-      <div className="flex items-center space-x-4">
-        {/* Online Status Indicator */}
-       
-
-        {/* User Menu
-        {parseCurrentUser && (
-          <Popover>
-            <PopoverTrigger className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-              {parseCurrentUser.username}
-            </PopoverTrigger>
-            <PopoverContent className="bg-white border border-orange-200 ml-3 w-40 shadow-lg rounded-lg">
-              <div className="space-y-1">
-                {parseCurrentUser?.role === "SUPERADMIN" && (
-                  <>
-                    <Button asChild className="w-full justify-start bg-transparent hover:bg-orange-50 text-gray-700 h-8">
-                      <Link href="/ListUserManage">المستخدمين</Link>
-                    </Button>
-                    <Button asChild className="w-full justify-start bg-transparent hover:bg-orange-50 text-gray-700 h-8">
-                      <Link href="/auth/register">انشاء حساب</Link>
-                    </Button>
-                    <Button asChild className="w-full justify-start bg-transparent hover:bg-orange-50 text-gray-700 h-8">
-                      <Link href="/logs">سجل الحركات</Link>
-                    </Button>
-                  </>
-                )}
-                <Button 
-                  onClick={() => logout()}
-                  className="w-full justify-start bg-transparent hover:bg-red-50 text-red-600 h-8"
-                >
-                  تسجيل الخروج
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        {user && (
+          <nav className="hidden md:flex items-center gap-1 text-sm">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/home">الرئيسية</Link>
+            </Button>
+            {canManageCities(role) && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/cities">المدن</Link>
+              </Button>
+            )}
+            {canManageGarages(role) && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/garages">الكراجات</Link>
+              </Button>
+            )}
+            {canManageVehicles(role) && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/vehicles">المركبات</Link>
+              </Button>
+            )}
+            {canManageTrips(role) && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/trips">الرحلات</Link>
+              </Button>
+            )}
+            {canUsePassengerPortal(role) && (
+              <>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/passenger/garages">كراجات (مسافر)</Link>
                 </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/passenger/trips">بحث رحلة</Link>
+                </Button>
+              </>
+            )}
+            {canViewBookings(role) && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/bookings">الحجوزات</Link>
+              </Button>
+            )}
+          </nav>
+        )}
+
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-sky-600 hover:bg-sky-500 max-w-[10rem] truncate"
+              >
+                {user.name || user.email}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5 text-xs text-muted-foreground border-b">
+                {user.email}
+                <br />
+                <span className="font-medium text-foreground">{user.role}</span>
               </div>
-            </PopoverContent>
-          </Popover>
-        )} */}
+              <DropdownMenuItem asChild>
+                <Link href="/home">لوحة التحكم</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={() => logout()}
+              >
+                تسجيل الخروج
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
       </div>
     </div>
   );
