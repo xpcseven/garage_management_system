@@ -1,0 +1,139 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('/fonts/Cairo-Regular.ttf');
+
+
+@font-face {
+  font-family: 'CairoFont';
+  src: url('/fonts/Cairo-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: 'CairoFont', Arial, Helvetica, sans-serif;
+}
+
+
+
+/* تعريف الكلاسات المخصصة */
+@layer base {
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
+
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+}
+
+@layer base {
+  :root {
+    --primary: #009ee7;
+    --secondary: #bb4c2a;
+    --savecolor: #e8b202;
+    --titlecolor: #FFFFFF;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+  }
+  
+
+  .dark {
+    /* Warmer dark palette aligned with brand colors */
+    --background: 24 15% 8%;
+    --foreground: 0 0% 98%;
+    --navbar-bg: 24 15% 10%;
+
+    --card: 24 15% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 24 15% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Brand accents (match #942f10 and #bb4c2a) */
+    --primary: 14 80% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 14 63% 45%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 24 12% 18%;
+    --muted-foreground: 0 0% 75%;
+    --accent: 24 12% 18%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 24 12% 20%;
+    --input: 24 12% 20%;
+    --ring: 14 80% 32%;
+    --chart-1: 14 80% 45%;
+    --chart-2: 24 60% 55%;
+    --chart-3: 34 70% 50%;
+    --chart-4: 204 60% 45%;
+    --chart-5: 284 55% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@media print {
+  .header, .footer {
+    display: none;
+  }
+  body {
+    font-family: "Cairo", sans-serif; /* تأكد من تحميل الخط "Cairo" */
+    color: #000; /* النص باللون الأسود للطباعة الواضحة */
+  }
+
+  .highlight {
+    background: #ffe423 !important; /* لون خلفية محدد عند الضرورة */
+  }
+
+  .no-print {
+    display: none;
+     /* العناصر غير الضرورية للطباعة */
+  }
+
+  .print-only {
+    display: block !important; /* عناصر تظهر فقط أثناء الطباعة */
+  }
+
+  a {
+    color: #000 !important; /* تعديل لون الروابط للطباعة */
+    text-decoration: underline; /* إضافة خط تحت النص للوضوح */
+  }
+
+  img {
+    max-width: 100%; /* تأكد من تناسب الصور للطباعة */
+    height: auto;
+  }
+}

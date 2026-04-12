@@ -1,0 +1,33 @@
+ export async function uploadImage(data: FormData) {
+   try {
+     const file = data.get("file") as File | null;
+     if (!file) {
+       throw new Error("No file uploaded");
+     }
+
+     const bytes = await file.arrayBuffer();
+     const buffer = Buffer.from(bytes);
+
+
+     const uploadDir = join(process.cwd(), "public", "uploads");
+
+
+     await mkdir(uploadDir, { recursive: true });
+
+     const filePath = join(uploadDir, file.name);
+
+     await writeFile(filePath, buffer);
+
+
+     const relativePath = `/uploads/${file.name}`;
+     return { success: true, path: relativePath };
+   } catch (error) {
+
+     throw error;
+   }
+ }
+
+
+
+
+  

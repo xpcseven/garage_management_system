@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  USER
+}
+
+enum LogAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model User {
+  id         String           @id @default(cuid())
+  name       String
+  username   String           @unique
+  email      String           @unique
+  phone      String?
+  password   String
+  role       UserRole         @default(USER)
+  isActive   Boolean          @default(true)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  permissions UserPermission[]  // 👈 back-rel
+}
+
+model PermissionGroup {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+
+  permissions Permission[]   // 👈 back-rel
+}
+
+model Permission {
+  id        String            @id @default(cuid())
+  name      String
+  groupId   String
+  group     PermissionGroup   @relation(fields: [groupId], references: [id])
+
+  abilities Ability[]         // 👈 back-rel
+}
+
+model Ability {
+  id            String     @id @default(cuid())
+  name          String     // create, update, delete, view
+  permissionId  String
+  permission    Permission @relation(fields: [permissionId], references: [id])
+
+  users         UserPermission[] // 👈 back-rel
+}
+
+model UserPermission {
+  id         String     @id @default(cuid())
+  userId     String
+  abilityId  String
+  allowed    Boolean    @default(false)
+  assignedAt DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  ability    Ability    @relation(fields: [abilityId], references: [id])
+
+  @@unique([userId, abilityId]) // 🔒 لمنع التكرار
+}
