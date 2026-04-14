@@ -137,3 +137,45 @@ body {
     height: auto;
   }
 }
+
+/* Responsive tables: each row becomes a card on small screens */
+@media (max-width: 768px) {
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    background: hsl(var(--card));
+  }
+
+  .responsive-table td {
+    border: 0 !important;
+    padding: 0.45rem 0.25rem !important;
+  }
+
+  .responsive-table td[data-label] {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .responsive-table td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    white-space: nowrap;
+  }
+}

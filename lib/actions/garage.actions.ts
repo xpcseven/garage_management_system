@@ -70,7 +70,8 @@ export async function createGarage(formData: FormData) {
   const description =
     String(formData.get("description") ?? "").trim() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
-  const address = String(formData.get("address") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim();
+  if (!address) return { error: "موقع الكراج مطلوب" };
 
   const ownerId =
     session.user.role === UserRole.SUPER_ADMIN
@@ -124,9 +125,10 @@ export async function updateGarage(formData: FormData) {
   const description =
     String(formData.get("description") ?? "").trim() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
-  const address = String(formData.get("address") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim();
   const isActive = formData.get("isActive") === "true";
   if (!name) return { error: "اسم الكراج مطلوب" };
+  if (!address) return { error: "موقع الكراج مطلوب" };
 
   try {
     await prisma.garage.update({

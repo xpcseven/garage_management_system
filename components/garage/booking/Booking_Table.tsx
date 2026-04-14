@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { BookingRow } from "@/lib/actions/booking.actions";
 import { cancelBooking } from "@/lib/actions/booking.actions";
@@ -14,12 +14,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
 import BookingLuggageList from "./BookingLuggageList";
+import Swal from "sweetalert2";
+import TablePagination from "@/components/Shared/TablePagination";
 
 type Props = { bookings: BookingRow[]; canCancel: boolean };
 
 export default function Booking_Table({ bookings, canCancel }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(bookings.length / PAGE_SIZE));
+  const pagedBookings = useMemo(
+    () => bookings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [bookings, page]
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <Card>
@@ -27,22 +40,25 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
         <CardTitle className="text-lg">الحجوزات</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm responsive-table">
           <thead>
             <tr className="border-b text-right">
+              <th className="p-2">صاحب الحجز</th>
               <th className="p-2">المسار</th>
               <th className="p-2 min-w-[10rem]">الأمتعة</th>
               <th className="p-2">المقعد</th>
               <th className="p-2">السعر</th>
               <th className="p-2">الحالة</th>
+              <th className="p-2">وقت المغادرة</th>
               <th className="p-2">التاريخ</th>
               {canCancel && <th className="p-2 w-28">إجراءات</th>}
             </tr>
           </thead>
           <tbody>
-            {bookings.map((b) => (
+            {pagedBookings.map((b) => (
               <tr key={b.id} className="border-b border-muted">
-                <td className="p-2">
+                <td className="p-2 font-medium" data-label="صاحب الحجز">{b.passengerName}</td>
+                <td className="p-2" data-label="المسار">
                   <TripRouteArrow
                     fromCityName={b.tripFromCity}
                     fromRegion={b.tripFromRegion}
@@ -50,33 +66,58 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                     toRegion={b.tripToRegion}
                   />
                 </td>
-                <td className="p-2 align-top">
+                <td className="p-2 align-top" data-label="الأمتعة">
                   <BookingLuggageList luggage={b.luggage} />
                 </td>
-                <td className="p-2">{b.seatNumber ?? "—"}</td>
-                <td className="p-2 font-mono">{b.priceAtBooking}</td>
-                <td className="p-2">
+                <td className="p-2" data-label="المقعد">{b.seatNumber ?? "—"}</td>
+                <td className="p-2 font-mono" data-label="السعر">{b.priceAtBooking}</td>
+                <td className="p-2" data-label="الحالة">
                   <Badge variant={b.status === "PENDING" ? "default" : "secondary"}>
                     {b.status}
                   </Badge>
                 </td>
-                <td className="p-2 text-muted-foreground">
-                  {new Date(b.createdAt).toLocaleDateString("ar-IQ")}
+                <td className="p-2 text-muted-foreground whitespace-nowrap" data-label="وقت المغادرة">
+                  {new Date(b.departureTime).toLocaleString("en-US")}
+                </td>
+                <td className="p-2 text-muted-foreground" data-label="التاريخ">
+                  {new Date(b.createdAt).toLocaleDateString("en-US")}
                 </td>
                 {canCancel && (
-                  <td className="p-2">
+                  <td className="p-2" data-label="إجراءات">
                     {b.status === "PENDING" && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         disabled={pending}
-                        onClick={() => {
-                          if (!confirm("إلغاء الحجز؟")) return;
+                        onClick={async () => {
+                          const confirmed = await Swal.fire({
+                            icon: "warning",
+                            title: "إلغاء الحجز",
+                            text: "هل تريد إلغاء الحجز؟",
+                            showCancelButton: true,
+                            confirmButtonText: "نعم، إلغاء",
+                            cancelButtonText: "تراجع",
+                          });
+                          if (!confirmed.isConfirmed) return;
                           start(async () => {
                             const res = await cancelBooking(b.id);
-                            if (res.success) router.refresh();
-                            else alert(res.error);
+                            if (res.success) {
+                              router.refresh();
+                              await Swal.fire({
+                                icon: "success",
+                                title: "تم الإلغاء",
+                                text: "تم إلغاء الحجز بنجاح",
+                                confirmButtonText: "موافق",
+                              });
+                            } else {
+                              await Swal.fire({
+                                icon: "error",
+                                title: "تعذر الإلغاء",
+                                text: res.error,
+                                confirmButtonText: "حسناً",
+                              });
+                            }
                           });
                         }}
                       >
@@ -89,7 +130,7 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
             ))}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={canCancel ? 7 : 6} className="p-6 text-center text-muted-foreground">
+                <td colSpan={canCancel ? 9 : 8} className="p-6 text-center text-muted-foreground">
                   لا توجد حجوزات
                 </td>
               </tr>
@@ -97,6 +138,7 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
           </tbody>
         </table>
       </CardContent>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </Card>
   );
 }

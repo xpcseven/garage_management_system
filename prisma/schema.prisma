@@ -286,6 +286,7 @@ model DriverProfile {
   isVerified   Boolean @default(false)
   isActive     Boolean @default(true)
   bio          String?
+  location     String?
   ratingAvg    Float   @default(0)
 
   currentLat Decimal? @db.Decimal(10, 8)

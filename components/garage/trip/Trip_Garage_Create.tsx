@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import Swal from "sweetalert2";
 
 type Props = {
   cities: CityRow[];
@@ -22,6 +24,7 @@ type Props = {
 
 export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [garageId, setGarageId] = useState(garagePacks[0]?.id ?? "");
   const [vehicleId, setVehicleId] = useState("");
@@ -55,23 +58,41 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">إنشاء رحلة للكراج</CardTitle>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-sky-600">إضافة رحلة للكراج</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">إنشاء رحلة للكراج</DialogTitle>
+        </DialogHeader>
         <p className="text-sm text-muted-foreground font-normal pt-1">
           حدّد وجهة السفر: نقطة الانطلاق (من) ونقطة الوصول (إلى) — يجب أن تكونا
           مختلفتين.
         </p>
-      </CardHeader>
-      <CardContent>
         <form
           className="grid gap-3 sm:grid-cols-2"
           action={(fd) => {
             fd.set("garageId", garageId);
             start(async () => {
               const res = await createGarageTrip(fd);
-              if (res.success) router.refresh();
-              else alert(res.error);
+              if (res.success) {
+                setOpen(false);
+                router.refresh();
+                await Swal.fire({
+                  icon: "success",
+                  title: "تمت الإضافة",
+                  text: "تم إنشاء الرحلة بنجاح",
+                  confirmButtonText: "موافق",
+                });
+              } else {
+                await Swal.fire({
+                  icon: "error",
+                  title: "تعذر الإضافة",
+                  text: res.error,
+                  confirmButtonText: "حسناً",
+                });
+              }
             });
           }}
         >
@@ -225,7 +246,7 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             إنشاء الرحلة والمقاعد
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

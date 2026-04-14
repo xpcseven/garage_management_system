@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { GarageRow } from "@/lib/actions/garage.actions";
 import { updateGarage } from "@/lib/actions/garage.actions";
@@ -14,6 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Swal from "sweetalert2";
+import { MapPin } from "lucide-react";
 
 type Props = { garage: GarageRow };
 
@@ -21,6 +23,40 @@ export default function Garage_Update({ garage }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const [address, setAddress] = useState(garage.address ?? "");
+  const [locating, setLocating] = useState(false);
+
+  function openMap(coords: string) {
+    const [lat, lng] = coords.split(",").map((v) => v.trim());
+    if (!lat || !lng) return;
+    window.open(
+      `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  function requestCurrentLocation() {
+    if (!("geolocation" in navigator)) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        const coords = `${lat}, ${lng}`;
+        setAddress(coords);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const initial = garage.address ?? "";
+    setAddress(initial);
+  }, [open, garage.address]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -42,7 +78,20 @@ export default function Garage_Update({ garage }: Props) {
               if (res.success) {
                 setOpen(false);
                 router.refresh();
-              } else alert(res.error);
+                await Swal.fire({
+                  icon: "success",
+                  title: "تم التحديث",
+                  text: "تم تعديل الكراج بنجاح",
+                  confirmButtonText: "موافق",
+                });
+              } else {
+                await Swal.fire({
+                  icon: "error",
+                  title: "تعذر التحديث",
+                  text: res.error,
+                  confirmButtonText: "حسناً",
+                });
+              }
             });
           }}
         >
@@ -73,12 +122,31 @@ export default function Garage_Update({ garage }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor={`ga-${garage.id}`}>العنوان</Label>
-            <Input
-              id={`ga-${garage.id}`}
-              name="address"
-              defaultValue={garage.address ?? ""}
-            />
+            <Label>موقع الكراج</Label>
+            <input type="hidden" name="address" value={address} required />
+            <button
+              type="button"
+              onClick={requestCurrentLocation}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input hover:bg-muted disabled:opacity-60"
+              disabled={locating}
+              title="أخذ/تحديث الموقع الحالي"
+            >
+              <MapPin
+                className={`h-5 w-5 ${
+                  address ? "text-sky-600" : "text-muted-foreground"
+                }`}
+              />
+            </button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="ms-2"
+              disabled={!address}
+              onClick={() => openMap(address)}
+            >
+              عرض على الخريطة
+            </Button>
           </div>
           <div className="space-y-1">
             <Label htmlFor={`gac-${garage.id}`}>الحالة</Label>

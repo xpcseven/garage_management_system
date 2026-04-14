@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { UserRole } from "@/prisma/UserRole.enum";
+import Swal from "sweetalert2";
 
 type Opt = { id: string; name: string };
 
@@ -20,6 +22,7 @@ type Props = { garageOptions: Opt[]; userRole: string };
 
 export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const isGarageOwner = userRole === UserRole.GARAGE_OWNER;
   const defaultGarageId = garageOptions[0]?.id ?? "";
@@ -39,11 +42,15 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   const driverRequired = showDriverField;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">إضافة مركبة</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-sky-600">إضافة مركبة</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">إضافة مركبة</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
         {blocked && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             لا يوجد لديك كراج بعد. أنشئ كراجاً من قسم{" "}
@@ -57,8 +64,23 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
             action={(fd) => {
               start(async () => {
                 const res = await createVehicle(fd);
-                if (res.success) router.refresh();
-                else alert(res.error);
+                if (res.success) {
+                  setOpen(false);
+                  router.refresh();
+                  await Swal.fire({
+                    icon: "success",
+                    title: "تمت الإضافة",
+                    text: "تمت إضافة المركبة بنجاح",
+                    confirmButtonText: "موافق",
+                  });
+                } else {
+                  await Swal.fire({
+                    icon: "error",
+                    title: "تعذر الإضافة",
+                    text: res.error,
+                    confirmButtonText: "حسناً",
+                  });
+                }
               });
             }}
           >
@@ -172,7 +194,8 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
             </Button>
           </form>
         )}
-      </CardContent>
-    </Card>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

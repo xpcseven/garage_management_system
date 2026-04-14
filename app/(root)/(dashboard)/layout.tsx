@@ -1,7 +1,7 @@
 import React from "react";
 import { auth } from "@/auth";
 import { currentUser } from "@/lib/auth";
-import NavBar from "@/components/NavBar";
+import DashboardShell from "@/components/DashboardShell";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
   const session = await auth();
@@ -19,13 +19,6 @@ const Layout = async ({ children }: { children: React.ReactNode }) => {
       }
     : null;
 
-  return (
-    <div dir="rtl" className="font-cairo min-h-screen flex flex-col">
-      <div className="print:hidden">
-        <NavBar user={navUser} />
-      </div>
-      <main className="flex-grow print:flex-grow-0">{children}</main>
-    </div>
-  );
+  return <DashboardShell user={navUser}>{children}</DashboardShell>;
 };
 export default Layout;

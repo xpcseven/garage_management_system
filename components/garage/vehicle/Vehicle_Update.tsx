@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Swal from "sweetalert2";
 
 type Props = { vehicle: VehicleRow };
 
@@ -42,7 +43,20 @@ export default function Vehicle_Update({ vehicle }: Props) {
               if (res.success) {
                 setOpen(false);
                 router.refresh();
-              } else alert(res.error);
+                await Swal.fire({
+                  icon: "success",
+                  title: "تم التحديث",
+                  text: "تم تعديل المركبة بنجاح",
+                  confirmButtonText: "موافق",
+                });
+              } else {
+                await Swal.fire({
+                  icon: "error",
+                  title: "تعذر التحديث",
+                  text: res.error,
+                  confirmButtonText: "حسناً",
+                });
+              }
             });
           }}
         >

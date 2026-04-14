@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CityRow } from "@/lib/actions/city.actions";
 import type { GarageTripPack } from "@/lib/actions/trip.actions";
@@ -9,11 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Swal from "sweetalert2";
+import { MapPin } from "lucide-react";
 
 type Props = {
   cities: CityRow[];
@@ -22,8 +31,37 @@ type Props = {
 
 export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const [driverLocation, setDriverLocation] = useState("");
+  const [locating, setLocating] = useState(false);
   const maxCap = vehicles[0]?.totalSeats ?? 1;
+
+  function openMap(coords: string) {
+    const [lat, lng] = coords.split(",").map((v) => v.trim());
+    if (!lat || !lng) return;
+    window.open(
+      `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
+  function requestCurrentLocation() {
+    if (!("geolocation" in navigator)) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        const coords = `${lat}, ${lng}`;
+        setDriverLocation(coords);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
 
   if (vehicles.length === 0) {
     return (
@@ -41,18 +79,36 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">إنشاء رحلة مستقلة</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-sky-600">إضافة رحلة مستقلة</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">إنشاء رحلة مستقلة</DialogTitle>
+        </DialogHeader>
         <form
           className="grid gap-3 sm:grid-cols-2"
           action={(fd) => {
             start(async () => {
               const res = await createFreelanceTrip(fd);
-              if (res.success) router.refresh();
-              else alert(res.error);
+              if (res.success) {
+                setOpen(false);
+                router.refresh();
+                await Swal.fire({
+                  icon: "success",
+                  title: "تمت الإضافة",
+                  text: "تم إنشاء الرحلة المستقلة بنجاح",
+                  confirmButtonText: "موافق",
+                });
+              } else {
+                await Swal.fire({
+                  icon: "error",
+                  title: "تعذر الإضافة",
+                  text: res.error,
+                  confirmButtonText: "حسناً",
+                });
+              }
             });
           }}
         >
@@ -113,6 +169,39 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
               ))}
             </select>
           </div>
+          <div className="space-y-1 sm:col-span-2">
+            <Label>موقع السائق الحالي</Label>
+            <input
+              type="hidden"
+              id="tf-location"
+              name="driverLocation"
+              required
+              value={driverLocation}
+            />
+            <button
+              type="button"
+              onClick={requestCurrentLocation}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input hover:bg-muted disabled:opacity-60"
+              disabled={locating}
+              title="أخذ/تحديث الموقع الحالي"
+            >
+              <MapPin
+                className={`h-5 w-5 ${
+                  driverLocation ? "text-sky-600" : "text-muted-foreground"
+                }`}
+              />
+            </button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="ms-2"
+              disabled={!driverLocation}
+              onClick={() => openMap(driverLocation)}
+            >
+              عرض على الخريطة
+            </Button>
+          </div>
 
           <div className="space-y-1">
             <Label htmlFor="tf-dep">وقت المغادرة</Label>
@@ -155,7 +244,7 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
             نشر الرحلة
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -246,6 +246,7 @@ export async function createGarageTrip(formData: FormData) {
     where: { id: garageId, isDeleted: false },
   });
   if (!garage) return { error: "الكراج غير موجود" };
+  if (!garage.address?.trim()) return { error: "يجب تحديد موقع الكراج أولاً" };
   if (
     session.user.role === UserRole.GARAGE_OWNER &&
     garage.ownerId !== session.user.id
@@ -327,6 +328,7 @@ export async function createFreelanceTrip(formData: FormData) {
   const toCityId = String(formData.get("toCityId") ?? "").trim();
   const departureTime = String(formData.get("departureTime") ?? "").trim();
   const basePriceRaw = String(formData.get("basePrice") ?? "").trim();
+  const driverLocation = String(formData.get("driverLocation") ?? "").trim();
   const maxSeats = Number(formData.get("maxSeats"));
 
   if (
@@ -335,6 +337,7 @@ export async function createFreelanceTrip(formData: FormData) {
     !toCityId ||
     !departureTime ||
     !basePriceRaw ||
+    !driverLocation ||
     !maxSeats ||
     fromCityId === toCityId
   ) {
@@ -361,6 +364,20 @@ export async function createFreelanceTrip(formData: FormData) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.driverProfile.upsert({
+        where: { userId: session.user.id },
+        create: {
+          userId: session.user.id,
+          isFreelancer: true,
+          isVerified: false,
+          isActive: true,
+          location: driverLocation,
+        },
+        update: {
+          location: driverLocation,
+        },
+      });
+
       const trip = await tx.trip.create({
         data: {
           garageId: null,

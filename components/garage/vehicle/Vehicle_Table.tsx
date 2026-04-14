@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import type { VehicleRow } from "@/lib/actions/vehicle.actions";
 import Vehicle_Update from "./Vehicle_Update";
 import {
@@ -9,17 +10,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import TablePagination from "@/components/Shared/TablePagination";
 
 type Props = { vehicles: VehicleRow[] };
 
 export default function Vehicle_Table({ vehicles }: Props) {
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(vehicles.length / PAGE_SIZE));
+  const pagedVehicles = useMemo(
+    () => vehicles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [vehicles, page]
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">قائمة المركبات</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm responsive-table">
           <thead>
             <tr className="border-b text-right">
               <th className="p-2">اللوحة</th>
@@ -32,21 +46,21 @@ export default function Vehicle_Table({ vehicles }: Props) {
             </tr>
           </thead>
           <tbody>
-            {vehicles.map((v) => (
+            {pagedVehicles.map((v) => (
               <tr key={v.id} className="border-b border-muted">
-                <td className="p-2 font-mono">{v.plateNumber}</td>
-                <td className="p-2">
+                <td className="p-2 font-mono" data-label="اللوحة">{v.plateNumber}</td>
+                <td className="p-2" data-label="المركبة">
                   {v.brand} {v.model} ({v.year})
                 </td>
-                <td className="p-2 text-muted-foreground">
+                <td className="p-2 text-muted-foreground" data-label="السائق">
                   {v.driverName ?? "—"}
                 </td>
-                <td className="p-2 text-muted-foreground">{v.garageName ?? "—"}</td>
-                <td className="p-2">{v.transportType === "INTERNAL" ? "داخلي" : "خارجي"}</td>
-                <td className="p-2">
+                <td className="p-2 text-muted-foreground" data-label="الكراج">{v.garageName ?? "—"}</td>
+                <td className="p-2" data-label="النوع">{v.transportType === "INTERNAL" ? "داخلي" : "خارجي"}</td>
+                <td className="p-2" data-label="الحالة">
                   {v.isActive ? <Badge>نشطة</Badge> : <Badge variant="secondary">موقوفة</Badge>}
                 </td>
-                <td className="p-2">
+                <td className="p-2" data-label="إجراءات">
                   <Vehicle_Update vehicle={v} />
                 </td>
               </tr>
@@ -61,6 +75,7 @@ export default function Vehicle_Table({ vehicles }: Props) {
           </tbody>
         </table>
       </CardContent>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </Card>
   );
 }

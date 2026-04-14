@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 
 type Props = { garages: PublicGarageRow[] };
 
@@ -52,7 +53,27 @@ export default function Passenger_Garages_Component({ garages }: Props) {
               <div className="space-y-2 flex-1">
                 {g.description && <p>{g.description}</p>}
                 {g.phone && <p>هاتف: {g.phone}</p>}
-                {g.address && <p>{g.address}</p>}
+                <div className="flex items-center justify-between gap-2">
+                  <p>الموقع (location): {g.address ?? "غير محدد"}</p>
+                  {g.address ? (
+                    <Button asChild variant="ghost" size="icon" title="عرض الموقع على الخريطة">
+                      <a
+                        href={`https://www.google.com/maps?q=${encodeURIComponent(g.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MapPin className="h-5 w-5 text-sky-600" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <span
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground/50"
+                      title="لا يوجد موقع"
+                    >
+                      <MapPin className="h-5 w-5" />
+                    </span>
+                  )}
+                </div>
               </div>
               <Button asChild className="w-full bg-sky-600 hover:bg-sky-700">
                 <Link href={`/passenger/garages/${g.id}`}>

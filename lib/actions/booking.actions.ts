@@ -24,9 +24,11 @@ export type BookingLuggageRow = {
 
 export type BookingRow = {
   id: string;
+  passengerName: string;
   status: string;
   priceAtBooking: string;
   createdAt: Date;
+  departureTime: Date;
   tripFromCity: string;
   tripFromRegion: string | null;
   tripToCity: string;
@@ -134,10 +136,12 @@ function parseLuggageForCreate(raw: unknown):
 
 function mapBookingRow(b: {
   id: string;
+  user: { name: string };
   status: BookingStatus;
   priceAtBooking: Prisma.Decimal;
   createdAt: Date;
   trip: {
+    departureTime: Date;
     fromCity: { name: string; region: string | null };
     toCity: { name: string; region: string | null };
   };
@@ -151,9 +155,11 @@ function mapBookingRow(b: {
 }): BookingRow {
   return {
     id: b.id,
+    passengerName: b.user.name,
     status: b.status,
     priceAtBooking: String(b.priceAtBooking),
     createdAt: b.createdAt,
+    departureTime: b.trip.departureTime,
     tripFromCity: b.trip.fromCity.name,
     tripFromRegion: b.trip.fromCity.region,
     tripToCity: b.trip.toCity.name,
@@ -177,6 +183,7 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
       take: 50,
       orderBy: { createdAt: "desc" },
       include: {
+        user: { select: { name: true } },
         trip: {
           include: {
             fromCity: { select: { name: true, region: true } },
@@ -212,6 +219,7 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
       take: 50,
       orderBy: { createdAt: "desc" },
       include: {
+        user: { select: { name: true } },
         trip: {
           include: {
             fromCity: { select: { name: true, region: true } },
@@ -237,6 +245,7 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },
     include: {
+      user: { select: { name: true } },
       trip: {
         include: {
           fromCity: { select: { name: true, region: true } },

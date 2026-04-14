@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Moon, Sun } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,14 +11,6 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { logout } from "@/lib/action/auth/logout";
-import {
-  canManageCities,
-  canManageGarages,
-  canManageTrips,
-  canManageVehicles,
-  canUsePassengerPortal,
-  canViewBookings,
-} from "@/lib/permissions";
 
 export type NavBarUser = {
   id: string;
@@ -29,15 +21,25 @@ export type NavBarUser = {
 
 type Props = {
   user: NavBarUser | null;
+  onToggleSidebar?: () => void;
 };
 
-function NavBar({ user }: Props) {
+function NavBar({ user, onToggleSidebar }: Props) {
   const { setTheme } = useTheme();
-  const role = user?.role;
 
   return (
     <div className="flex justify-between items-center p-4 border-b border-sky-200 bg-white dark:bg-card shadow-sm print:hidden gap-4 flex-wrap">
       <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="rounded-lg border-sky-200 md:hidden"
+          onClick={onToggleSidebar}
+        >
+          <Menu className="h-4 w-4" />
+          <span className="sr-only">Toggle sidebar</span>
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -72,50 +74,7 @@ function NavBar({ user }: Props) {
         </Link>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-end">
-        {user && (
-          <nav className="hidden md:flex items-center gap-1 text-sm">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/home">الرئيسية</Link>
-            </Button>
-            {canManageCities(role) && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/cities">المدن</Link>
-              </Button>
-            )}
-            {canManageGarages(role) && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/garages">الكراجات</Link>
-              </Button>
-            )}
-            {canManageVehicles(role) && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/vehicles">المركبات</Link>
-              </Button>
-            )}
-            {canManageTrips(role) && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/trips">الرحلات</Link>
-              </Button>
-            )}
-            {canUsePassengerPortal(role) && (
-              <>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/passenger/garages">كراجات (مسافر)</Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/passenger/trips">بحث رحلة</Link>
-                </Button>
-              </>
-            )}
-            {canViewBookings(role) && (
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/bookings">الحجوزات</Link>
-              </Button>
-            )}
-          </nav>
-        )}
-
+      <div className="flex items-start gap-2 flex-wrap justify-end">
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

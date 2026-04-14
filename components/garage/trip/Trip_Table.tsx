@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { TripManageRow } from "@/lib/actions/trip.actions";
 import {
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
+import Swal from "sweetalert2";
+import TablePagination from "@/components/Shared/TablePagination";
 
 type Props = { trips: TripManageRow[] };
 
@@ -30,6 +32,17 @@ const STATUS_AR: Record<string, string> = {
 export default function Trip_Table({ trips }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(trips.length / PAGE_SIZE));
+  const pagedTrips = useMemo(
+    () => trips.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [trips, page]
+  );
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <Card>
@@ -43,7 +56,7 @@ export default function Trip_Table({ trips }: Props) {
         </p>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm responsive-table">
           <thead>
             <tr className="border-b text-right">
               <th className="p-2">المسار</th>
@@ -56,7 +69,7 @@ export default function Trip_Table({ trips }: Props) {
             </tr>
           </thead>
           <tbody>
-            {trips.map((t) => {
+            {pagedTrips.map((t) => {
               const departure = new Date(t.departureTime);
               const now = new Date();
               const isFull = t.availableSeats === 0;
@@ -69,7 +82,7 @@ export default function Trip_Table({ trips }: Props) {
 
               return (
                 <tr key={t.id} className="border-b border-muted">
-                  <td className="p-2">
+                  <td className="p-2" data-label="المسار">
                     <TripRouteArrow
                       fromCityName={t.fromCity}
                       fromRegion={t.fromRegion}
@@ -80,24 +93,24 @@ export default function Trip_Table({ trips }: Props) {
                       {t.garageName ?? "رحلة مستقلة"} — {t.driverName}
                     </div>
                   </td>
-                  <td className="p-2">
+                  <td className="p-2" data-label="النوع">
                     {t.isFreelance ? (
                       <Badge variant="secondary">مستقلة</Badge>
                     ) : (
                       <Badge>كراج</Badge>
                     )}
                   </td>
-                  <td className="p-2 whitespace-nowrap">
-                    {departure.toLocaleString("ar-IQ")}
+                  <td className="p-2 whitespace-nowrap" data-label="المغادرة">
+                    {departure.toLocaleString("en-US")}
                   </td>
-                  <td className="p-2 font-mono">{t.basePrice}</td>
-                  <td className="p-2">
+                  <td className="p-2 font-mono" data-label="السعر">{t.basePrice}</td>
+                  <td className="p-2" data-label="المقاعد">
                     {t.availableSeats}/{t.maxSeats}
                   </td>
-                  <td className="p-2">
+                  <td className="p-2" data-label="الحالة">
                     {STATUS_AR[t.status] ?? t.status}
                   </td>
-                  <td className="p-2">
+                  <td className="p-2" data-label="إجراءات">
                     <div className="flex flex-col gap-1.5 items-stretch">
                       {showStart && (
                         <Button
@@ -105,17 +118,34 @@ export default function Trip_Table({ trips }: Props) {
                           variant="secondary"
                           size="sm"
                           disabled={pending}
-                          onClick={() => {
-                            if (
-                              !confirm(
-                                "تسجيل بدء الرحلة؟ (جميع المقاعد محجوزة)"
-                              )
-                            )
-                              return;
+                          onClick={async () => {
+                            const confirmed = await Swal.fire({
+                              icon: "question",
+                              title: "بدء الرحلة",
+                              text: "تسجيل بدء الرحلة؟ (جميع المقاعد محجوزة)",
+                              showCancelButton: true,
+                              confirmButtonText: "نعم، ابدأ",
+                              cancelButtonText: "إلغاء",
+                            });
+                            if (!confirmed.isConfirmed) return;
                             start(async () => {
                               const res = await startTripInProgress(t.id);
-                              if (res.success) router.refresh();
-                              else alert(res.error);
+                              if (res.success) {
+                                router.refresh();
+                                await Swal.fire({
+                                  icon: "success",
+                                  title: "تم التحديث",
+                                  text: "تم تسجيل بدء الرحلة",
+                                  confirmButtonText: "موافق",
+                                });
+                              } else {
+                                await Swal.fire({
+                                  icon: "error",
+                                  title: "تعذر التحديث",
+                                  text: res.error,
+                                  confirmButtonText: "حسناً",
+                                });
+                              }
                             });
                           }}
                         >
@@ -128,17 +158,34 @@ export default function Trip_Table({ trips }: Props) {
                           className="bg-emerald-700 hover:bg-emerald-800"
                           size="sm"
                           disabled={pending}
-                          onClick={() => {
-                            if (
-                              !confirm(
-                                "تأكيد الوصول إلى الوجهة وإكمال الرحلة؟"
-                              )
-                            )
-                              return;
+                          onClick={async () => {
+                            const confirmed = await Swal.fire({
+                              icon: "question",
+                              title: "إكمال الرحلة",
+                              text: "تأكيد الوصول إلى الوجهة وإكمال الرحلة؟",
+                              showCancelButton: true,
+                              confirmButtonText: "نعم، إكمال",
+                              cancelButtonText: "إلغاء",
+                            });
+                            if (!confirmed.isConfirmed) return;
                             start(async () => {
                               const res = await completeTripAtDestination(t.id);
-                              if (res.success) router.refresh();
-                              else alert(res.error);
+                              if (res.success) {
+                                router.refresh();
+                                await Swal.fire({
+                                  icon: "success",
+                                  title: "تم الإكمال",
+                                  text: "تم تسجيل الوصول وإكمال الرحلة",
+                                  confirmButtonText: "موافق",
+                                });
+                              } else {
+                                await Swal.fire({
+                                  icon: "error",
+                                  title: "تعذر الإكمال",
+                                  text: res.error,
+                                  confirmButtonText: "حسناً",
+                                });
+                              }
                             });
                           }}
                         >
@@ -151,12 +198,34 @@ export default function Trip_Table({ trips }: Props) {
                           variant="outline"
                           size="sm"
                           disabled={pending}
-                          onClick={() => {
-                            if (!confirm("إلغاء الرحلة؟")) return;
+                          onClick={async () => {
+                            const confirmed = await Swal.fire({
+                              icon: "warning",
+                              title: "إلغاء الرحلة",
+                              text: "هل تريد إلغاء الرحلة؟",
+                              showCancelButton: true,
+                              confirmButtonText: "نعم، إلغاء",
+                              cancelButtonText: "تراجع",
+                            });
+                            if (!confirmed.isConfirmed) return;
                             start(async () => {
                               const res = await cancelTrip(t.id);
-                              if (res.success) router.refresh();
-                              else alert(res.error);
+                              if (res.success) {
+                                router.refresh();
+                                await Swal.fire({
+                                  icon: "success",
+                                  title: "تم الإلغاء",
+                                  text: "تم إلغاء الرحلة بنجاح",
+                                  confirmButtonText: "موافق",
+                                });
+                              } else {
+                                await Swal.fire({
+                                  icon: "error",
+                                  title: "تعذر الإلغاء",
+                                  text: res.error,
+                                  confirmButtonText: "حسناً",
+                                });
+                              }
                             });
                           }}
                         >
@@ -178,6 +247,7 @@ export default function Trip_Table({ trips }: Props) {
           </tbody>
         </table>
       </CardContent>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </Card>
   );
 }

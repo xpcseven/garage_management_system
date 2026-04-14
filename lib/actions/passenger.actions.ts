@@ -64,8 +64,8 @@ function mapTripToPassengerRow(t: {
   transportType: TransportType;
   fromCity: { name: string; region: string | null };
   toCity: { name: string; region: string | null };
-  garage: { name: string } | null;
-  driver: { name: string };
+  garage: { name: string; address: string | null } | null;
+  driver: { name: string; driverProfile: { location: string | null } | null };
 }): PassengerTripRow {
   return {
     id: t.id,
@@ -80,6 +80,9 @@ function mapTripToPassengerRow(t: {
     garageName: t.garage?.name ?? null,
     isFreelance: !t.garageId,
     driverName: t.driver.name,
+    sourceLocation: t.garageId
+      ? (t.garage?.address?.trim() ?? null)
+      : (t.driver.driverProfile?.location?.trim() ?? null),
   };
 }
 
@@ -109,8 +112,13 @@ export async function getTripsForGaragePassenger(
     include: {
       fromCity: { select: { name: true, region: true } },
       toCity: { select: { name: true, region: true } },
-      garage: { select: { name: true } },
-      driver: { select: { name: true } },
+      garage: { select: { name: true, address: true } },
+      driver: {
+        select: {
+          name: true,
+          driverProfile: { select: { location: true } },
+        },
+      },
     },
   });
 
@@ -132,6 +140,7 @@ export type PassengerTripRow = {
   garageName: string | null;
   isFreelance: boolean;
   driverName: string;
+  sourceLocation: string | null;
 };
 
 export async function searchTripsForPassenger(params: {
@@ -174,8 +183,13 @@ export async function searchTripsForPassenger(params: {
     include: {
       fromCity: { select: { name: true, region: true } },
       toCity: { select: { name: true, region: true } },
-      garage: { select: { name: true } },
-      driver: { select: { name: true } },
+      garage: { select: { name: true, address: true } },
+      driver: {
+        select: {
+          name: true,
+          driverProfile: { select: { location: true } },
+        },
+      },
     },
   });
 

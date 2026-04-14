@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Swal from "sweetalert2";
 
 type Props = { tripId: string };
 
@@ -260,7 +261,20 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                     if (res.success) {
                       setOpen(false);
                       router.refresh();
-                    } else alert(res.error);
+                      await Swal.fire({
+                        icon: "success",
+                        title: "تم الحجز",
+                        text: "تم حجز المقعد بنجاح",
+                        confirmButtonText: "موافق",
+                      });
+                    } else {
+                      await Swal.fire({
+                        icon: "error",
+                        title: "تعذر الحجز",
+                        text: res.error,
+                        confirmButtonText: "حسناً",
+                      });
+                    }
                   });
                 }}
               >
