@@ -547,7 +547,7 @@ export async function cancelTrip(tripId: string) {
   else if (
     session.user.role === UserRole.GARAGE_OWNER &&
     trip.garageId &&
-    trip.garage.ownerId === session.user.id
+    trip.garage?.ownerId === session.user.id
   )
     allowed = true;
   else if (

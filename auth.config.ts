@@ -2,6 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { LoginSchema } from "@/schemas";
+import { UserRole } from "@/prisma/UserRole.enum";
 import { getUserByEmail } from "./lib/action/user.action";
 
 export default {
@@ -23,7 +24,7 @@ export default {
               id: user.id,
               email: user.email,
               name: user.name,
-              role: user.role,
+              role: user.role as UserRole,
             };
           }
         }

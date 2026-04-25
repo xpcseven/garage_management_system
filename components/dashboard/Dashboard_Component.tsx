@@ -67,11 +67,31 @@ const links: Record<
   },
 };
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "sky" | "emerald" | "violet" | "amber";
+}) {
+  const toneClasses: Record<typeof tone, string> = {
+    sky: "border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 text-sky-700",
+    emerald:
+      "border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 text-emerald-700",
+    violet:
+      "border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 text-violet-700",
+    amber:
+      "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700",
+  };
+
   return (
-    <div className="rounded-lg border bg-card p-4 text-center">
-      <div className="text-2xl font-bold text-sky-700">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
+    <div
+      className={`rounded-2xl border p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${toneClasses[tone]}`}
+    >
+      <div className="text-3xl font-extrabold">{value}</div>
+      <div className="mt-1 text-sm font-medium text-slate-600">{label}</div>
     </div>
   );
 }
@@ -82,12 +102,12 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
   const isPassenger = user.role === UserRole.USER;
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-10">
-      <div>
-        <h1 className="text-3xl font-bold text-sky-800">
+    <div className="mx-auto max-w-6xl space-y-10 p-4">
+      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-sky-50/40 to-emerald-50/40 p-6 shadow-sm">
+        <h1 className="text-3xl font-bold text-slate-900">
           {isPassenger ? "لوحة المسافر" : "لوحة تحكم الكراج"}
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           مرحباً {user.name ?? user.email} —{" "}
           {isPassenger ? (
             <>
@@ -104,16 +124,16 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
 
       {isPassenger ? (
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="كراجات مسجّلة" value={snapshot.garages} />
-          <Stat label="رحلات متاحة للحجز" value={snapshot.tripsActive} />
-          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} />
+          <Stat label="كراجات مسجّلة" value={snapshot.garages} tone="emerald" />
+          <Stat label="رحلات متاحة للحجز" value={snapshot.tripsActive} tone="sky" />
+          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} tone="amber" />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="كراجات" value={snapshot.garages} />
-          <Stat label="مركبات" value={snapshot.vehicles} />
-          <Stat label="رحلات نشطة" value={snapshot.tripsActive} />
-          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} />
+          <Stat label="كراجات" value={snapshot.garages} tone="emerald" />
+          <Stat label="مركبات" value={snapshot.vehicles} tone="violet" />
+          <Stat label="رحلات نشطة" value={snapshot.tripsActive} tone="sky" />
+          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} tone="amber" />
         </div>
       )}
 
@@ -140,21 +160,32 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
         )}
 
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-sky-800">الأقسام</h2>
+        <h2 className="mb-4 text-xl font-semibold text-slate-900">الأقسام</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {sections
             .filter((s): s is Exclude<DashboardSectionId, "overview"> => s !== "overview")
             .map((key) => {
               const item = links[key];
+              const sectionTone: Record<string, string> = {
+                cities: "from-blue-50 to-cyan-50 border-blue-100",
+                garages: "from-emerald-50 to-lime-50 border-emerald-100",
+                vehicles: "from-violet-50 to-fuchsia-50 border-violet-100",
+                bookings: "from-amber-50 to-orange-50 border-amber-100",
+                trips: "from-sky-50 to-indigo-50 border-sky-100",
+                passenger_garages: "from-teal-50 to-emerald-50 border-teal-100",
+                passenger_trips: "from-cyan-50 to-blue-50 border-cyan-100",
+              };
               return (
                 <Link key={key} href={item.href}>
-                  <Card className="h-full transition-shadow hover:shadow-md border-sky-100">
+                  <Card
+                    className={`h-full border bg-gradient-to-br transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${sectionTone[key] ?? "from-slate-50 to-white border-slate-100"}`}
+                  >
                     <CardHeader>
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
-                      <CardDescription>{item.desc}</CardDescription>
+                      <CardTitle className="text-lg text-slate-900">{item.title}</CardTitle>
+                      <CardDescription className="text-slate-600">{item.desc}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-sky-600 text-sm font-medium">فتح ←</span>
+                      <span className="text-sm font-semibold text-sky-700">فتح ←</span>
                     </CardContent>
                   </Card>
                 </Link>

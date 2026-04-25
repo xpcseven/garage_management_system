@@ -20,7 +20,7 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <SessionProvider session={session}>
-      <html lang="en" dir="rtl" className="font-cairo">
+      <html lang="en" dir="rtl">
         <body>
           <ThemeProvider
             attribute="class"
@@ -28,7 +28,7 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="font-cairo">{children}</div>
+            <div>{children}</div>
             <ToastProvider />
           </ThemeProvider>
         </body>
