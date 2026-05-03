@@ -17,22 +17,29 @@ export default function LandingPage() {
             منصة ذكية لإدارة النقل في الكراجات
           </span>
           <h1 className="max-w-3xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            إدارة النقل العام والنقل الخارجي من لوحة واحدة
+            ASHUOR - آشور
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
             نظام متكامل يساعد الكراج على تنظيم الحركة اليومية، متابعة الرحلات،
             إدارة السائقين والمركبات، ورفع كفاءة خدمات النقل العام والخارجي.
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild className="bg-sky-600 px-8 hover:bg-sky-500">
+          <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-center sm:gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="w-full rounded-xl border-0 bg-gradient-to-l from-sky-600 to-sky-500 px-8 font-semibold text-white shadow-md shadow-sky-500/25 transition hover:from-sky-500 hover:to-sky-400 hover:shadow-lg hover:shadow-sky-500/30 sm:w-auto sm:min-w-[11.5rem]"
+            >
               <Link href="/auth/register">ابدأ الآن</Link>
             </Button>
-            <Button asChild variant="outline" className="border-sky-300 bg-white text-sky-700 hover:bg-sky-50">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full rounded-xl border-2 border-sky-400 bg-white px-8 font-semibold text-sky-700 shadow-sm transition hover:border-sky-500 hover:bg-sky-50 sm:w-auto sm:min-w-[11.5rem]"
+            >
               <Link href="/auth/login">تسجيل الدخول</Link>
             </Button>
-            <Button asChild variant="secondary">
-              <Link href="/home">لوحة التحكم</Link>
-            </Button>
+
           </div>
         </div>
       </section>

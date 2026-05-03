@@ -7,6 +7,7 @@ import type {
   PassengerTripScope,
 } from "@/lib/actions/passenger.actions";
 import Link from "next/link";
+import { DashboardPageLayout } from "@/components/layout/DashboardPageLayout";
 import { Button } from "@/components/ui/button";
 import {
   Card,

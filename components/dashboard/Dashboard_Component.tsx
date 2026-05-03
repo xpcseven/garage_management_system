@@ -67,6 +67,14 @@ const links: Record<
   },
 };
 
+/** شريط لوني خفيف يذكّر بأسلوب البطاقات النظيف في واجهات مثل claude.ai */
+const statAccent: Record<"sky" | "emerald" | "violet" | "amber", string> = {
+  sky: "bg-sky-500",
+  emerald: "bg-emerald-500",
+  violet: "bg-violet-500",
+  amber: "bg-amber-500",
+};
+
 function Stat({
   label,
   value,
@@ -76,22 +84,20 @@ function Stat({
   value: number;
   tone: "sky" | "emerald" | "violet" | "amber";
 }) {
-  const toneClasses: Record<typeof tone, string> = {
-    sky: "border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 text-sky-700",
-    emerald:
-      "border-emerald-200 bg-gradient-to-br from-emerald-50 to-lime-50 text-emerald-700",
-    violet:
-      "border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 text-violet-700",
-    amber:
-      "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700",
-  };
-
   return (
-    <div
-      className={`rounded-2xl border p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${toneClasses[tone]}`}
-    >
-      <div className="text-3xl font-extrabold">{value}</div>
-      <div className="mt-1 text-sm font-medium text-slate-600">{label}</div>
+    <div className="group relative overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:border-stone-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
+      <div
+        className={`absolute end-0 top-0 h-full w-1 ${statAccent[tone]} opacity-80`}
+        aria-hidden
+      />
+      <div className="px-5 py-6 text-center">
+        <div className="text-3xl font-semibold tabular-nums tracking-tight text-stone-900">
+          {value}
+        </div>
+        <div className="mt-2 text-sm font-medium leading-snug text-stone-500">
+          {label}
+        </div>
+      </div>
     </div>
   );
 }
@@ -100,99 +106,139 @@ function Stat({
 export default function Dashboard_Component({ user, snapshot }: Props) {
   const sections = dashboardSectionsForRole(user.role);
   const isPassenger = user.role === UserRole.USER;
+  const roleLabel =
+    isPassenger ? "مسافر" : String(user.role);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 p-4">
-      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-sky-50/40 to-emerald-50/40 p-6 shadow-sm">
-        <h1 className="text-3xl font-bold text-slate-900">
-          {isPassenger ? "لوحة المسافر" : "لوحة تحكم الكراج"}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          مرحباً {user.name ?? user.email} —{" "}
-          {isPassenger ? (
-            <>
-              الدور: <span className="font-medium text-foreground">مسافر</span>
-            </>
-          ) : (
-            <>
-              الدور:{" "}
-              <span className="font-medium text-foreground">{user.role}</span>
-            </>
-          )}
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      {/* خلفية دافئة ومساحات واسعة — أسلوب صفحات منتجات نظيفة */}
+      <header className="rounded-2xl border border-stone-200/80 bg-[#FAFAF8] px-6 py-8 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:px-8 sm:py-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3 text-right">
+            <p className="text-sm font-medium text-stone-500">نظرة عامة</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+              {isPassenger ? "لوحة المسافر" : "لوحة تحكم الكراج"}
+            </h1>
+            <p className="max-w-xl text-base leading-relaxed text-stone-600">
+              مرحباً{" "}
+              <span className="font-medium text-stone-800">
+                {user.name ?? user.email}
+              </span>
+              . من هنا تتابع الأرقام الأساسية وتنتقل بسرعة إلى الأقسام.
+            </p>
+          </div>
+          <div className="shrink-0 self-start rounded-full border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 shadow-sm">
+            <span className="text-stone-400">الدور</span>{" "}
+            <span className="font-medium text-stone-900">{roleLabel}</span>
+          </div>
+        </div>
+      </header>
 
       {isPassenger ? (
         <div className="grid gap-4 sm:grid-cols-3">
           <Stat label="كراجات مسجّلة" value={snapshot.garages} tone="emerald" />
-          <Stat label="رحلات متاحة للحجز" value={snapshot.tripsActive} tone="sky" />
-          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} tone="amber" />
+          <Stat
+            label="رحلات متاحة للحجز"
+            value={snapshot.tripsActive}
+            tone="sky"
+          />
+          <Stat
+            label="حجوزات قيد الانتظار"
+            value={snapshot.bookingsPending}
+            tone="amber"
+          />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="كراجات" value={snapshot.garages} tone="emerald" />
           <Stat label="مركبات" value={snapshot.vehicles} tone="violet" />
           <Stat label="رحلات نشطة" value={snapshot.tripsActive} tone="sky" />
-          <Stat label="حجوزات قيد الانتظار" value={snapshot.bookingsPending} tone="amber" />
+          <Stat
+            label="حجوزات قيد الانتظار"
+            value={snapshot.bookingsPending}
+            tone="amber"
+          />
         </div>
       )}
 
       {user.role === UserRole.GARAGE_OWNER &&
         snapshot.showGarageOwnerTripReminder && (
-          <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-amber-900 dark:text-amber-100">
+          <Card className="overflow-hidden rounded-2xl border border-amber-200/90 bg-[#FFFBF5] shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <CardHeader className="space-y-2 pb-2 sm:pb-3">
+              <CardTitle className="text-lg font-semibold text-stone-900">
                 مطلوب: إنشاء رحلة وتحديد الوجهة
               </CardTitle>
-              <CardDescription className="text-amber-900/80 dark:text-amber-100/90">
+              <CardDescription className="text-base leading-relaxed text-stone-600">
                 لديك كراج ومركبات جاهزة، لكن لا توجد رحلة مجدولة بعد. أنشئ رحلة
                 من صفحة «الرحلات» وحدد بوضوح{" "}
-                <strong>من أين تنطلق</strong> و<strong>إلى أين</strong> (مدينتان
-                مختلفتان في القائمة).
+                <strong className="font-semibold text-stone-800">
+                  من أين تنطلق
+                </strong>{" "}
+                و
+                <strong className="font-semibold text-stone-800">
+                  إلى أين
+                </strong>{" "}
+                (مدينتان مختلفتان في القائمة).
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button asChild className="bg-amber-700 hover:bg-amber-600 text-white">
+            <CardContent className="pt-0">
+              <Button
+                asChild
+                className="rounded-xl bg-stone-900 px-5 font-medium text-white shadow-sm transition hover:bg-stone-800"
+              >
                 <Link href="/trips">الذهاب إلى إنشاء الرحلة</Link>
               </Button>
             </CardContent>
           </Card>
         )}
 
-      <div>
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">الأقسام</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <section className="space-y-5">
+        <div className="text-right">
+          <h2 className="text-lg font-semibold tracking-tight text-stone-900">
+            الأقسام
+          </h2>
+          <p className="mt-1 text-sm text-stone-500">
+            اختر القسم للانتقال مباشرة
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
           {sections
-            .filter((s): s is Exclude<DashboardSectionId, "overview"> => s !== "overview")
+            .filter(
+              (s): s is Exclude<DashboardSectionId, "overview"> =>
+                s !== "overview"
+            )
             .map((key) => {
               const item = links[key];
-              const sectionTone: Record<string, string> = {
-                cities: "from-blue-50 to-cyan-50 border-blue-100",
-                garages: "from-emerald-50 to-lime-50 border-emerald-100",
-                vehicles: "from-violet-50 to-fuchsia-50 border-violet-100",
-                bookings: "from-amber-50 to-orange-50 border-amber-100",
-                trips: "from-sky-50 to-indigo-50 border-sky-100",
-                passenger_garages: "from-teal-50 to-emerald-50 border-teal-100",
-                passenger_trips: "from-cyan-50 to-blue-50 border-cyan-100",
-              };
               return (
-                <Link key={key} href={item.href}>
-                  <Card
-                    className={`h-full border bg-gradient-to-br transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${sectionTone[key] ?? "from-slate-50 to-white border-slate-100"}`}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-lg text-slate-900">{item.title}</CardTitle>
-                      <CardDescription className="text-slate-600">{item.desc}</CardDescription>
+                <Link key={key} href={item.href} className="group block">
+                  <Card className="h-full rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:border-stone-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+                    <CardHeader className="space-y-2 pb-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-base font-semibold text-stone-900 sm:text-lg">
+                          {item.title}
+                        </CardTitle>
+                        <span
+                          className="mt-0.5 shrink-0 text-stone-400 transition group-hover:text-stone-700"
+                          aria-hidden
+                        >
+                          ←
+                        </span>
+                      </div>
+                      <CardDescription className="text-sm leading-relaxed text-stone-500">
+                        {item.desc}
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <span className="text-sm font-semibold text-sky-700">فتح ←</span>
+                    <CardContent className="pt-0">
+                      <span className="text-xs font-medium text-stone-400 transition group-hover:text-stone-600">
+                        فتح القسم
+                      </span>
                     </CardContent>
                   </Card>
                 </Link>
               );
             })}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

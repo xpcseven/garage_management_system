@@ -69,7 +69,7 @@ function NavBar({ user, onToggleSidebar }: Props) {
       </div>
 
       <div className="flex-1 flex justify-center min-w-0">
-        <Link href="/home" className="text-xl font-bold text-sky-600 truncate">
+        <Link href="/" className="text-xl font-bold text-sky-600 truncate">
           كراج السيارات
         </Link>
       </div>
