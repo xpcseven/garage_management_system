@@ -28,7 +28,7 @@ export default function Trip_Component({
   return (
     <div className="space-y-8 p-4 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-sky-700">الرحلات</h1>
+        <h1 className="text-2xl font-bold text-purple-500">الرحلات</h1>
         <p className="text-muted-foreground text-sm mt-1">
           {isGarageOwner ? (
             <>

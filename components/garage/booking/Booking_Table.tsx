@@ -42,7 +42,7 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm responsive-table">
           <thead>
-            <tr className="border-b text-right">
+            <tr className="border-b text-center text-purple-700">
               <th className="p-2">صاحب الحجز</th>
               <th className="p-2">المسار</th>
               <th className="p-2 min-w-[10rem]">الأمتعة</th>
@@ -54,7 +54,7 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
               {canCancel && <th className="p-2 w-28">إجراءات</th>}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-center">
             {pagedBookings.map((b) => (
               <tr key={b.id} className="border-b border-muted">
                 <td className="p-2 font-medium" data-label="صاحب الحجز">{b.passengerName}</td>
@@ -72,15 +72,15 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                 <td className="p-2" data-label="المقعد">{b.seatNumber ?? "—"}</td>
                 <td className="p-2 font-mono" data-label="السعر">{b.priceAtBooking}</td>
                 <td className="p-2" data-label="الحالة">
-                  <Badge variant={b.status === "PENDING" ? "default" : "secondary"}>
+                  <div className={`text-${b.status === "PENDING" ? "yellow-500" : b.status === "CONFIRMED" ? "green-500" : "red-500"} font-bold flex items-center gap-2`}>
                     {b.status}
-                  </Badge>
+                  </div>
                 </td>
                 <td className="p-2 text-muted-foreground whitespace-nowrap" data-label="وقت المغادرة">
-                  {new Date(b.departureTime).toLocaleString("en-US")}
+                  {new Date(b.departureTime).toLocaleTimeString("en-US")}
                 </td>
                 <td className="p-2 text-muted-foreground" data-label="التاريخ">
-                  {new Date(b.createdAt).toLocaleDateString("en-US")}
+                  {new Date(b.departureTime).toLocaleDateString("en-US")}
                 </td>
                 {canCancel && (
                   <td className="p-2" data-label="إجراءات">

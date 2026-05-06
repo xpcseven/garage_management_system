@@ -1,15 +1,16 @@
 "use client";
-import React from "react";
-import { Menu, Moon, Sun } from "lucide-react";
+
+import { Computer, Menu, Moon, Sun, LogOut, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
-import Link from "next/link";
 import { logout } from "@/lib/action/auth/logout";
 
 export type NavBarUser = {
@@ -28,84 +29,182 @@ function NavBar({ user, onToggleSidebar }: Props) {
   const { setTheme } = useTheme();
 
   return (
-    <div className="flex justify-between items-center p-4 border-b border-sky-200 bg-white dark:bg-card shadow-sm print:hidden gap-4 flex-wrap">
+    <header
+      dir="rtl"
+      className="
+        sticky top-0 z-50
+        flex items-center justify-between
+        gap-3 px-4 py-3
+        border-b border-violet-600/40
+        bg-gradient-to-l from-indigo-950 via-violet-900 to-purple-800
+        shadow-[0_2px_20px_rgba(109,40,217,0.3)]
+        backdrop-blur-sm
+        print:hidden
+      "
+    >
+      {/* ── Right side: sidebar toggle + theme switcher ── */}
       <div className="flex items-center gap-2">
+        {/* Sidebar toggle (mobile only) */}
         <Button
           type="button"
           size="icon"
-          variant="outline"
-          className="rounded-lg border-sky-200 md:hidden"
+          variant="ghost"
+          className="
+            md:hidden
+            h-9 w-9 rounded-lg
+            border border-white/20
+            text-white/80
+            hover:bg-white/10 hover:text-white
+            transition-colors
+          "
           onClick={onToggleSidebar}
         >
           <Menu className="h-4 w-4" />
           <span className="sr-only">Toggle sidebar</span>
         </Button>
+
+        {/* Theme switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
-              variant="outline"
-              className="rounded-lg border-sky-200"
+              variant="ghost"
+              className="
+                h-9 w-9 rounded-lg
+                border border-white/20
+                text-white/80
+                hover:bg-white/10 hover:text-white
+                transition-colors
+              "
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="rounded-lg">
-            <DropdownMenuItem onClick={() => setTheme("light")}>
-              <Sun className="h-4 w-4 ml-2" />
+
+          <DropdownMenuContent
+            align="start"
+            className="
+              mt-1 w-36 rounded-xl
+              border border-violet-200/20
+              bg-white/95 backdrop-blur-sm
+              shadow-xl shadow-violet-900/20
+              dark:bg-slate-900/95
+            "
+          >
+            <DropdownMenuItem
+              onClick={() => setTheme("light")}
+              className="gap-2 rounded-lg text-sm font-medium"
+            >
+              <Sun className="h-4 w-4 text-amber-500" />
               فاتح
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>
-              <Moon className="h-4 w-4 ml-2" />
+            <DropdownMenuItem
+              onClick={() => setTheme("dark")}
+              className="gap-2 rounded-lg text-sm font-medium"
+            >
+              <Moon className="h-4 w-4 text-violet-500" />
               داكن
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>
+            <DropdownMenuItem
+              onClick={() => setTheme("system")}
+              className="gap-2 rounded-lg text-sm font-medium"
+            >
+              <Computer className="h-4 w-4 text-slate-500" />
               النظام
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      <div className="flex-1 flex justify-center min-w-0">
-        <Link href="/" className="text-xl font-bold text-sky-600 truncate">
-          كراج السيارات
+      {/* ── Center: brand / title ── */}
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <Link
+          href="/"
+          className="
+            text-lg font-bold tracking-wide text-white
+            hover:text-violet-200
+            transition-colors duration-200
+            whitespace-nowrap
+          "
+        >
+          🚗 كراج السيارات
         </Link>
       </div>
 
-      <div className="flex items-start gap-2 flex-wrap justify-end">
+      {/* ── Left side: user menu ── */}
+      <div className="flex items-center">
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="default"
+                variant="ghost"
                 size="sm"
-                className="bg-sky-600 hover:bg-sky-500 max-w-[10rem] truncate"
+                className="
+                  h-9 max-w-[10rem]
+                  rounded-lg
+                  border border-white/20
+                  bg-white/10
+                  px-3 text-sm font-medium text-white
+                  hover:bg-white/20
+                  truncate
+                  transition-colors
+                "
               >
                 {user.name || user.email}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="px-2 py-1.5 text-xs text-muted-foreground border-b">
-                {user.email}
-                <br />
-                <span className="font-medium text-foreground">{user.role}</span>
+
+            <DropdownMenuContent
+              align="end"
+              className="
+                mt-1 w-56 rounded-xl
+                border border-violet-200/20
+                bg-white/95 backdrop-blur-sm
+                shadow-xl shadow-violet-900/20
+                dark:bg-slate-900/95
+              "
+            >
+              {/* User info header */}
+              <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="mt-0.5 text-xs font-semibold text-violet-600 dark:text-violet-400">
+                  {user.role}
+                </p>
               </div>
-              <DropdownMenuItem asChild>
-                <Link href="/home">لوحة التحكم</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600"
-                onClick={() => logout()}
-              >
-                تسجيل الخروج
-              </DropdownMenuItem>
+
+              <div className="p-1">
+                <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
+                  <Link href="/home">
+                    <LayoutDashboard className="h-4 w-4 text-violet-500" />
+                    لوحة التحكم
+                  </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="my-1" />
+
+                <DropdownMenuItem
+                  className="
+                    gap-2 rounded-lg text-sm
+                    text-red-600
+                    focus:bg-red-50 focus:text-red-600
+                    dark:focus:bg-red-950/40
+                  "
+                  onClick={() => logout()}
+                >
+                  <LogOut className="h-4 w-4" />
+                  تسجيل الخروج
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : null}
+        ) : (
+          // placeholder to keep layout balanced when no user
+          <div className="h-9 w-9" />
+        )}
       </div>
-    </div>
+    </header>
   );
 }
 

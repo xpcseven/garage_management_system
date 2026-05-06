@@ -18,7 +18,7 @@ export default function Vehicle_Component({
   return (
     <div className="space-y-8 p-4 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-sky-700">المركبات</h1>
+        <h1 className="text-2xl font-bold text-purple-500">المركبات</h1>
         <p className="text-muted-foreground text-sm mt-1">
           إدارة المركبات المرتبطة بحسابك أو بكراجك.
         </p>

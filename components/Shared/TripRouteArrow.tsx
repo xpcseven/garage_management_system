@@ -27,7 +27,7 @@ export default function TripRouteArrow({
     >
       <span className="font-medium text-foreground">{from}</span>
       <ArrowLeft
-        className="h-4 w-4 shrink-0 text-sky-600"
+        className="h-4 w-4 shrink-0 text-purple-500"
         strokeWidth={2.5}
         aria-hidden
       />

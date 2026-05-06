@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import TablePagination from "@/components/Shared/TablePagination";
+import { FaCertificate } from "react-icons/fa";
 
 type Props = { vehicles: VehicleRow[] };
 
@@ -58,7 +59,11 @@ export default function Vehicle_Table({ vehicles }: Props) {
                 <td className="p-2 text-muted-foreground" data-label="الكراج">{v.garageName ?? "—"}</td>
                 <td className="p-2" data-label="النوع">{v.transportType === "INTERNAL" ? "داخلي" : "خارجي"}</td>
                 <td className="p-2" data-label="الحالة">
-                  {v.isActive ? <Badge>نشطة</Badge> : <Badge variant="secondary">موقوفة</Badge>}
+                  {v.isActive ? <h1 className="text-green-500 font-bold">
+                    <FaCertificate />
+                  </h1> : <h1 className="text-red-500 font-bold  ">
+                    <FaCertificate />
+                  </h1>}
                 </td>
                 <td className="p-2" data-label="إجراءات">
                   <Vehicle_Update vehicle={v} />

@@ -120,7 +120,7 @@ const LoginForm = () => {
                   disabled={isPending}
                   type="submit"
                   size="lg"
-                  className="h-11 w-full bg-sky-600 text-base font-semibold hover:bg-sky-500"
+                  className="h-11 w-full text-base font-semibold"
                 >
                   دخول النظام
                 </Button>

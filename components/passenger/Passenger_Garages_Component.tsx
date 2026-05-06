@@ -36,7 +36,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
               رحلات لا تتبع كراجاً — ادخل لعرض جميع الرحلات المستقلة المتاحة
               للحجز.
             </p>
-            <Button asChild className="w-full bg-violet-700 hover:bg-violet-800">
+            <Button asChild className="w-full">
               <Link href="/passenger/freelance-trips">
                 الدخول وعرض الرحلات
               </Link>
@@ -75,7 +75,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
                   )}
                 </div>
               </div>
-              <Button asChild className="w-full bg-sky-600 hover:bg-sky-700">
+              <Button asChild className="w-full">
                 <Link href={`/passenger/garages/${g.id}`}>
                   الدخول وعرض الرحلات
                 </Link>

@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import TablePagination from "@/components/Shared/TablePagination";
+import { FaCertificate } from "react-icons/fa";
 
 type Props = { garages: GarageRow[] };
 
@@ -49,9 +49,13 @@ export default function Garage_Table({ garages }: Props) {
                 <td className="p-2 text-muted-foreground" data-label="الهاتف">{g.phone ?? "—"}</td>
                 <td className="p-2" data-label="الحالة">
                   {g.isActive ? (
-                    <Badge>نشط</Badge>
+                    <h1 className="text-green-500 font-bold">
+                      <FaCertificate />
+                    </h1>
                   ) : (
-                    <Badge variant="secondary">موقوف</Badge>
+                    <h1 className="text-red-500 font-bold">
+                      <FaCertificate />
+                    </h1>
                   )}
                 </td>
                 <td className="p-2" data-label="إجراءات">

@@ -81,7 +81,7 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-sky-600">إضافة رحلة مستقلة</Button>
+        <Button className="">إضافة رحلة مستقلة</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>

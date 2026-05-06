@@ -44,7 +44,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-sky-600">إضافة مركبة</Button>
+        <Button className="">إضافة مركبة</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>

@@ -56,7 +56,7 @@ export default function Garage_Create({ role }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-sky-600">إضافة كراج</Button>
+        <Button className="">إضافة كراج</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>

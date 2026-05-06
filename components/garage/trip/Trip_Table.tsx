@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
 import Swal from "sweetalert2";
 import TablePagination from "@/components/Shared/TablePagination";
+import { BiSolidCarGarage } from "react-icons/bi";
+import { FaCarSide } from "react-icons/fa";
 
 type Props = { trips: TripManageRow[] };
 
@@ -95,9 +97,15 @@ export default function Trip_Table({ trips }: Props) {
                   </td>
                   <td className="p-2" data-label="النوع">
                     {t.isFreelance ? (
-                      <Badge variant="secondary">مستقلة</Badge>
+                      <h1 className="text-purple-500 font-bold flex items-center gap-2">
+                       <FaCarSide className="w-5 h-5" />
+                       <span className="text-purple-500 font-bold">مستقلة</span>
+                      </h1>
                     ) : (
-                      <Badge>كراج</Badge>
+                      <h1 className="text-green-500 font-bold flex items-center gap-2">
+                       <BiSolidCarGarage className="w-5 h-5" />
+                       <span className="text-green-500 font-bold">كراج</span>
+                      </h1>
                     )}
                   </td>
                   <td className="p-2 whitespace-nowrap" data-label="المغادرة">

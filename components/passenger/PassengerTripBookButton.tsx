@@ -93,7 +93,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-sky-600">
+        <Button size="sm" className="">
           حجز
         </Button>
       </DialogTrigger>

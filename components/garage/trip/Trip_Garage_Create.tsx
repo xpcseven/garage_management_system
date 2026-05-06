@@ -66,7 +66,7 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-sky-600">إضافة رحلة للكراج</Button>
+        <Button className="">إضافة رحلة للكراج</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
