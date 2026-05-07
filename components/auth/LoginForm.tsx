@@ -47,7 +47,7 @@ const LoginForm = () => {
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 lg:px-0 [font-family:'CairoFont',Arial,Helvetica,sans-serif]">
+    <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 lg:px-0">
       <div className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white/95 shadow-2xl backdrop-blur-sm">
         <div className="grid lg:grid-cols-[1fr_1.05fr]">
           <div className="bg-gradient-to-b from-slate-50 to-white p-5 text-right sm:p-8 lg:p-10">

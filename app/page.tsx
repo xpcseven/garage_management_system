@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
+import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
+import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
 
 function placeGovernorate(
   p: Awaited<ReturnType<typeof getPublicTourismPlacesForLanding>>[number]
@@ -19,44 +21,13 @@ export default async function LandingPage() {
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_80%,_rgba(34,197,94,0.16),_transparent_45%)]" />
 
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
-          <span className="mb-6 rounded-full border border-purple-300 bg-purple-50 px-4 py-1 text-sm text-purple-700">
-            آشور للسياحة و السفر - Ashuor Tourism and Travel
-          </span>
-          <h1 className="max-w-3xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
-            ASHUOR - آشور
-          </h1>
-          <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-            نظام متكامل يساعد السياح و ينظم الحركة اليومية، متابعة الرحلات،
-            إدارة السائقين والمركبات، ورفع كفاءة خدمات النقل العام والخارجي.
-          </p>
-          <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-center sm:gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="w-full rounded-xl border-0 bg-gradient-to-l from-purple-600 to-purple-500 px-8 font-semibold text-white shadow-md shadow-purple-500/25 transition hover:from-purple-500 hover:to-purple-400 hover:shadow-lg hover:shadow-purple-500/30 sm:w-auto sm:min-w-[11.5rem]"
-            >
-              <Link href="/auth/register">ابدأ الآن</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full rounded-xl border-2 border-purple-400 bg-white px-8 font-semibold text-purple-700 shadow-sm transition hover:border-purple-500 hover:bg-purple-50 sm:w-auto sm:min-w-[11.5rem]"
-            >
-              <Link href="/auth/login">تسجيل الدخول</Link>
-            </Button>
+      <section className="">
+        <Dashboard_Nav />
+      </section>
 
-          </div>
-
-          <div className="mt-10 ">
-            <Image className="h-[50px] w-[160px]" src="/System/flags.png" alt="علم" width={100} height={100} />
-          </div>
-        </div>
+      <section>
+        <Tourism_Img_Component />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
@@ -199,6 +170,8 @@ export default async function LandingPage() {
           </aside>
         </div>
       </section>
+
+
 
       <section className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 lg:px-8">
         <h3 className="text-2xl font-bold sm:text-3xl">

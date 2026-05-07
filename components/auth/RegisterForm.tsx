@@ -107,10 +107,10 @@ const RegisterForm = () => {
 
           <div className="bg-gradient-to-b from-slate-50 to-white p-5 text-right sm:p-8 lg:p-10">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+              <h1 className="text-2xl font-bold text-purple-700 sm:text-3xl">
                 إنشاء حساب جديد
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-purple-600">
                 أدخل بياناتك الأساسية ثم اختر نوع الحساب المناسب لنشاطك.
               </p>
             </div>
@@ -122,7 +122,7 @@ const RegisterForm = () => {
                 dir="rtl"
               >
                 <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <h3 className="mb-4 text-sm font-bold text-slate-800">
+                  <h3 className="mb-4 text-sm font-bold text-purple-700">
                     البيانات الشخصية
                   </h3>
 
@@ -132,7 +132,7 @@ const RegisterForm = () => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>الاسم الكامل</FormLabel>
+                          <FormLabel className="text-purple-700">الاسم الكامل</FormLabel>
                           <FormControl>
                             <Input
                               className="text-right"
@@ -152,7 +152,7 @@ const RegisterForm = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                          <FormLabel className="text-purple-700">البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <Input
                               className="text-right"
@@ -172,7 +172,7 @@ const RegisterForm = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                          <FormLabel className="text-purple-700">كلمة المرور</FormLabel>
                           <FormControl>
                             <Input
                               className="text-right"
@@ -193,7 +193,7 @@ const RegisterForm = () => {
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <h3 className="mb-4 text-sm font-bold text-slate-800">
+                  <h3 className="mb-4 text-sm font-bold text-purple-700">
                     إعدادات الحساب
                   </h3>
 
@@ -203,7 +203,7 @@ const RegisterForm = () => {
                       name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>نوع الحساب</FormLabel>
+                          <FormLabel className="text-purple-700">نوع الحساب</FormLabel>
                           <FormDescription className="text-xs">
                             اختر الدور المناسب. حساب المشرف العام لا يُنشأ من
                             هذه الصفحة.
@@ -212,13 +212,13 @@ const RegisterForm = () => {
                             <select
                               {...field}
                               disabled={isPending}
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors"
                             >
-                              <option value="USER">عميل الكراج</option>
-                              <option value="GARAGE_OWNER">صاحب كراج</option>
-                              <option value="DRIVER">سائق مركبة</option>
+                              <option value="USER">عميل الكراج - عميل للشركة السياحية</option>
+                              <option value="GARAGE_OWNER">مالك كراج - مالك شركة سياحية</option>
+                              <option value="DRIVER">سائق مستقل</option>
                               <option value="TOURISM_OWNER">
-                                صاحب مكان سياحي
+                                مالك مكان سياحي
                               </option>
                             </select>
                           </FormControl>
@@ -233,7 +233,7 @@ const RegisterForm = () => {
                         name="jobTypes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>نوع الخدمات أو النقل</FormLabel>
+                            <FormLabel className="text-purple-700"  >نوع الخدمات أو النقل</FormLabel>
                             <FormDescription className="text-xs">
                               يظهر هذا القسم لصاحب الكراج أو السائق فقط.
                             </FormDescription>

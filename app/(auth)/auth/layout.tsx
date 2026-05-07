@@ -2,7 +2,7 @@ import React from 'react'
 
 const AuthLayout = ({children}: {children : React.ReactNode}) => {
   return (
-    <div className="relative min-h-screen overflow-hidden [font-family:'CairoFont',Arial,Helvetica,sans-serif]">
+    <div className="relative min-h-screen overflow-hidden">
       <div className='absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-purple-900' />
       <div className='pointer-events-none absolute -top-24 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full bg-purple-400/20 blur-3xl' />
       <div className='pointer-events-none absolute -bottom-28 -left-24 h-[24rem] w-[24rem] rounded-full bg-cyan-300/20 blur-3xl' />
