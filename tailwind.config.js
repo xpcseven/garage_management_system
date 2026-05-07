@@ -35,11 +35,11 @@ module.exports = {
         titlecolor: "#FFFFFF",
         colorthree: "#0282c2",
         hussam2: "#000000",
-        sky1: "#065985",
+        purple1: "#065985",
       },
       boxShadow: {
-        neonsky:
-          "0 0 10px theme('colors.white'), 0 0 50px theme('colors.sky.700')",
+        neonpurple:
+          "0 0 10px theme('colors.white'), 0 0 50px theme('colors.purple.700')",
         neonyellow:
           "0 0 5px theme('colors.yellow.200'), 0 0 20px theme('colors.yellow.700')",
       },

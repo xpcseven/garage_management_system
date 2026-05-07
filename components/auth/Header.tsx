@@ -7,7 +7,7 @@ export const Header = ({ label }: HeaderProps) => {
     <div className="w-full flex flex-col gap-y-4 items-center justify-center ">
       <h1
         className={cn(
-          "text-xl font-bold items-center justify-center text-sky-600"
+          "text-xl font-bold items-center justify-center text-purple-600"
         )}
       >
       تسجيل الدخول  

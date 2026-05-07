@@ -35,6 +35,11 @@ const links: Record<
     title: "المدن",
     desc: "إدارة المدن للرحلات",
   },
+  tourism_places: {
+    href: "/tourism_places",
+    title: "الأماكن السياحية",
+    desc: "إدارة وعرض الأماكن السياحية",
+  },
   garages: {
     href: "/garages",
     title: "الكراجات",
@@ -65,11 +70,16 @@ const links: Record<
     title: "البحث عن رحلة",
     desc: "رحلات الكراجات والسائقين المستقلين",
   },
+  passenger_tourism_places: {
+    href: "/passenger/tourism-places",
+    title: "أماكن سياحية",
+    desc: "استكشف الأماكن السياحية المتاحة",
+  },
 };
 
 /** شريط لوني خفيف يذكّر بأسلوب البطاقات النظيف في واجهات مثل claude.ai */
-const statAccent: Record<"sky" | "emerald" | "violet" | "amber", string> = {
-  sky: "bg-sky-500",
+const statAccent: Record<"purple" | "emerald" | "violet" | "amber", string> = {
+  purple: "bg-purple-500",
   emerald: "bg-emerald-500",
   violet: "bg-violet-500",
   amber: "bg-amber-500",
@@ -82,7 +92,7 @@ function Stat({
 }: {
   label: string;
   value: number;
-  tone: "sky" | "emerald" | "violet" | "amber";
+  tone: "purple" | "emerald" | "violet" | "amber";
 }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:border-stone-300 hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)]">
@@ -107,17 +117,40 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
   const sections = dashboardSectionsForRole(user.role);
   const isPassenger = user.role === UserRole.USER;
   const roleLabel =
-    isPassenger ? "مسافر" : String(user.role);
+    user.role === UserRole.SUPER_ADMIN
+      ? "مشرف عام"
+      : user.role === UserRole.GARAGE_OWNER
+      ? "صاحب كراج"
+      : user.role === UserRole.DRIVER
+      ? "سائق"
+      : user.role === UserRole.TOURISM_OWNER
+      ? "صاحب مكان سياحي"
+      : user.role === UserRole.USER
+      ? "مسافر"
+      : String(user.role);
+
+  const dashboardTitle =
+    user.role === UserRole.SUPER_ADMIN
+      ? "لوحة المشرف العام"
+      : user.role === UserRole.GARAGE_OWNER
+      ? "لوحة صاحب الكراج"
+      : user.role === UserRole.DRIVER
+      ? "لوحة السائق"
+      : user.role === UserRole.TOURISM_OWNER
+      ? "لوحة صاحب المكان السياحي"
+      : user.role === UserRole.USER
+      ? "لوحة المسافر"
+      : "لوحة التحكم";
 
   return (
-    <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <div className="mx-auto max-w-5xl space-y-12  sm:px-6 sm:py-10 lg:px-8">
       {/* خلفية دافئة ومساحات واسعة — أسلوب صفحات منتجات نظيفة */}
       <header className="rounded-2xl border border-stone-200/80 bg-[#FAFAF8] px-6 py-8 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:px-8 sm:py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3 text-right">
             <p className="text-sm font-medium text-stone-500">نظرة عامة</p>
             <h1 className="text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
-              {isPassenger ? "لوحة المسافر" : "لوحة تحكم الكراج"}
+              {dashboardTitle}
             </h1>
             <p className="max-w-xl text-base leading-relaxed text-stone-600">
               مرحباً{" "}
@@ -140,7 +173,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
           <Stat
             label="رحلات متاحة للحجز"
             value={snapshot.tripsActive}
-            tone="sky"
+            tone="purple"
           />
           <Stat
             label="حجوزات قيد الانتظار"
@@ -152,7 +185,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="كراجات" value={snapshot.garages} tone="emerald" />
           <Stat label="مركبات" value={snapshot.vehicles} tone="violet" />
-          <Stat label="رحلات نشطة" value={snapshot.tripsActive} tone="sky" />
+          <Stat label="رحلات نشطة" value={snapshot.tripsActive} tone="purple" />
           <Stat
             label="حجوزات قيد الانتظار"
             value={snapshot.bookingsPending}

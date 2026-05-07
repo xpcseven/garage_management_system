@@ -42,10 +42,10 @@ export default function Passenger_Garage_Detail_Component({
     <div className="space-y-6 p-4 max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-sky-800">
+          <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-purple-800">
             <Link href="/passenger/garages">العودة إلى قائمة الكراجات</Link>
           </Button>
-          <h1 className="text-2xl font-bold text-sky-800">{garage.name}</h1>
+          <h1 className="text-2xl font-bold text-purple-800">{garage.name}</h1>
           <div className="space-y-1 text-sm text-muted-foreground max-w-xl">
             {garage.description && <p>{garage.description}</p>}
             {garage.phone && <p>هاتف: {garage.phone}</p>}

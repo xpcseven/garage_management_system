@@ -123,13 +123,15 @@ function NavBar({ user, onToggleSidebar }: Props) {
         <Link
           href="/"
           className="
-            text-lg font-bold tracking-wide text-white
+            block max-w-[58vw] truncate text-center
+            text-sm sm:text-base lg:text-lg
+            font-bold tracking-wide text-white
             hover:text-violet-200
             transition-colors duration-200
-            whitespace-nowrap
           "
         >
-          🚗 كراج السيارات
+          <span>آشور للسياحة و السفر</span>
+          <span className="hidden sm:inline"> - Ashuor Tourism and Travel</span>
         </Link>
       </div>
 

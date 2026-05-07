@@ -133,7 +133,7 @@ export default function Garage_Update({ garage }: Props) {
             >
               <MapPin
                 className={`h-5 w-5 ${
-                  address ? "text-sky-600" : "text-muted-foreground"
+                  address ? "text-purple-600" : "text-muted-foreground"
                 }`}
               />
             </button>
@@ -160,7 +160,7 @@ export default function Garage_Update({ garage }: Props) {
               <option value="false">موقوف</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full bg-sky-600">
+          <Button type="submit" disabled={pending} className="w-full bg-purple-600">
             تحديث
           </Button>
         </form>

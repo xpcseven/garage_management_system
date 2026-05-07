@@ -4,8 +4,19 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
+import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
 
-export default function LandingPage() {
+function placeGovernorate(
+  p: Awaited<ReturnType<typeof getPublicTourismPlacesForLanding>>[number]
+) {
+  if (p.governorate) return p.governorate;
+  if (!p.cityName) return "العراق";
+  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+}
+
+export default async function LandingPage() {
+  const tourismPlaces = await getPublicTourismPlacesForLanding();
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <section className="relative overflow-hidden">
@@ -13,8 +24,8 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_80%,_rgba(34,197,94,0.16),_transparent_45%)]" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
-          <span className="mb-6 rounded-full border border-sky-300 bg-sky-50 px-4 py-1 text-sm text-sky-700">
-            منصة ذكية لإدارة النقل في الكراجات
+          <span className="mb-6 rounded-full border border-purple-300 bg-purple-50 px-4 py-1 text-sm text-purple-700">
+            آشور للسياحة و السفر - Ashuor Tourism and Travel
           </span>
           <h1 className="max-w-3xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-5xl">
             ASHUOR - آشور
@@ -27,7 +38,7 @@ export default function LandingPage() {
             <Button
               asChild
               size="lg"
-              className="w-full rounded-xl border-0 bg-gradient-to-l from-sky-600 to-sky-500 px-8 font-semibold text-white shadow-md shadow-sky-500/25 transition hover:from-sky-500 hover:to-sky-400 hover:shadow-lg hover:shadow-sky-500/30 sm:w-auto sm:min-w-[11.5rem]"
+              className="w-full rounded-xl border-0 bg-gradient-to-l from-purple-600 to-purple-500 px-8 font-semibold text-white shadow-md shadow-purple-500/25 transition hover:from-purple-500 hover:to-purple-400 hover:shadow-lg hover:shadow-purple-500/30 sm:w-auto sm:min-w-[11.5rem]"
             >
               <Link href="/auth/register">ابدأ الآن</Link>
             </Button>
@@ -35,11 +46,15 @@ export default function LandingPage() {
               asChild
               variant="outline"
               size="lg"
-              className="w-full rounded-xl border-2 border-sky-400 bg-white px-8 font-semibold text-sky-700 shadow-sm transition hover:border-sky-500 hover:bg-sky-50 sm:w-auto sm:min-w-[11.5rem]"
+              className="w-full rounded-xl border-2 border-purple-400 bg-white px-8 font-semibold text-purple-700 shadow-sm transition hover:border-purple-500 hover:bg-purple-50 sm:w-auto sm:min-w-[11.5rem]"
             >
               <Link href="/auth/login">تسجيل الدخول</Link>
             </Button>
 
+          </div>
+
+          <div className="mt-10 ">
+            <Image className="h-[50px] w-[160px]" src="/System/flags.png" alt="علم" width={100} height={100} />
           </div>
         </div>
       </section>
@@ -108,40 +123,95 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-y border-sky-100 bg-sky-50/70">
+      <section className="border-y border-purple-100 bg-purple-50/70">
         <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 text-right sm:grid-cols-2 lg:grid-cols-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-sky-100 bg-white p-4">
+          <div className="rounded-xl border border-purple-100 bg-white p-4">
             <p className="text-sm text-slate-500">تشغيل يومي</p>
-            <p className="mt-1 text-xl font-bold text-sky-600">رحلات منتظمة</p>
+            <p className="mt-1 text-xl font-bold text-purple-600">رحلات منتظمة</p>
           </div>
-          <div className="rounded-xl border border-sky-100 bg-white p-4">
+          <div className="rounded-xl border border-purple-100 bg-white p-4">
             <p className="text-sm text-slate-500">إدارة ذكية</p>
-            <p className="mt-1 text-xl font-bold text-sky-600">مركبات وسائقون</p>
+            <p className="mt-1 text-xl font-bold text-purple-600">مركبات وسائقون</p>
           </div>
-          <div className="rounded-xl border border-sky-100 bg-white p-4">
+          <div className="rounded-xl border border-purple-100 bg-white p-4">
             <p className="text-sm text-slate-500">خدمة العملاء</p>
-            <p className="mt-1 text-xl font-bold text-sky-600">حجوزات دقيقة</p>
+            <p className="mt-1 text-xl font-bold text-purple-600">حجوزات دقيقة</p>
           </div>
-          <div className="rounded-xl border border-sky-100 bg-white p-4">
+          <div className="rounded-xl border border-purple-100 bg-white p-4">
             <p className="text-sm text-slate-500">توسّع الأعمال</p>
-            <p className="mt-1 text-xl font-bold text-sky-600">نقل عام وخارجي</p>
+            <p className="mt-1 text-xl font-bold text-purple-600">نقل عام وخارجي</p>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mb-6 text-right">
+          <h2 className="text-2xl font-bold text-purple-700">أماكن سياحية</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            تصفح أماكن السياحة التي ترغب في زيارتها.
+          </p>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[2fr_1fr]">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {tourismPlaces.map((p) => (
+              <Link
+                key={p.id}
+                href="/tourism-places"
+                className="relative block h-72 overflow-hidden rounded-2xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {p.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.imageUrl}
+                    alt={p.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-slate-300 to-slate-500" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                <div className="absolute bottom-0 z-10 w-full p-3 text-white">
+                  <h3 className="text-lg font-semibold leading-tight">الأماكن السياحية في العراق</h3>
+                </div>
+              </Link>
+            ))}
+            {tourismPlaces.length === 0 && (
+              <p className="col-span-full rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
+                لا توجد أماكن سياحية متاحة حالياً.
+              </p>
+            )}
+          </div>
+
+          <aside className="rounded-2xl border border-purple-100 bg-purple-50/60 p-5 text-right">
+            <h3 className="text-lg font-bold text-purple-700">السياحة في العراق</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-700">
+              يتميّز العراق بتنوع سياحي غني يجمع بين المواقع الأثرية، الطبيعة،
+              والموروث الحضاري العريق. من الأهوار الجنوبية إلى المدن التاريخية،
+              يجد الزائر تجربة فريدة تجمع التاريخ والثقافة.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-slate-700">
+              كما تُعد العتبات المقدسة في النجف الأشرف وكربلاء المقدسة وسامراء
+              والكاظمية من أبرز المقاصد الدينية، وتستقبل ملايين الزائرين سنوياً،
+              ما يجعل السياحة الدينية ركيزة أساسية في المشهد السياحي العراقي.
+            </p>
+          </aside>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 lg:px-8">
         <h3 className="text-2xl font-bold sm:text-3xl">
-          جهّز كراجك لمرحلة تشغيل أكثر احترافية
+          آشور للسياحة و السفر - Ashuor Tourism and Travel
         </h3>
         <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-          ابدأ اليوم في تنظيم عمليات النقل العام والنقل الخارجي بنظام واحد
-          يمنحك وضوحاً أكبر وتحكماً أفضل.
+          انت على بعد خطوة واحدة من تنظيم رحلاتك والسفر.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Button asChild className="bg-emerald-600 px-8 hover:bg-emerald-500">
+          <Button asChild className=" px-8">
             <Link href="/auth/register">إنشاء حساب</Link>
           </Button>
-          <Button asChild variant="outline" className="border-sky-300 bg-white text-sky-700 hover:bg-sky-50">
+          <Button asChild variant="outline" className="border-purple-300 bg-white text-purple-700 hover:bg-purple-50">
             <Link href="/auth/login">الدخول للنظام</Link>
           </Button>
         </div>

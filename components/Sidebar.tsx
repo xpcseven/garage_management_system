@@ -7,6 +7,7 @@ import {
   canManageCities,
   canManageGarages,
   canManageTrips,
+  canManageTourismPlaces,
   canManageVehicles,
   canUsePassengerPortal,
   canViewBookings,
@@ -110,6 +111,10 @@ export default function Sidebar({ user, className }: Props) {
           <NavLink href="/cities" label="المدن" icon="🏙️" />
         )}
 
+        {canManageTourismPlaces(role) && (
+          <NavLink href="/tourism_places" label="الأماكن السياحية" icon="🧭" />
+        )}
+
         {canManageGarages(role) && (
           <NavLink href="/garages" label="الكراجات" icon="🏢" />
         )}
@@ -130,6 +135,11 @@ export default function Sidebar({ user, className }: Props) {
             <SectionDivider label="المسافر" />
             <NavLink href="/passenger/garages" label="كراجات (مسافر)" icon="📍" />
             <NavLink href="/passenger/trips" label="بحث رحلة" icon="🔍" />
+            <NavLink
+              href="/passenger/tourism-places"
+              label="أماكن سياحية"
+              icon="🧳"
+            />
           </>
         )}
 

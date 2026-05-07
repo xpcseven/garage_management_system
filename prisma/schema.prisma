@@ -20,6 +20,7 @@ enum Role {
   GARAGE_OWNER
   DRIVER
   USER
+  TOURISM_OWNER
 }
 
 enum GarageRole {
@@ -127,6 +128,7 @@ model User {
   notifications Notification[]
   tripsAsDriver Trip[]         @relation("TripDriver")
   jobPreferences UserJobPreference[]
+  tourismPlaces TourismPlace[]
 
   @@index([email])
   @@index([phone])
@@ -159,6 +161,36 @@ model City {
   tripsFrom Trip[]     @relation("TripFromCity")
   tripsTo   Trip[]     @relation("TripToCity")
   tripStops TripStop[]
+  tourismPlaces TourismPlace[]
+}
+
+// ============================================================
+// TOURISM PLACE (NEW)
+// ============================================================
+
+model TourismPlace {
+  id          String   @id @default(uuid())
+  name        String
+  governorate String?
+  description String?
+  address     String?
+  // موقع نصي/رابط يمكن فتحه على الخريطة (مثال: "Baghdad, Iraq" أو رابط Google Maps)
+  location    String?
+  imageUrl    String?
+
+  cityId String?
+  city   City? @relation(fields: [cityId], references: [id])
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cityId])
+  @@index([ownerId])
+  @@index([isActive])
 }
 
 // ============================================================

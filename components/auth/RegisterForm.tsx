@@ -77,7 +77,7 @@ const RegisterForm = () => {
               unoptimized
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/45 to-sky-800/35" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/45 to-purple-800/35" />
             <div className="absolute inset-0 flex flex-col justify-between p-6 text-right text-white sm:p-8">
               <div className="self-start rounded-full border border-white/40 bg-white/10 px-3 py-1 text-xs">
                 Garage Management System
@@ -217,6 +217,9 @@ const RegisterForm = () => {
                               <option value="USER">عميل الكراج</option>
                               <option value="GARAGE_OWNER">صاحب كراج</option>
                               <option value="DRIVER">سائق مركبة</option>
+                              <option value="TOURISM_OWNER">
+                                صاحب مكان سياحي
+                              </option>
                             </select>
                           </FormControl>
                           <FormMessage />
@@ -274,7 +277,7 @@ const RegisterForm = () => {
                   disabled={isPending}
                   type="submit"
                   size="lg"
-                  className="h-11 w-full bg-sky-600 text-base font-semibold hover:bg-sky-500"
+                  className="h-11 w-full  text-base font-semibold"
                 >
                   إنشاء الحساب
                 </Button>
@@ -285,7 +288,7 @@ const RegisterForm = () => {
               لديك حساب بالفعل؟{" "}
               <Link
                 href="/auth/login"
-                className="font-semibold text-sky-700 transition hover:text-sky-600"
+                className="font-semibold text-purple-700 transition hover:text-purple-600"
               >
                 تسجيل الدخول
               </Link>

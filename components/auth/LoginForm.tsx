@@ -131,7 +131,7 @@ const LoginForm = () => {
               ليس لديك حساب؟{" "}
               <Link
                 href="/auth/register"
-                className="font-semibold text-sky-700 transition hover:text-sky-600"
+                className="font-semibold text-purple-700 transition hover:text-purple-600"
               >
                 إنشاء حساب جديد
               </Link>
@@ -147,7 +147,7 @@ const LoginForm = () => {
               className="object-cover"
               unoptimized
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/45 to-sky-800/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/45 to-purple-800/30" />
             <div className="absolute inset-x-0 bottom-0 p-8 text-right text-white">
               <h2 className="text-2xl font-bold leading-tight">
                 إدارة متقدمة لرحلات النقل

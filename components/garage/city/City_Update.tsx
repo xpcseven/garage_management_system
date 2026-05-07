@@ -90,7 +90,7 @@ export default function City_Update({ city }: Props) {
               <option value="false">موقوفة</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full bg-sky-600">
+          <Button type="submit" disabled={pending} className="w-full bg-purple-600">
             تحديث
           </Button>
         </form>

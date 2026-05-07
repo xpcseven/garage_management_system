@@ -117,8 +117,8 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             </select>
           </div>
 
-          <div className="sm:col-span-2 rounded-lg border border-sky-200 bg-sky-50/60 dark:bg-sky-950/20 p-4 space-y-3">
-            <p className="text-sm font-semibold text-sky-900 dark:text-sky-100">
+          <div className="sm:col-span-2 rounded-lg border border-purple-200 bg-purple-50/60 dark:bg-purple-950/20 p-4 space-y-3">
+            <p className="text-sm font-semibold text-purple-900 dark:text-purple-100">
               وجهة السفر (مطلوب)
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -247,7 +247,7 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
           <Button
             type="submit"
             disabled={pending || !pack?.vehicles.length}
-            className="sm:col-span-2 bg-sky-600"
+            className="sm:col-span-2 bg-purple-600"
           >
             إنشاء الرحلة والمقاعد
           </Button>

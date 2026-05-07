@@ -187,7 +187,7 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
             >
               <MapPin
                 className={`h-5 w-5 ${
-                  driverLocation ? "text-sky-600" : "text-muted-foreground"
+                  driverLocation ? "text-purple-600" : "text-muted-foreground"
                 }`}
               />
             </button>
@@ -239,7 +239,7 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
           <Button
             type="submit"
             disabled={pending}
-            className="sm:col-span-2 bg-sky-600"
+            className="sm:col-span-2 bg-purple-600"
           >
             نشر الرحلة
           </Button>

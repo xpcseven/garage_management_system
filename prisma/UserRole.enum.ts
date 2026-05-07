@@ -4,4 +4,5 @@ export enum UserRole {
   GARAGE_OWNER = "GARAGE_OWNER",
   DRIVER = "DRIVER",
   USER = "USER",
+  TOURISM_OWNER = "TOURISM_OWNER",
 }

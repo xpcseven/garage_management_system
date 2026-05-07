@@ -26,7 +26,7 @@ export default function Trip_Component({
   const isGarageOwner = role === UserRole.GARAGE_OWNER;
 
   return (
-    <div className="space-y-8 p-4 max-w-5xl mx-auto">
+    <div className="space-y-8 p-4">
       <div>
         <h1 className="text-2xl font-bold text-purple-500">الرحلات</h1>
         <p className="text-muted-foreground text-sm mt-1">

@@ -16,7 +16,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
     <div className="space-y-6 p-4 max-w-4xl mx-auto">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-sky-800">الكراجات المسجّلة</h1>
+          <h1 className="text-2xl font-bold text-purple-800">الكراجات المسجّلة</h1>
           <p className="text-sm text-muted-foreground mt-1">
             مسافر — اختر كراجاً أو قسم الرحلات المستقلة لعرض الرحلات المتاحة.
           </p>
@@ -45,7 +45,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
         </Card>
 
         {garages.map((g) => (
-          <Card key={g.id} className="border-sky-100 flex flex-col">
+          <Card key={g.id} className="border-purple-100 flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg">{g.name}</CardTitle>
             </CardHeader>
@@ -62,7 +62,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <MapPin className="h-5 w-5 text-sky-600" />
+                        <MapPin className="h-5 w-5 text-purple-600" />
                       </a>
                     </Button>
                   ) : (

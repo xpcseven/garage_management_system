@@ -111,7 +111,7 @@ export default function Garage_Create({ role }: Props) {
             >
               <MapPin
                 className={`h-5 w-5 ${
-                  address ? "text-sky-600" : "text-muted-foreground"
+                  address ? "text-purple-600" : "text-muted-foreground"
                 }`}
               />
             </button>
@@ -139,7 +139,7 @@ export default function Garage_Create({ role }: Props) {
           <Button
             type="submit"
             disabled={pending}
-            className="sm:col-span-2 bg-sky-600 w-full sm:w-auto"
+            className="sm:col-span-2  w-full sm:w-auto"
           >
             حفظ
           </Button>

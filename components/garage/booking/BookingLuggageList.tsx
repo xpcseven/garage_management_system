@@ -15,7 +15,7 @@ export default function BookingLuggageList({
       {luggage.map((l, i) => (
         <li
           key={`${l.kind}-${i}`}
-          className="border-r-2 border-sky-200 pr-2 leading-relaxed"
+          className="border-r-2 border-purple-200 pr-2 leading-relaxed"
         >
           <span className="font-medium text-foreground">
             {luggageKindLabel(l.kind)}

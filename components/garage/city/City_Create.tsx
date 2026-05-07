@@ -23,7 +23,7 @@ export default function City_Create() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-sky-600">إضافة مدينة</Button>
+        <Button className="">إضافة مدينة</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -62,7 +62,7 @@ export default function City_Create() {
             <Label htmlFor="city-region">المنطقة (اختياري)</Label>
             <Input id="city-region" name="region" placeholder="بغداد" />
           </div>
-          <Button type="submit" disabled={pending} className="bg-sky-600">
+          <Button type="submit" disabled={pending} className="">
             حفظ
           </Button>
         </form>

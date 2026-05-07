@@ -7,7 +7,6 @@ import type {
   PassengerTripScope,
 } from "@/lib/actions/passenger.actions";
 import Link from "next/link";
-import { DashboardPageLayout } from "@/components/layout/DashboardPageLayout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -50,10 +49,10 @@ export default function Passenger_Trips_Component({
   }, [page, totalPages]);
 
   return (
-    <div className="space-y-8 p-4 max-w-5xl mx-auto">
+    <div className="space-y-8 p-4 ">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-sky-800">البحث عن رحلة</h1>
+          <h1 className="text-2xl font-bold text-purple-800">البحث عن رحلة</h1>
           <p className="text-sm text-muted-foreground mt-1">
             رحلات الكراجات ورحلات السائقين المستقلين — ثم احجز مقعداً.
           </p>
@@ -122,7 +121,7 @@ export default function Passenger_Trips_Component({
                 <option value="freelance">رحلات السائقين المستقلين فقط</option>
               </select>
             </div>
-            <Button type="submit" className="sm:col-span-2 bg-sky-600 w-full sm:w-auto">
+            <Button type="submit" className="sm:col-span-2 w-full sm:w-auto">
               بحث
             </Button>
           </form>

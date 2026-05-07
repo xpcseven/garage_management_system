@@ -188,7 +188,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
             <Button
               type="submit"
               disabled={pending}
-              className="sm:col-span-2 bg-sky-600 w-full sm:w-auto"
+              className="sm:col-span-2  w-full sm:w-auto"
             >
               {isGarageOwner ? "حفظ في الكراج" : "حفظ"}
             </Button>
