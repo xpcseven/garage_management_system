@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
+import { FaPlus } from "react-icons/fa";
 
 export default function City_Create() {
   const router = useRouter();
@@ -21,9 +22,13 @@ export default function City_Create() {
   const [pending, start] = useTransition();
 
   return (
+
+    <div>
+
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة مدينة</Button>
+        <Button className="">إضافة مدينة <FaPlus className="w-4 h-4" /></Button>
+       
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -68,5 +73,8 @@ export default function City_Create() {
         </form>
       </DialogContent>
     </Dialog>
+
+    <h1 className="text-sm text-purple-400 mt-4">اضافة مدينة او منطقة سياحية</h1>
+    </div>
   );
 }

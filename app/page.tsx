@@ -31,7 +31,7 @@ export default async function LandingPage() {
             ASHUOR - آشور
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-            نظام متكامل يساعد الكراج على تنظيم الحركة اليومية، متابعة الرحلات،
+            نظام متكامل يساعد السياح و ينظم الحركة اليومية، متابعة الرحلات،
             إدارة السائقين والمركبات، ورفع كفاءة خدمات النقل العام والخارجي.
           </p>
           <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-center sm:gap-3">

@@ -144,7 +144,7 @@ export default function Vehicle_Update({ vehicle }: Props) {
               <option value="false">موقوفة</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full bg-purple-600">
+          <Button type="submit" disabled={pending} className="w-full">
             تحديث
           </Button>
         </form>

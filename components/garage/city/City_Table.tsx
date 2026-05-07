@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Swal from "sweetalert2";
 import TablePagination from "@/components/Shared/TablePagination";
+import { FaCertificate } from "react-icons/fa";
 
 type Props = { cities: CityRow[] };
 
@@ -40,25 +41,30 @@ export default function City_Table({ cities }: Props) {
         <CardTitle className="text-lg">قائمة المدن</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm responsive-table">
-          <thead>
-            <tr className="border-b text-right">
-              <th className="p-2">الاسم</th>
-              <th className="p-2">المنطقة</th>
-              <th className="p-2">الحالة</th>
-              <th className="p-2 w-40">إجراءات</th>
+        <table className="w-full text-sm  responsive-table">
+          <thead className="text-center bg-purple-700 text-white">
+            <tr className="border-b text-center">
+              <th className="p-2 text-center">الاسم</th>
+              <th className="p-2 text-center">المنطقة</th>
+              <th className="p-2 text-center">الحالة</th>
+              <th className="p-2 w-40 text-center">إجراءات</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-center">
             {pagedCities.map((c) => (
               <tr key={c.id} className="border-b border-muted">
                 <td className="p-2 font-medium" data-label="الاسم">{c.name}</td>
                 <td className="p-2 text-muted-foreground" data-label="المنطقة">{c.region ?? "—"}</td>
                 <td className="p-2" data-label="الحالة">
                   {c.isActive ? (
-                    <Badge>نشطة</Badge>
+                    <div className="text-green-500 font-bold flex items-center justify-center">
+                      <FaCertificate className="w-5 h-5" />
+                    </div>
                   ) : (
-                    <Badge variant="secondary">موقوفة</Badge>
+                      <div className="text-red-500 font-bold flex items-center justify-center">
+                        <FaCertificate className="w-5 h-5" />
+                      </div>
+                      
                   )}
                 </td>
                 <td className="p-2 flex flex-wrap gap-2 justify-end" data-label="إجراءات">

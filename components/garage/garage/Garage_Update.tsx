@@ -160,7 +160,7 @@ export default function Garage_Update({ garage }: Props) {
               <option value="false">موقوف</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full bg-purple-600">
+          <Button type="submit" disabled={pending} className="w-full">
             تحديث
           </Button>
         </form>

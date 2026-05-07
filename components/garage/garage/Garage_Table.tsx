@@ -34,31 +34,31 @@ export default function Garage_Table({ garages }: Props) {
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm responsive-table">
-          <thead>
-            <tr className="border-b text-right">
-              <th className="p-2">الاسم</th>
-              <th className="p-2">الهاتف</th>
-              <th className="p-2">الحالة</th>
-              <th className="p-2 w-32">إجراءات</th>
+          <thead className="text-center bg-purple-700 text-white">
+            <tr className="border-b text-center">
+              <th className="p-2 text-center">الاسم</th>
+              <th className="p-2 text-center">الهاتف</th>
+              <th className="p-2 text-center">الحالة</th>
+              <th className="p-2 w-32 text-center">إجراءات</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-center">
             {pagedGarages.map((g) => (
               <tr key={g.id} className="border-b border-muted">
                 <td className="p-2 font-medium" data-label="الاسم">{g.name}</td>
                 <td className="p-2 text-muted-foreground" data-label="الهاتف">{g.phone ?? "—"}</td>
                 <td className="p-2" data-label="الحالة">
                   {g.isActive ? (
-                    <h1 className="text-green-500 font-bold">
-                      <FaCertificate />
-                    </h1>
+                    <div className="text-green-500 font-bold flex items-center justify-center">
+                      <FaCertificate className="w-5 h-5" />
+                    </div>
                   ) : (
-                    <h1 className="text-red-500 font-bold">
-                      <FaCertificate />
-                    </h1>
+                    <div className="text-red-500 font-bold flex items-center justify-center">
+                      <FaCertificate className="w-5 h-5" />
+                    </div>
                   )}
                 </td>
-                <td className="p-2" data-label="إجراءات">
+                <td className="p-2 flex flex-wrap gap-2 justify-center" data-label="إجراءات">
                   <Garage_Update garage={g} />
                 </td>
               </tr>
