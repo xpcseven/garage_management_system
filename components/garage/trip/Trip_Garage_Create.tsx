@@ -52,11 +52,11 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">رحلة باسم الكراج</CardTitle>
+          <CardTitle className="text-lg">رحلة باسم الشركة السياحية</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-amber-800">
-            لا يوجد كراج نشط. أنشئ كراجاً ومركبات مرتبطة به أولاً.
+            لا توجد شركة سياحية نشطة. أنشئ شركة سياحية ومركبات مرتبطة بها أولاً.
           </p>
         </CardContent>
       </Card>
@@ -66,11 +66,11 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة رحلة للكراج</Button>
+        <Button className="">إضافة رحلة للشركة السياحية</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg">إنشاء رحلة للكراج</DialogTitle>
+          <DialogTitle className="text-lg">إنشاء رحلة للشركة السياحية</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground font-normal pt-1">
           حدّد وجهة السفر: نقطة الانطلاق (من) ونقطة الوصول (إلى) — يجب أن تكونا
@@ -103,7 +103,7 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
           }}
         >
           <div className="space-y-1 sm:col-span-2">
-            <Label>الكراج</Label>
+            <Label>الشركة السياحية</Label>
             <select
               value={garageId}
               onChange={(e) => setGarageId(e.target.value)}

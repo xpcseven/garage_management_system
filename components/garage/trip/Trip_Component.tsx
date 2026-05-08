@@ -1,8 +1,14 @@
 import type { CityRow } from "@/lib/actions/city.actions";
 import type { GarageTripPack, TripManageRow } from "@/lib/actions/trip.actions";
+import type {
+  TourismProgramCreatePack,
+  TourismProgramManageRow,
+} from "@/lib/actions/tourism_program.actions";
 import Trip_Garage_Create from "./Trip_Garage_Create";
 import Trip_Freelance_Create from "./Trip_Freelance_Create";
 import Trip_Table from "./Trip_Table";
+import Tourism_Program_Create from "./Tourism_Program_Create";
+import Tourism_Program_Table from "./Tourism_Program_Table";
 import { UserRole } from "@/prisma/UserRole.enum";
 
 type Props = {
@@ -11,6 +17,8 @@ type Props = {
   trips: TripManageRow[];
   garagePacks?: GarageTripPack[];
   freelanceVehicles?: GarageTripPack["vehicles"];
+  tourismPrograms?: TourismProgramManageRow[];
+  tourismProgramPack?: TourismProgramCreatePack;
 };
 
 export default function Trip_Component({
@@ -19,6 +27,8 @@ export default function Trip_Component({
   trips,
   garagePacks = [],
   freelanceVehicles = [],
+  tourismPrograms = [],
+  tourismProgramPack,
 }: Props) {
   const showGarageForm =
     role === UserRole.GARAGE_OWNER || role === UserRole.SUPER_ADMIN;
@@ -33,19 +43,19 @@ export default function Trip_Component({
           {isGarageOwner ? (
             <>
               <span className="font-medium text-foreground">
-                على صاحب الكراج إنشاء الرحلات
+                على صاحب الشركة السياحية إنشاء الرحلات
               </span>{" "}
               وتحديد{" "}
               <span className="font-medium text-foreground">
                 وجهة السفر: من أين وإلى أين
               </span>{" "}
               (مدينة أو منطقة حسب ما هو مسجّل في «المدن»). كل رحلة مرتبطة
-              بكراجك ومركبة وسائق.
+              بشركتك السياحية ومركبة وسائق.
             </>
           ) : (
             <>
               أنشئ رحلة بين مدينتين (أو بلدين عبر أسماء المدن في النظام). رحلات
-              الكراج مرتبطة بكراجك؛ الرحلة المستقلة بدون كراج.
+              الشركة السياحية مرتبطة بشركتك السياحية؛ الرحلة المستقلة بدون شركة سياحية.
             </>
           )}
         </p>
@@ -57,6 +67,16 @@ export default function Trip_Component({
         <Trip_Freelance_Create cities={cities} vehicles={freelanceVehicles} />
       )}
       <Trip_Table trips={trips} />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-purple-700">البرامج السياحية</h2>
+          {showGarageForm && tourismProgramPack && (
+            <Tourism_Program_Create pack={tourismProgramPack} />
+          )}
+        </div>
+        <Tourism_Program_Table rows={tourismPrograms} editPack={tourismProgramPack} />
+      </div>
+
     </div>
   );
 }

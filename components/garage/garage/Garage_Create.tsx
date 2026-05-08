@@ -56,11 +56,11 @@ export default function Garage_Create({ role }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة كراج</Button>
+        <Button className="">إضافة شركة سياحية</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">إضافة كراج</DialogTitle>
+          <DialogTitle className="text-lg">إضافة شركة سياحية</DialogTitle>
         </DialogHeader>
         <form
           className="grid gap-4 sm:grid-cols-2"
@@ -73,7 +73,7 @@ export default function Garage_Create({ role }: Props) {
                 await Swal.fire({
                   icon: "success",
                   title: "تمت الإضافة",
-                  text: "تم إنشاء الكراج بنجاح",
+                  text: "تم إنشاء الشركة السياحية بنجاح",
                   confirmButtonText: "موافق",
                 });
               } else {
@@ -88,7 +88,7 @@ export default function Garage_Create({ role }: Props) {
           }}
         >
           <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="g-name">اسم الكراج</Label>
+            <Label htmlFor="g-name">اسم الشركة السياحية</Label>
             <Input id="g-name" name="name" required />
           </div>
           <div className="space-y-1 sm:col-span-2">
@@ -100,7 +100,7 @@ export default function Garage_Create({ role }: Props) {
             <Input id="g-phone" name="phone" />
           </div>
           <div className="space-y-1">
-            <Label>موقع الكراج</Label>
+            <Label>موقع الشركة السياحية</Label>
             <input type="hidden" name="address" value={address} required />
             <button
               type="button"
@@ -128,7 +128,7 @@ export default function Garage_Create({ role }: Props) {
           </div>
           {showOwnerField && (
             <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="g-owner">معرّف مالك الكراج (UUID)</Label>
+              <Label htmlFor="g-owner">معرّف مالك الشركة السياحية (UUID)</Label>
               <Input
                 id="g-owner"
                 name="ownerId"

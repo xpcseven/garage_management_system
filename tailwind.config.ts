@@ -44,11 +44,6 @@ const config = {
         },
 
 
-        fontFamily: {
-          cairo: ['CairoFont', 'sans-serif'],
-        },
-
-
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
@@ -66,6 +61,9 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
 
+      },
+      fontFamily: {
+        cairo: ["var(--font-cairo)", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

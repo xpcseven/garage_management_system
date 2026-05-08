@@ -210,7 +210,7 @@ export async function createGarageTrip(formData: FormData) {
     session.user.role !== UserRole.GARAGE_OWNER &&
     session.user.role !== UserRole.SUPER_ADMIN
   ) {
-    return { error: "فقط مالك الكراج أو المشرف يمكنه إنشاء رحلة باسم الكراج" };
+    return { error: "فقط مالك الشركة السياحية أو المشرف يمكنه إنشاء رحلة باسم الشركة السياحية" };
   }
 
   const garageId = String(formData.get("garageId") ?? "").trim();
@@ -245,19 +245,19 @@ export async function createGarageTrip(formData: FormData) {
   const garage = await prisma.garage.findFirst({
     where: { id: garageId, isDeleted: false },
   });
-  if (!garage) return { error: "الكراج غير موجود" };
-  if (!garage.address?.trim()) return { error: "يجب تحديد موقع الكراج أولاً" };
+  if (!garage) return { error: "الشركة السياحية غير موجودة" };
+  if (!garage.address?.trim()) return { error: "يجب تحديد موقع الشركة السياحية أولاً" };
   if (
     session.user.role === UserRole.GARAGE_OWNER &&
     garage.ownerId !== session.user.id
   ) {
-    return { error: "هذا ليس كراجك" };
+    return { error: "هذه ليست شركتك السياحية" };
   }
 
   const vehicle = await prisma.vehicle.findFirst({
     where: { id: vehicleId, garageId, isActive: true },
   });
-  if (!vehicle) return { error: "المركبة غير مرتبطة بهذا الكراج" };
+  if (!vehicle) return { error: "المركبة غير مرتبطة بهذه الشركة السياحية" };
 
   const driverOk =
     driverId === garage.ownerId ||
@@ -268,7 +268,7 @@ export async function createGarageTrip(formData: FormData) {
         role: GarageRole.DRIVER,
       },
     }));
-  if (!driverOk) return { error: "السائق غير مصرح له بالقيادة لهذا الكراج" };
+  if (!driverOk) return { error: "السائق غير مصرح له بالقيادة لهذه الشركة السياحية" };
 
   if (maxSeats < 1 || maxSeats > vehicle.totalSeats) {
     return { error: `عدد المقاعد بين 1 و ${vehicle.totalSeats}` };

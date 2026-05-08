@@ -54,11 +54,11 @@ export default function Passenger_Trips_Component({
         <div>
           <h1 className="text-2xl font-bold text-purple-800">البحث عن رحلة</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            رحلات الكراجات ورحلات السائقين المستقلين — ثم احجز مقعداً.
+            رحلات الشركات السياحية ورحلات السائقين المستقلين — ثم احجز مقعداً.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/passenger/garages">الكراجات المسجّلة</Link>
+          <Link href="/passenger/garages">الشركات السياحية المسجّلة</Link>
         </Button>
       </div>
 
@@ -116,8 +116,8 @@ export default function Passenger_Trips_Component({
                 defaultValue={initialParams.scope}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="all">الكل (كراج + مستقل)</option>
-                <option value="garage">رحلات أصحاب الكراجات فقط</option>
+                <option value="all">الكل (شركة سياحية + مستقل)</option>
+                <option value="garage">رحلات أصحاب الشركات السياحية فقط</option>
                 <option value="freelance">رحلات السائقين المستقلين فقط</option>
               </select>
             </div>
@@ -161,7 +161,7 @@ export default function Passenger_Trips_Component({
                     {t.isFreelance ? (
                       <span className="text-violet-700">مستقل</span>
                     ) : (
-                      <span>{t.garageName ?? "كراج"}</span>
+                      <span>{t.garageName ?? "شركة سياحية"}</span>
                     )}
                   </td>
                   <td className="p-2" data-label="السائق">{t.driverName}</td>

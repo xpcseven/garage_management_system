@@ -53,6 +53,13 @@ enum TripStatus {
   CANCELLED
 }
 
+enum TourismProgramStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 enum SeatStatus {
   AVAILABLE
   RESERVED
@@ -127,6 +134,8 @@ model User {
   reviews       Review[]       @relation("ReviewAuthor")
   notifications Notification[]
   tripsAsDriver Trip[]         @relation("TripDriver")
+  tourismProgramsAsDriver TourismProgram[] @relation("TourismProgramDriver")
+  tourismProgramBookings TourismProgramBooking[]
   jobPreferences UserJobPreference[]
   tourismPlaces TourismPlace[]
 
@@ -183,6 +192,7 @@ model TourismPlace {
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  programPlaces TourismProgramPlace[]
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -217,6 +227,7 @@ model Garage {
   vehicles Vehicle[]
   members  GarageMember[]
   trips    Trip[]
+  tourismPrograms TourismProgram[]
   reviews  Review[]       @relation("GarageReview")
 
   @@index([ownerId])
@@ -265,6 +276,7 @@ model Vehicle {
   owner     User              @relation(fields: [ownerId], references: [id])
   garage    Garage?           @relation(fields: [garageId], references: [id])
   trips     Trip[]
+  tourismPrograms TourismProgram[]
   documents VehicleDocument[]
   drivers   DriverVehicle[]
 
@@ -429,6 +441,86 @@ model Trip {
   @@index([fromCityId])
   @@index([toCityId])
   @@index([departureTime])
+  @@index([status])
+}
+
+// ============================================================
+// TOURISM PROGRAM
+// ============================================================
+
+model TourismProgram {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+  notes       String?
+
+  garageId  String
+  vehicleId String
+  driverId  String
+
+  startAt DateTime
+  endAt   DateTime?
+
+  basePrice      Decimal @db.Decimal(10, 2)
+  maxSeats       Int
+  availableSeats Int
+  status         TourismProgramStatus @default(SCHEDULED)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  garage  Garage  @relation(fields: [garageId], references: [id])
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  driver  User    @relation("TourismProgramDriver", fields: [driverId], references: [id])
+
+  places   TourismProgramPlace[]
+  bookings TourismProgramBooking[]
+
+  @@index([garageId])
+  @@index([vehicleId])
+  @@index([driverId])
+  @@index([startAt])
+  @@index([status])
+  @@index([isActive])
+}
+
+model TourismProgramPlace {
+  id String @id @default(uuid())
+
+  programId      String
+  tourismPlaceId String
+  stopOrder      Int
+
+  program TourismProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  place   TourismPlace   @relation(fields: [tourismPlaceId], references: [id])
+
+  @@unique([programId, tourismPlaceId])
+  @@unique([programId, stopOrder])
+  @@index([programId])
+  @@index([tourismPlaceId])
+}
+
+model TourismProgramBooking {
+  id String @id @default(uuid())
+
+  programId String
+  userId    String
+
+  status BookingStatus @default(PENDING)
+  priceAtBooking Decimal @db.Decimal(10, 2)
+  passengersCount Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  program TourismProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, userId])
+  @@index([programId])
+  @@index([userId])
   @@index([status])
 }
 

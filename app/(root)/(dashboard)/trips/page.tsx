@@ -5,6 +5,10 @@ import {
   getManagedTrips,
   getOwnVehiclesForFreelanceTrip,
 } from "@/lib/actions/trip.actions";
+import {
+  getManagedTourismPrograms,
+  getTourismProgramCreatePack,
+} from "@/lib/actions/tourism_program.actions";
 import { canManageTrips } from "@/lib/permissions";
 import Trip_Component from "@/components/garage/trip/Trip_Component";
 import UnAuthorized from "@/components/UnAuthorized";
@@ -16,9 +20,10 @@ export default async function TripsPage() {
     return <UnAuthorized />;
   }
 
-  const [cities, trips] = await Promise.all([
+  const [cities, trips, tourismPrograms] = await Promise.all([
     getActiveCitiesPublic(),
     getManagedTrips(),
+    getManagedTourismPrograms(),
   ]);
 
   if (user.role === UserRole.DRIVER) {
@@ -29,17 +34,23 @@ export default async function TripsPage() {
         cities={cities}
         trips={trips}
         freelanceVehicles={vehicles}
+        tourismPrograms={tourismPrograms}
       />
     );
   }
 
-  const garagePacks = await getGaragesPackForTripCreation();
+  const [garagePacks, tourismProgramPack] = await Promise.all([
+    getGaragesPackForTripCreation(),
+    getTourismProgramCreatePack(),
+  ]);
   return (
     <Trip_Component
       role={user.role}
       cities={cities}
       trips={trips}
       garagePacks={garagePacks}
+      tourismPrograms={tourismPrograms}
+      tourismProgramPack={tourismProgramPack}
     />
   );
 }

@@ -34,13 +34,13 @@ export default function Passenger_Freelance_Trips_Component({ trips }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-purple-800">
-            <Link href="/passenger/garages">العودة إلى قائمة الكراجات</Link>
+            <Link href="/passenger/garages">العودة إلى قائمة الشركات السياحية</Link>
           </Button>
           <h1 className="text-2xl font-bold text-violet-900 dark:text-violet-500">
             رحلات السائقين المستقلين
           </h1>
           <p className="text-sm text-muted-foreground max-w-xl">
-            رحلات لا تتبع كراجاً — مقاعد متاحة، رحلة مجدولة، وفق نفس شروط العرض
+            رحلات لا تتبع شركة سياحية — مقاعد متاحة، رحلة مجدولة، وفق نفس شروط العرض
             في البحث العام.
           </p>
         </div>

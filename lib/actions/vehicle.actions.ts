@@ -124,19 +124,19 @@ export async function createVehicle(formData: FormData) {
 
   if (session.user.role === UserRole.GARAGE_OWNER) {
     if (!garageId) {
-      return { error: "يجب اختيار الكراج لإضافة المركبة إلى أسطولك" };
+      return { error: "يجب اختيار الشركة السياحية لإضافة المركبة إلى أسطولك" };
     }
   }
 
   if (garageId && !driverName) {
-    return { error: "أدخل اسم السائق المعيّن لهذه المركبة في الكراج" };
+    return { error: "أدخل اسم السائق المعيّن لهذه المركبة في الشركة السياحية" };
   }
 
   if (garageId) {
     const g = await prisma.garage.findFirst({
       where: { id: garageId, isDeleted: false },
     });
-    if (!g) return { error: "كراج غير صالح" };
+    if (!g) return { error: "شركة سياحية غير صالحة" };
     const allowed =
       session.user.role === UserRole.SUPER_ADMIN ||
       g.ownerId === session.user.id ||
@@ -147,7 +147,7 @@ export async function createVehicle(formData: FormData) {
           role: GarageRole.GARAGE_ADMIN,
         },
       }));
-    if (!allowed) return { error: "لا يمكنك ربط المركبة بهذا الكراج" };
+    if (!allowed) return { error: "لا يمكنك ربط المركبة بهذه الشركة السياحية" };
   }
 
   try {
@@ -217,7 +217,7 @@ export async function updateVehicle(formData: FormData) {
   }
 
   if (v.garageId && !driverName) {
-    return { error: "اسم السائق مطلوب للمركبات المرتبطة بكراج" };
+    return { error: "اسم السائق مطلوب للمركبات المرتبطة بشركة سياحية" };
   }
 
   try {

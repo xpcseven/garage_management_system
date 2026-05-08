@@ -45,7 +45,7 @@ module.exports = {
       },
     },
     fontFamily: {
-      cairo: ["CairoFont", "sans-serif"],
+      cairo: ["var(--font-cairo)", "sans-serif"],
     },
   },
   plugins: [],

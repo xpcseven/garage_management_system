@@ -51,7 +51,7 @@ export default function Trip_Table({ trips }: Props) {
       <CardHeader>
         <CardTitle className="text-lg">رحلاتك</CardTitle>
         <p className="text-xs text-muted-foreground font-normal leading-relaxed">
-          السائق المعيّن على الرحلة (كراج أو مستقلة) يغيّر الحالة من هنا. عند اكتمال
+          السائق المعيّن على الرحلة (شركة سياحية أو مستقلة) يغيّر الحالة من هنا. عند اكتمال
           حجز المقاعد: «بدء الرحلة» قبل موعد المغادرة إن رغبت، ثم «تم الوصول —
           إكمال» بعد الوصول؛ أو الإكمال مباشرة إن مرّ موعد المغادرة والمقاعد
           مكتملة. «إلغاء» للرحلة المجدولة فقط.
@@ -104,7 +104,7 @@ export default function Trip_Table({ trips }: Props) {
                     ) : (
                       <h1 className="text-green-500 font-bold flex items-center gap-2">
                        <BiSolidCarGarage className="w-5 h-5" />
-                       <span className="text-green-500 font-bold">كراج</span>
+                       <span className="text-green-500 font-bold">شركة سياحية</span>
                       </h1>
                     )}
                   </td>

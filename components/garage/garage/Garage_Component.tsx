@@ -12,9 +12,9 @@ export default function Garage_Component({ garages, role }: Props) {
   return (
     <div className="space-y-8 p-4 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-purple-500">الكراجات</h1>
+        <h1 className="text-2xl font-bold text-purple-500">الشركات السياحية</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          عرض الكراجات المرتبطة بحسابك؛ الإنشاء متاح لمالك الكراج أو المشرف العام.
+          عرض الشركات السياحية المرتبطة بحسابك؛ الإنشاء متاح لمالك الشركة السياحية أو المشرف العام.
         </p>
       </div>
       {canCreateGarage(role) && <Garage_Create role={role} />}

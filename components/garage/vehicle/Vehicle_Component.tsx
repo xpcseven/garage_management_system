@@ -20,7 +20,7 @@ export default function Vehicle_Component({
       <div>
         <h1 className="text-2xl font-bold text-purple-500">المركبات</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          إدارة المركبات المرتبطة بحسابك أو بكراجك.
+          إدارة المركبات المرتبطة بحسابك أو بشركتك السياحية.
         </p>
       </div>
       <Vehicle_Create garageOptions={garageOptions} userRole={userRole} />

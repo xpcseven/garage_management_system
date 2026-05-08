@@ -53,8 +53,8 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
         <div className="space-y-4">
         {blocked && (
           <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-            لا يوجد لديك كراج بعد. أنشئ كراجاً من قسم{" "}
-            <span className="font-semibold">الكراجات</span> ثم عد لإضافة مركبة
+            لا يوجد لديك شركة سياحية بعد. أنشئ شركة سياحية من قسم{" "}
+            <span className="font-semibold">الشركات السياحية</span> ثم عد لإضافة مركبة
             ضمنه.
           </p>
         )}
@@ -137,7 +137,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
             {(garageOptions.length > 0 || isGarageOwner) && (
               <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor="v-garage">
-                  {isGarageOwner ? "الكراج (مطلوب)" : "الكراج (اختياري)"}
+                  {isGarageOwner ? "الشركة السياحية (مطلوب)" : "الشركة السياحية (اختياري)"}
                 </Label>
                 <select
                   id="v-garage"
@@ -148,7 +148,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   {!isGarageOwner && (
-                    <option value="">بدون كراج</option>
+                    <option value="">بدون شركة سياحية</option>
                   )}
                   {garageOptions.map((g) => (
                     <option key={g.id} value={g.id}>
@@ -158,8 +158,8 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
                 </select>
                 {isGarageOwner && (
                   <p className="text-xs text-muted-foreground">
-                    تُسجَّل المركبة تحت كراجك؛ يمكنك تغيير الكراج من القائمة إن
-                    كان لديك أكثر من كراج.
+                    تُسجَّل المركبة تحت شركتك السياحية؛ يمكنك تغيير الشركة السياحية من القائمة إن
+                    كان لديك أكثر من شركة سياحية.
                   </p>
                 )}
               </div>
@@ -179,7 +179,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
                   className="text-right"
                 />
                 <p className="text-xs text-muted-foreground">
-                  يُطلب عند ربط المركبة بكراج لتسهيل التعرف على السائق المسؤول
+                  يُطلب عند ربط المركبة بشركة سياحية لتسهيل التعرف على السائق المسؤول
                   عنها.
                 </p>
               </div>
@@ -190,7 +190,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
               disabled={pending}
               className="sm:col-span-2  w-full sm:w-auto"
             >
-              {isGarageOwner ? "حفظ في الكراج" : "حفظ"}
+              {isGarageOwner ? "حفظ في الشركة السياحية" : "حفظ"}
             </Button>
           </form>
         )}

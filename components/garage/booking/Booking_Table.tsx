@@ -44,13 +44,16 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
           <thead>
             <tr className="border-b text-center text-purple-700">
               <th className="p-2">صاحب الحجز</th>
+              <th className="p-2">النوع</th>
               <th className="p-2">المسار</th>
               <th className="p-2 min-w-[10rem]">الأمتعة</th>
               <th className="p-2">المقعد</th>
+              <th className="p-2">الأفراد</th>
               <th className="p-2">السعر</th>
               <th className="p-2">الحالة</th>
               <th className="p-2">وقت المغادرة</th>
               <th className="p-2">التاريخ</th>
+              <th className="p-2">التفاصيل</th>
               {canCancel && <th className="p-2 w-28">إجراءات</th>}
             </tr>
           </thead>
@@ -58,18 +61,30 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
             {pagedBookings.map((b) => (
               <tr key={b.id} className="border-b border-muted">
                 <td className="p-2 font-medium" data-label="صاحب الحجز">{b.passengerName}</td>
+                <td className="p-2" data-label="النوع">
+                  {b.bookingKind === "tourism_program" ? "برنامج سياحي" : "رحلة"}
+                </td>
                 <td className="p-2" data-label="المسار">
-                  <TripRouteArrow
-                    fromCityName={b.tripFromCity}
-                    fromRegion={b.tripFromRegion}
-                    toCityName={b.tripToCity}
-                    toRegion={b.tripToRegion}
-                  />
+                  {b.bookingKind === "trip" && b.tripFromCity && b.tripToCity ? (
+                    <TripRouteArrow
+                      fromCityName={b.tripFromCity}
+                      fromRegion={b.tripFromRegion}
+                      toCityName={b.tripToCity}
+                      toRegion={b.tripToRegion}
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">{b.programTitle ?? "—"}</span>
+                  )}
                 </td>
                 <td className="p-2 align-top" data-label="الأمتعة">
-                  <BookingLuggageList luggage={b.luggage} />
+                  {b.bookingKind === "trip" ? (
+                    <BookingLuggageList luggage={b.luggage} />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
                 <td className="p-2" data-label="المقعد">{b.seatNumber ?? "—"}</td>
+                <td className="p-2" data-label="الأفراد">{b.passengersCount}</td>
                 <td className="p-2 font-mono" data-label="السعر">{b.priceAtBooking}</td>
                 <td className="p-2" data-label="الحالة">
                   <div className={`text-${b.status === "PENDING" ? "yellow-500" : b.status === "CONFIRMED" ? "green-500" : "red-500"} font-bold flex items-center gap-2`}>
@@ -77,10 +92,59 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                   </div>
                 </td>
                 <td className="p-2 text-muted-foreground whitespace-nowrap" data-label="وقت المغادرة">
-                  {new Date(b.departureTime).toLocaleTimeString("en-US")}
+                  {b.departureTime
+                    ? new Date(b.departureTime).toLocaleTimeString("en-US")
+                    : "—"}
                 </td>
                 <td className="p-2 text-muted-foreground" data-label="التاريخ">
-                  {new Date(b.departureTime).toLocaleDateString("en-US")}
+                  {b.departureTime
+                    ? new Date(b.departureTime).toLocaleDateString("en-US")
+                    : "—"}
+                </td>
+                <td className="p-2" data-label="التفاصيل">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      const details =
+                        b.bookingKind === "tourism_program"
+                          ? [
+                              `المسافر: ${b.passengerName}`,
+                              `البريد: ${b.passengerEmail ?? "—"}`,
+                              `البرنامج: ${b.programTitle ?? "—"}`,
+                              `الشركة: ${b.programGarageName ?? "—"}`,
+                              `المركبة: ${b.programVehicleLabel ?? "—"}`,
+                              `السائق: ${b.programDriverName ?? "—"}`,
+                              `عدد الأفراد: ${b.passengersCount}`,
+                              `السعر: ${b.priceAtBooking}`,
+                              `الحالة: ${b.status}`,
+                              `الأماكن: ${
+                                b.programPlaces.length
+                                  ? b.programPlaces.map((x) => `${x.order}. ${x.name}`).join(" | ")
+                                  : "—"
+                              }`,
+                            ]
+                          : [
+                              `المسافر: ${b.passengerName}`,
+                              `البريد: ${b.passengerEmail ?? "—"}`,
+                              `المسار: ${b.tripFromCity ?? "—"} → ${b.tripToCity ?? "—"}`,
+                              `المقعد: ${b.seatNumber ?? "—"}`,
+                              `السعر: ${b.priceAtBooking}`,
+                              `الحالة: ${b.status}`,
+                            ];
+                      await Swal.fire({
+                        icon: "info",
+                        title: "تفاصيل الحجز",
+                        html: `<div style="text-align:right;line-height:1.9">${details
+                          .map((d) => `<div>${d}</div>`)
+                          .join("")}</div>`,
+                        confirmButtonText: "إغلاق",
+                      });
+                    }}
+                  >
+                    فتح
+                  </Button>
                 </td>
                 {canCancel && (
                   <td className="p-2" data-label="إجراءات">
@@ -130,7 +194,7 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
             ))}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={canCancel ? 9 : 8} className="p-6 text-center text-muted-foreground">
+                <td colSpan={canCancel ? 12 : 11} className="p-6 text-center text-muted-foreground">
                   لا توجد حجوزات
                 </td>
               </tr>

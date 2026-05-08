@@ -60,7 +60,7 @@ export default function Passenger_Tourism_Places_Component({ places }: Props) {
             href="/passenger/garages"
             className="text-sm font-medium text-purple-700 hover:text-purple-900"
           >
-            العودة إلى كراجات المسافر
+            العودة إلى الشركات السياحية للمسافر
           </Link>
         </div>
 

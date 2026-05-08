@@ -42,8 +42,8 @@ const links: Record<
   },
   garages: {
     href: "/garages",
-    title: "الكراجات",
-    desc: "كراجاتك أو كراجات أعضائك",
+    title: "الشركات السياحية",
+    desc: "شركاتك السياحية أو شركات أعضائك",
   },
   vehicles: {
     href: "/vehicles",
@@ -62,13 +62,13 @@ const links: Record<
   },
   passenger_garages: {
     href: "/passenger/garages",
-    title: "الكراجات المسجّلة",
-    desc: "تصفّح الكراجات النشطة",
+    title: "الشركات السياحية المسجّلة",
+    desc: "تصفّح الشركات السياحية النشطة",
   },
   passenger_trips: {
     href: "/passenger/trips",
     title: "البحث عن رحلة",
-    desc: "رحلات الكراجات والسائقين المستقلين",
+    desc: "رحلات الشركات السياحية والسائقين المستقلين",
   },
   passenger_tourism_places: {
     href: "/passenger/tourism-places",
@@ -120,7 +120,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
     user.role === UserRole.SUPER_ADMIN
       ? "مشرف عام"
       : user.role === UserRole.GARAGE_OWNER
-      ? "صاحب كراج"
+      ? "صاحب شركة سياحية"
       : user.role === UserRole.DRIVER
       ? "سائق"
       : user.role === UserRole.TOURISM_OWNER
@@ -133,7 +133,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
     user.role === UserRole.SUPER_ADMIN
       ? "لوحة المشرف العام"
       : user.role === UserRole.GARAGE_OWNER
-      ? "لوحة صاحب الكراج"
+      ? "لوحة صاحب الشركة السياحية"
       : user.role === UserRole.DRIVER
       ? "لوحة السائق"
       : user.role === UserRole.TOURISM_OWNER
@@ -169,7 +169,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
 
       {isPassenger ? (
         <div className="grid gap-4 sm:grid-cols-3">
-          <Stat label="كراجات مسجّلة" value={snapshot.garages} tone="emerald" />
+          <Stat label="شركات سياحية مسجّلة" value={snapshot.garages} tone="emerald" />
           <Stat
             label="رحلات متاحة للحجز"
             value={snapshot.tripsActive}
@@ -183,7 +183,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="كراجات" value={snapshot.garages} tone="emerald" />
+          <Stat label="شركات سياحية" value={snapshot.garages} tone="emerald" />
           <Stat label="مركبات" value={snapshot.vehicles} tone="violet" />
           <Stat label="رحلات نشطة" value={snapshot.tripsActive} tone="purple" />
           <Stat
@@ -202,7 +202,7 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
                 مطلوب: إنشاء رحلة وتحديد الوجهة
               </CardTitle>
               <CardDescription className="text-base leading-relaxed text-stone-600">
-                لديك كراج ومركبات جاهزة، لكن لا توجد رحلة مجدولة بعد. أنشئ رحلة
+                لديك شركة سياحية ومركبات جاهزة، لكن لا توجد رحلة مجدولة بعد. أنشئ رحلة
                 من صفحة «الرحلات» وحدد بوضوح{" "}
                 <strong className="font-semibold text-stone-800">
                   من أين تنطلق

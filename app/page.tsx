@@ -125,19 +125,20 @@ export default async function LandingPage() {
 
         <div className="grid gap-3 lg:grid-cols-[2fr_1fr]">
           <div className="grid gap-4 sm:grid-cols-2">
-            {tourismPlaces.map((p) => (
+            {tourismPlaces.slice(0, 1).map((p) => (
               <Link
                 key={p.id}
                 href="/tourism-places"
-                className="relative block h-72 overflow-hidden rounded-2xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="relative block h-72 w-full overflow-hidden rounded-2xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {p.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.imageUrl}
+                  <Image
+                    src="/System/Tourism_Images/all-hadar_01.png"
                     alt={p.name}
                     className="absolute inset-0 h-full w-full object-cover"
                     loading="lazy"
+                    width={500}
+                    height={500}
                   />
                 ) : (
                   <div className="absolute inset-0 h-full w-full bg-gradient-to-br from-slate-300 to-slate-500" />

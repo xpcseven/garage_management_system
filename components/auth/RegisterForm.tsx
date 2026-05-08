@@ -71,7 +71,7 @@ const RegisterForm = () => {
           <aside className="relative min-h-[260px] lg:min-h-[740px]">
             <Image
               src={createGarageImage}
-              alt="صورة كراج سيارات"
+              alt="صورة شركة سياحية"
               fill
               priority
               unoptimized
@@ -84,10 +84,10 @@ const RegisterForm = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold leading-tight sm:text-3xl">
-                  منصة متكاملة لإدارة الكراج
+                  منصة متكاملة لإدارة الشركة السياحية
                 </h2>
                 <p className="mt-3 max-w-md text-sm leading-6 text-slate-200 sm:text-base">
-                  أنشئ حسابك الآن وابدأ إدارة العملاء، السائقين، ونشاطات الكراج
+                  أنشئ حسابك الآن وابدأ إدارة العملاء، السائقين، ونشاطات الشركة السياحية
                   اليومية من لوحة واحدة.
                 </p>
                 <div className="mt-5 grid grid-cols-1 gap-2 text-xs text-slate-100 sm:grid-cols-3 sm:text-sm">
@@ -214,8 +214,8 @@ const RegisterForm = () => {
                               disabled={isPending}
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors"
                             >
-                              <option value="USER">عميل الكراج - عميل للشركة السياحية</option>
-                              <option value="GARAGE_OWNER">مالك كراج - مالك شركة سياحية</option>
+                              <option value="USER">عميل الشركة السياحية</option>
+                              <option value="GARAGE_OWNER">مالك شركة سياحية</option>
                               <option value="DRIVER">سائق مستقل</option>
                               <option value="TOURISM_OWNER">
                                 مالك مكان سياحي
@@ -235,7 +235,7 @@ const RegisterForm = () => {
                           <FormItem>
                             <FormLabel className="text-purple-700"  >نوع الخدمات أو النقل</FormLabel>
                             <FormDescription className="text-xs">
-                              يظهر هذا القسم لصاحب الكراج أو السائق فقط.
+                              يظهر هذا القسم لصاحب الشركة السياحية أو السائق فقط.
                             </FormDescription>
                             <div className="space-y-3 rounded-md border border-input bg-background p-3">
                               {REGISTER_JOB_OPTIONS.map((opt) => {

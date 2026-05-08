@@ -34,9 +34,10 @@ export default async function PublicTourismPlacesPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {places.map((p) => (
-            <article
+            <Link
               key={p.id}
-              className="relative h-56 overflow-hidden rounded-2xl border border-slate-200"
+              href={`/tourism-places/${p.id}`}
+              className="relative block h-56 overflow-hidden rounded-2xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {p.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -57,7 +58,7 @@ export default async function PublicTourismPlacesPage() {
                   {p.description ?? "بدون وصف"}
                 </p>
               </div>
-            </article>
+            </Link>
           ))}
 
           {places.length === 0 && (

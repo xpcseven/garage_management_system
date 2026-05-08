@@ -63,15 +63,15 @@ export async function getGaragesForUser(): Promise<GarageRow[]> {
 export async function createGarage(formData: FormData) {
   const session = await auth();
   if (!session?.user || !canCreateGarage(session.user.role)) {
-    return { error: "لا تملك صلاحية إنشاء كراج" };
+    return { error: "لا تملك صلاحية إنشاء شركة سياحية" };
   }
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) return { error: "اسم الكراج مطلوب" };
+  if (!name) return { error: "اسم الشركة السياحية مطلوب" };
   const description =
     String(formData.get("description") ?? "").trim() || null;
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim();
-  if (!address) return { error: "موقع الكراج مطلوب" };
+  if (!address) return { error: "موقع الشركة السياحية مطلوب" };
 
   const ownerId =
     session.user.role === UserRole.SUPER_ADMIN
@@ -93,7 +93,7 @@ export async function createGarage(formData: FormData) {
     revalidatePath("/home");
     return { success: true };
   } catch {
-    return { error: "تعذر إنشاء الكراج" };
+    return { error: "تعذر إنشاء الشركة السياحية" };
   }
 }
 
@@ -101,12 +101,12 @@ export async function updateGarage(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
   const id = String(formData.get("id") ?? "");
-  if (!id) return { error: "معرّف الكراج مفقود" };
+  if (!id) return { error: "معرّف الشركة السياحية مفقود" };
 
   const existing = await prisma.garage.findFirst({
     where: { id, isDeleted: false },
   });
-  if (!existing) return { error: "الكراج غير موجود" };
+  if (!existing) return { error: "الشركة السياحية غير موجودة" };
 
   const isOwner = existing.ownerId === session.user.id;
   const isSuper = session.user.role === UserRole.SUPER_ADMIN;
@@ -118,7 +118,7 @@ export async function updateGarage(formData: FormData) {
     },
   });
   if (!isOwner && !isSuper && !isGarageAdmin) {
-    return { error: "لا تملك صلاحية تعديل هذا الكراج" };
+    return { error: "لا تملك صلاحية تعديل هذه الشركة السياحية" };
   }
 
   const name = String(formData.get("name") ?? "").trim();
@@ -127,8 +127,8 @@ export async function updateGarage(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim();
   const isActive = formData.get("isActive") === "true";
-  if (!name) return { error: "اسم الكراج مطلوب" };
-  if (!address) return { error: "موقع الكراج مطلوب" };
+  if (!name) return { error: "اسم الشركة السياحية مطلوب" };
+  if (!address) return { error: "موقع الشركة السياحية مطلوب" };
 
   try {
     await prisma.garage.update({

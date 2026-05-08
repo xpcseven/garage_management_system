@@ -30,7 +30,7 @@ export default function Garage_Table({ garages }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">قائمة الكراجات</CardTitle>
+        <CardTitle className="text-lg">قائمة الشركات السياحية</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm responsive-table">
@@ -66,7 +66,7 @@ export default function Garage_Table({ garages }: Props) {
             {garages.length === 0 && (
               <tr>
                 <td colSpan={4} className="p-6 text-center text-muted-foreground">
-                  لا توجد كراجات
+                  لا توجد شركات سياحية
                 </td>
               </tr>
             )}

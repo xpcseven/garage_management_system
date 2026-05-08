@@ -173,6 +173,33 @@ export async function getPublicTourismPlaceByIdForPassenger(
   };
 }
 
+/** صفحة عامة: تفاصيل مكان نشط بالمعرف بدون تسجيل دخول */
+export async function getPublicTourismPlaceByIdForGuest(
+  placeId: string
+): Promise<TourismPlaceRow | null> {
+  const p = await prisma.tourismPlace.findFirst({
+    where: { id: placeId, isActive: true },
+    include: { city: { select: { id: true, name: true, region: true } } },
+  });
+  if (!p) return null;
+
+  return {
+    id: p.id,
+    name: p.name,
+    governorate: p.governorate ?? null,
+    description: p.description ?? null,
+    address: p.address ?? null,
+    location: p.location ?? null,
+    imageUrl: p.imageUrl ?? null,
+    cityId: p.cityId ?? null,
+    cityName: p.city?.name ?? null,
+    cityRegion: p.city?.region ?? null,
+    ownerId: p.ownerId,
+    isActive: p.isActive,
+    createdAt: p.createdAt.toISOString(),
+  };
+}
+
 export async function createTourismPlace(formData: FormData) {
   const session = await auth();
   if (!session?.user || !canManageTourismPlaces(session.user.role)) {

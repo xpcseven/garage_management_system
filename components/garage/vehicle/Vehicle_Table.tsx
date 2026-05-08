@@ -40,7 +40,7 @@ export default function Vehicle_Table({ vehicles }: Props) {
               <th className="p-2">اللوحة</th>
               <th className="p-2">المركبة</th>
               <th className="p-2">السائق</th>
-              <th className="p-2">الكراج</th>
+              <th className="p-2">الشركة السياحية</th>
               <th className="p-2">النوع</th>
               <th className="p-2">الحالة</th>
               <th className="p-2 w-28">إجراءات</th>
@@ -56,7 +56,7 @@ export default function Vehicle_Table({ vehicles }: Props) {
                 <td className="p-2 text-muted-foreground" data-label="السائق">
                   {v.driverName ?? "—"}
                 </td>
-                <td className="p-2 text-muted-foreground" data-label="الكراج">{v.garageName ?? "—"}</td>
+                <td className="p-2 text-muted-foreground" data-label="الشركة السياحية">{v.garageName ?? "—"}</td>
                 <td className="p-2" data-label="النوع">{v.transportType === "INTERNAL" ? "داخلي" : "خارجي"}</td>
                 <td className="p-2" data-label="الحالة">
                   {v.isActive ? <h1 className="text-green-500 font-bold">

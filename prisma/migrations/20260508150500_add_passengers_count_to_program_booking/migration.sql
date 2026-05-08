@@ -1,0 +1,3 @@
+ALTER TABLE "TourismProgramBooking"
+ADD COLUMN IF NOT EXISTS "passengersCount" INTEGER NOT NULL DEFAULT 1;
+

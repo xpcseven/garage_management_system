@@ -15,6 +15,7 @@ const cairo = Cairo({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
+  variable: "--font-cairo",
 });
 export const metadata: Metadata = {
   title: "MANAGE-Instituion | Home",
@@ -29,7 +30,7 @@ export default async function RootLayout({
   return (
     <SessionProvider session={session}>
       <html lang="en" dir="rtl">
-        <body className={cairo.className}>
+        <body className={`${cairo.variable} ${cairo.className}`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

@@ -67,7 +67,7 @@ export default function Garage_Update({ garage }: Props) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>تعديل الكراج</DialogTitle>
+          <DialogTitle>تعديل الشركة السياحية</DialogTitle>
         </DialogHeader>
         <form
           className="space-y-3"
@@ -81,7 +81,7 @@ export default function Garage_Update({ garage }: Props) {
                 await Swal.fire({
                   icon: "success",
                   title: "تم التحديث",
-                  text: "تم تعديل الكراج بنجاح",
+                  text: "تم تعديل الشركة السياحية بنجاح",
                   confirmButtonText: "موافق",
                 });
               } else {
@@ -122,7 +122,7 @@ export default function Garage_Update({ garage }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label>موقع الكراج</Label>
+            <Label>موقع الشركة السياحية</Label>
             <input type="hidden" name="address" value={address} required />
             <button
               type="button"

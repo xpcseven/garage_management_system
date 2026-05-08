@@ -116,7 +116,7 @@ export default function Sidebar({ user, className }: Props) {
         )}
 
         {canManageGarages(role) && (
-          <NavLink href="/garages" label="الكراجات" icon="🏢" />
+          <NavLink href="/garages" label="الشركات السياحية" icon="🏢" />
         )}
 
         {canManageVehicles(role) && (
@@ -127,14 +127,20 @@ export default function Sidebar({ user, className }: Props) {
           <>
             <SectionDivider label="الرحلات" />
             <NavLink href="/trips" label="الرحلات" icon="🗺️" />
+            <NavLink href="/tourism-programs" label="البرامج السياحية" icon="🧳" />
           </>
         )}
 
         {canUsePassengerPortal(role) && (
           <>
             <SectionDivider label="المسافر" />
-            <NavLink href="/passenger/garages" label="كراجات (مسافر)" icon="📍" />
+            <NavLink href="/passenger/garages" label="الشركات السياحية (مسافر)" icon="📍" />
             <NavLink href="/passenger/trips" label="بحث رحلة" icon="🔍" />
+            <NavLink
+              href="/passenger/tourism-programs"
+              label="برامج سياحية"
+              icon="🧭"
+            />
             <NavLink
               href="/passenger/tourism-places"
               label="أماكن سياحية"

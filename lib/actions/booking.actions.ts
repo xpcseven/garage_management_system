@@ -24,17 +24,25 @@ export type BookingLuggageRow = {
 
 export type BookingRow = {
   id: string;
+  bookingKind: "trip" | "tourism_program";
   passengerName: string;
+  passengerEmail?: string | null;
   status: string;
   priceAtBooking: string;
+  passengersCount: number;
   createdAt: Date;
-  departureTime: Date;
-  tripFromCity: string;
+  departureTime: Date | null;
+  tripFromCity: string | null;
   tripFromRegion: string | null;
-  tripToCity: string;
+  tripToCity: string | null;
   tripToRegion: string | null;
   seatNumber: number | null;
   luggage: BookingLuggageRow[];
+  programTitle: string | null;
+  programGarageName: string | null;
+  programVehicleLabel: string | null;
+  programDriverName: string | null;
+  programPlaces: { name: string; order: number }[];
 };
 
 const luggageKindSet = new Set<string>(Object.values(LuggageKind));
@@ -136,7 +144,7 @@ function parseLuggageForCreate(raw: unknown):
 
 function mapBookingRow(b: {
   id: string;
-  user: { name: string };
+  user: { name: string; email?: string | null };
   status: BookingStatus;
   priceAtBooking: Prisma.Decimal;
   createdAt: Date;
@@ -155,9 +163,12 @@ function mapBookingRow(b: {
 }): BookingRow {
   return {
     id: b.id,
+    bookingKind: "trip",
     passengerName: b.user.name,
+    passengerEmail: b.user.email ?? null,
     status: b.status,
     priceAtBooking: String(b.priceAtBooking),
+    passengersCount: 1,
     createdAt: b.createdAt,
     departureTime: b.trip.departureTime,
     tripFromCity: b.trip.fromCity.name,
@@ -171,6 +182,53 @@ function mapBookingRow(b: {
       dimensions: l.dimensions,
       quantity: l.quantity,
     })),
+    programTitle: null,
+    programGarageName: null,
+    programVehicleLabel: null,
+    programDriverName: null,
+    programPlaces: [],
+  };
+}
+
+function mapProgramBookingRow(b: {
+  id: string;
+  user: { name: string; email?: string | null };
+  status: BookingStatus;
+  priceAtBooking: Prisma.Decimal;
+  passengersCount: number;
+  createdAt: Date;
+  program: {
+    title: string;
+    startAt: Date;
+    garage: { name: string };
+    vehicle: { brand: string; model: string; plateNumber: string };
+    driver: { name: string };
+    places: { stopOrder: number; place: { name: string } }[];
+  };
+}): BookingRow {
+  return {
+    id: b.id,
+    bookingKind: "tourism_program",
+    passengerName: b.user.name,
+    passengerEmail: b.user.email ?? null,
+    status: b.status,
+    priceAtBooking: String(b.priceAtBooking),
+    passengersCount: b.passengersCount,
+    createdAt: b.createdAt,
+    departureTime: b.program.startAt,
+    tripFromCity: null,
+    tripFromRegion: null,
+    tripToCity: null,
+    tripToRegion: null,
+    seatNumber: null,
+    luggage: [],
+    programTitle: b.program.title,
+    programGarageName: b.program.garage.name,
+    programVehicleLabel: `${b.program.vehicle.brand} ${b.program.vehicle.model} — ${b.program.vehicle.plateNumber}`,
+    programDriverName: b.program.driver.name,
+    programPlaces: b.program.places
+      .map((p) => ({ name: p.place.name, order: p.stopOrder }))
+      .sort((a, b2) => a.order - b2.order),
   };
 }
 
@@ -179,30 +237,49 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
   if (!session?.user) return [];
 
   if (session.user.role === UserRole.SUPER_ADMIN) {
-    const rows = await prisma.booking.findMany({
-      take: 50,
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { name: true } },
-        trip: {
-          include: {
-            fromCity: { select: { name: true, region: true } },
-            toCity: { select: { name: true, region: true } },
+    const [tripRows, programRows] = await Promise.all([
+      prisma.booking.findMany({
+        take: 50,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true, email: true } },
+          trip: {
+            include: {
+              fromCity: { select: { name: true, region: true } },
+              toCity: { select: { name: true, region: true } },
+            },
+          },
+          seat: { select: { seatNumber: true } },
+          luggageItems: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              kind: true,
+              weightKg: true,
+              dimensions: true,
+              quantity: true,
+            },
           },
         },
-        seat: { select: { seatNumber: true } },
-        luggageItems: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            kind: true,
-            weightKg: true,
-            dimensions: true,
-            quantity: true,
+      }),
+      prisma.tourismProgramBooking.findMany({
+        take: 50,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true, email: true } },
+          program: {
+            include: {
+              garage: { select: { name: true } },
+              vehicle: { select: { brand: true, model: true, plateNumber: true } },
+              driver: { select: { name: true } },
+              places: { include: { place: { select: { name: true } } } },
+            },
           },
         },
-      },
-    });
-    return rows.map(mapBookingRow);
+      }),
+    ]);
+    return [...tripRows.map(mapBookingRow), ...programRows.map(mapProgramBookingRow)].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
   }
 
   if (
@@ -214,12 +291,64 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
         ? { garage: { ownerId: session.user.id, isDeleted: false } }
         : { driverId: session.user.id };
 
-    const rows = await prisma.booking.findMany({
-      where: { trip: garageFilter },
-      take: 50,
+    const programFilter =
+      session.user.role === UserRole.GARAGE_OWNER
+        ? { program: { garage: { ownerId: session.user.id, isDeleted: false } } }
+        : { program: { driverId: session.user.id } };
+
+    const [tripRows, programRows] = await Promise.all([
+      prisma.booking.findMany({
+        where: { trip: garageFilter },
+        take: 50,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true, email: true } },
+          trip: {
+            include: {
+              fromCity: { select: { name: true, region: true } },
+              toCity: { select: { name: true, region: true } },
+            },
+          },
+          seat: { select: { seatNumber: true } },
+          luggageItems: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              kind: true,
+              weightKg: true,
+              dimensions: true,
+              quantity: true,
+            },
+          },
+        },
+      }),
+      prisma.tourismProgramBooking.findMany({
+        where: programFilter,
+        take: 50,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true, email: true } },
+          program: {
+            include: {
+              garage: { select: { name: true } },
+              vehicle: { select: { brand: true, model: true, plateNumber: true } },
+              driver: { select: { name: true } },
+              places: { include: { place: { select: { name: true } } } },
+            },
+          },
+        },
+      }),
+    ]);
+    return [...tripRows.map(mapBookingRow), ...programRows.map(mapProgramBookingRow)].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+  }
+
+  const [tripRows, programRows] = await Promise.all([
+    prisma.booking.findMany({
+      where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       include: {
-        user: { select: { name: true } },
+        user: { select: { name: true, email: true } },
         trip: {
           include: {
             fromCity: { select: { name: true, region: true } },
@@ -237,34 +366,26 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
           },
         },
       },
-    });
-    return rows.map(mapBookingRow);
-  }
-
-  const rows = await prisma.booking.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { name: true } },
-      trip: {
-        include: {
-          fromCity: { select: { name: true, region: true } },
-          toCity: { select: { name: true, region: true } },
+    }),
+    prisma.tourismProgramBooking.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { name: true, email: true } },
+        program: {
+          include: {
+            garage: { select: { name: true } },
+            vehicle: { select: { brand: true, model: true, plateNumber: true } },
+            driver: { select: { name: true } },
+            places: { include: { place: { select: { name: true } } } },
+          },
         },
       },
-      seat: { select: { seatNumber: true } },
-      luggageItems: {
-        orderBy: { createdAt: "asc" },
-        select: {
-          kind: true,
-          weightKg: true,
-          dimensions: true,
-          quantity: true,
-        },
-      },
-    },
-  });
-  return rows.map(mapBookingRow);
+    }),
+  ]);
+  return [...tripRows.map(mapBookingRow), ...programRows.map(mapProgramBookingRow)].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+  );
 }
 
 export async function bookSeatOnTrip(
@@ -344,6 +465,42 @@ export async function bookSeatOnTrip(
 export async function cancelBooking(bookingId: string) {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
+
+  const programBooking = await prisma.tourismProgramBooking.findUnique({
+    where: { id: bookingId },
+    include: { program: { include: { garage: true } } },
+  });
+  if (programBooking) {
+    if (programBooking.status === BookingStatus.CANCELLED) {
+      return { error: "الحجز ملغى مسبقاً" };
+    }
+    const isCustomer = programBooking.userId === session.user.id;
+    const isOwnerProgram =
+      session.user.role === UserRole.GARAGE_OWNER &&
+      programBooking.program.garage.ownerId === session.user.id;
+    const isSuper = session.user.role === UserRole.SUPER_ADMIN;
+    if (!isCustomer && !isOwnerProgram && !isSuper) {
+      return { error: "لا تملك صلاحية إلغاء هذا الحجز" };
+    }
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.tourismProgramBooking.update({
+          where: { id: bookingId },
+          data: { status: BookingStatus.CANCELLED },
+        });
+        await tx.tourismProgram.update({
+          where: { id: programBooking.programId },
+          data: { availableSeats: { increment: programBooking.passengersCount } },
+        });
+      });
+      revalidatePath("/bookings");
+      revalidatePath("/passenger/tourism-programs");
+      revalidatePath("/home");
+      return { success: true };
+    } catch {
+      return { error: "تعذر الإلغاء" };
+    }
+  }
 
   const b = await prisma.booking.findUnique({
     where: { id: bookingId },

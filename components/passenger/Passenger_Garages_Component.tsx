@@ -16,9 +16,9 @@ export default function Passenger_Garages_Component({ garages }: Props) {
     <div className="space-y-6 p-4 max-w-4xl mx-auto">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-purple-800">الكراجات المسجّلة</h1>
+          <h1 className="text-2xl font-bold text-purple-800">الشركات السياحية المسجّلة</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            مسافر — اختر كراجاً أو قسم الرحلات المستقلة لعرض الرحلات المتاحة.
+            مسافر — اختر شركة سياحية أو قسم الرحلات المستقلة لعرض الرحلات المتاحة.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
@@ -33,7 +33,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground flex-1 flex flex-col">
             <p className="flex-1 leading-relaxed">
-              رحلات لا تتبع كراجاً — ادخل لعرض جميع الرحلات المستقلة المتاحة
+              رحلات لا تتبع شركة سياحية — ادخل لعرض جميع الرحلات المستقلة المتاحة
               للحجز.
             </p>
             <Button asChild className="w-full">
@@ -86,7 +86,7 @@ export default function Passenger_Garages_Component({ garages }: Props) {
 
         {garages.length === 0 && (
           <p className="text-muted-foreground col-span-full text-center py-8">
-            لا توجد كراجات مسجّلة حالياً.
+            لا توجد شركات سياحية مسجّلة حالياً.
           </p>
         )}
       </div>

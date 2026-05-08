@@ -43,7 +43,7 @@ export default function Passenger_Garage_Detail_Component({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-purple-800">
-            <Link href="/passenger/garages">العودة إلى قائمة الكراجات</Link>
+            <Link href="/passenger/garages">العودة إلى قائمة الشركات السياحية</Link>
           </Button>
           <h1 className="text-2xl font-bold text-purple-800">{garage.name}</h1>
           <div className="space-y-1 text-sm text-muted-foreground max-w-xl">
@@ -60,7 +60,7 @@ export default function Passenger_Garage_Detail_Component({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            الرحلات المتاحة في هذا الكراج ({trips.length})
+            الرحلات المتاحة في هذه الشركة السياحية ({trips.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
@@ -103,7 +103,7 @@ export default function Passenger_Garage_Detail_Component({
                     colSpan={6}
                     className="p-10 text-center text-muted-foreground"
                   >
-                    لا توجد رحلات متاحة حالياً في هذا الكراج. يمكنك العودة لاحقاً
+                    لا توجد رحلات متاحة حالياً في هذه الشركة السياحية. يمكنك العودة لاحقاً
                     أو استخدام البحث العام عن الرحلات.
                   </td>
                 </tr>

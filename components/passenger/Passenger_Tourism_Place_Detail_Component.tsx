@@ -8,6 +8,7 @@ import { ArrowRight, MapPin, Navigation } from "lucide-react";
 
 type Props = {
   place: TourismPlaceRow;
+  backHref?: string;
 };
 
 function cityLabel(p: TourismPlaceRow) {
@@ -16,7 +17,10 @@ function cityLabel(p: TourismPlaceRow) {
   return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
 }
 
-export default function Passenger_Tourism_Place_Detail_Component({ place }: Props) {
+export default function Passenger_Tourism_Place_Detail_Component({
+  place,
+  backHref = "/passenger/tourism-places",
+}: Props) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Section */}
@@ -43,7 +47,7 @@ export default function Passenger_Tourism_Place_Detail_Component({ place }: Prop
             size="sm"
             className="gap-1.5 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 border border-white/30"
           >
-            <Link href="/passenger/tourism-places">
+            <Link href={backHref}>
               <ArrowRight className="h-4 w-4" />
               العودة
             </Link>
