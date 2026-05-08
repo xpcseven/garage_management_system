@@ -88,12 +88,21 @@ export default function Tourism_Places_Create() {
               if (res.success) {
                 setOpen(false);
                 router.refresh();
-                await Swal.fire({
-                  icon: "success",
-                  title: "تمت الإضافة",
-                  text: "تمت إضافة المكان بنجاح",
-                  confirmButtonText: "موافق",
-                });
+                if (res.pendingApproval) {
+                  await Swal.fire({
+                    icon: "info",
+                    title: "تم إرسال الطلب",
+                    text: "تمت إضافة المكان وإرساله بانتظار موافقة السوبر أدمن",
+                    confirmButtonText: "موافق",
+                  });
+                } else {
+                  await Swal.fire({
+                    icon: "success",
+                    title: "تمت الإضافة",
+                    text: "تمت إضافة المكان بنجاح",
+                    confirmButtonText: "موافق",
+                  });
+                }
               } else {
                 await Swal.fire({
                   icon: "error",

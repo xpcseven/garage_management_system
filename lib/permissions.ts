@@ -44,7 +44,11 @@ export function canViewBookings(role: UserRole | string | undefined) {
 
 /** إدارة الأماكن السياحية (حالياً: المشرف العام فقط) */
 export function canManageTourismPlaces(role: UserRole | string | undefined) {
-  return role === UserRole.SUPER_ADMIN || role === UserRole.TOURISM_OWNER;
+  return (
+    role === UserRole.SUPER_ADMIN ||
+    role === UserRole.TOURISM_OWNER ||
+    role === UserRole.GARAGE_OWNER
+  );
 }
 
 export type DashboardSectionId =
@@ -57,7 +61,8 @@ export type DashboardSectionId =
   | "bookings"
   | "passenger_garages"
   | "passenger_trips"
-  | "passenger_tourism_places";
+  | "passenger_tourism_places"
+  | "tourism_place_requests";
 
 export function dashboardSectionsForRole(
   role: UserRole | string | undefined
@@ -73,6 +78,7 @@ export function dashboardSectionsForRole(
       "vehicles",
       "trips",
       "bookings",
+      "tourism_place_requests",
     ];
   }
   if (role === UserRole.TOURISM_OWNER) {

@@ -32,7 +32,7 @@ export default function PassengerTourismProgramBookButton({ programId }: Props) 
           inputValidator: (value) => {
             const n = Number(value);
             if (!Number.isInteger(n) || n < 1) return "أدخل عدد أفراد صحيح (1 أو أكثر)";
-            return undefined;
+            return null;
           },
           showCancelButton: true,
           confirmButtonText: "نعم، حجز",

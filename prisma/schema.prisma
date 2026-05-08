@@ -97,6 +97,12 @@ enum NotificationType {
   GENERAL
 }
 
+enum TourismApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum DocumentType {
   LICENSE
   ID_CARD
@@ -195,12 +201,15 @@ model TourismPlace {
   programPlaces TourismProgramPlace[]
 
   isActive  Boolean  @default(true)
+  approvalStatus TourismApprovalStatus @default(PENDING)
+  reviewedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([cityId])
   @@index([ownerId])
   @@index([isActive])
+  @@index([approvalStatus])
 }
 
 // ============================================================

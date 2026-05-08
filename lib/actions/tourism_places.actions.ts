@@ -21,6 +21,8 @@ export type TourismPlaceRow = {
   cityRegion: string | null;
   ownerId: string;
   isActive: boolean;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedAt: string | null;
   createdAt: string;
 };
 
@@ -53,6 +55,8 @@ export async function getTourismPlaces(): Promise<TourismPlaceRow[]> {
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   }));
 }
@@ -65,7 +69,7 @@ export async function getPublicTourismPlacesForPassenger(): Promise<
   if (!session?.user || !canUsePassengerPortal(session.user.role)) return [];
 
   const rows = await prisma.tourismPlace.findMany({
-    where: { isActive: true },
+    where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
     include: { city: { select: { id: true, name: true, region: true } } },
     take: 200,
@@ -84,6 +88,8 @@ export async function getPublicTourismPlacesForPassenger(): Promise<
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   }));
 }
@@ -93,7 +99,7 @@ export async function getPublicTourismPlacesForLanding(): Promise<
   TourismPlaceRow[]
 > {
   const rows = await prisma.tourismPlace.findMany({
-    where: { isActive: true },
+    where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
     include: { city: { select: { id: true, name: true, region: true } } },
     take: 6,
@@ -112,6 +118,8 @@ export async function getPublicTourismPlacesForLanding(): Promise<
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   }));
 }
@@ -121,7 +129,7 @@ export async function getPublicTourismPlacesForGuest(): Promise<
   TourismPlaceRow[]
 > {
   const rows = await prisma.tourismPlace.findMany({
-    where: { isActive: true },
+    where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
     include: { city: { select: { id: true, name: true, region: true } } },
     take: 200,
@@ -140,6 +148,8 @@ export async function getPublicTourismPlacesForGuest(): Promise<
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   }));
 }
@@ -151,7 +161,7 @@ export async function getPublicTourismPlaceByIdForPassenger(
   if (!session?.user || !canUsePassengerPortal(session.user.role)) return null;
 
   const p = await prisma.tourismPlace.findFirst({
-    where: { id: placeId, isActive: true },
+    where: { id: placeId, isActive: true, approvalStatus: "APPROVED" },
     include: { city: { select: { id: true, name: true, region: true } } },
   });
   if (!p) return null;
@@ -169,6 +179,8 @@ export async function getPublicTourismPlaceByIdForPassenger(
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   };
 }
@@ -178,7 +190,7 @@ export async function getPublicTourismPlaceByIdForGuest(
   placeId: string
 ): Promise<TourismPlaceRow | null> {
   const p = await prisma.tourismPlace.findFirst({
-    where: { id: placeId, isActive: true },
+    where: { id: placeId, isActive: true, approvalStatus: "APPROVED" },
     include: { city: { select: { id: true, name: true, region: true } } },
   });
   if (!p) return null;
@@ -196,6 +208,8 @@ export async function getPublicTourismPlaceByIdForGuest(
     cityRegion: p.city?.region ?? null,
     ownerId: p.ownerId,
     isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
   };
 }
@@ -231,6 +245,7 @@ export async function createTourismPlace(formData: FormData) {
       imageUrl = uploaded.path;
     }
 
+    const autoApprove = session.user.role === UserRole.SUPER_ADMIN;
     await prisma.tourismPlace.create({
       data: {
         name,
@@ -242,11 +257,16 @@ export async function createTourismPlace(formData: FormData) {
         imageUrl,
         ownerId: session.user.id,
         isActive: true,
+        approvalStatus: autoApprove ? "APPROVED" : "PENDING",
+        reviewedAt: autoApprove ? new Date() : null,
       },
     });
     revalidatePath("/tourism_places");
     revalidatePath("/home");
-    return { success: true };
+    return {
+      success: true,
+      pendingApproval: !autoApprove,
+    };
   } catch {
     return { error: "تعذر الإنشاء" };
   }
@@ -328,6 +348,16 @@ export async function updateTourismPlace(formData: FormData) {
         location,
         ...(imageUrl !== undefined ? { imageUrl } : {}),
         isActive,
+        ...(session.user.role === UserRole.SUPER_ADMIN
+          ? {
+              approvalStatus:
+                isActive ? "APPROVED" : "REJECTED",
+              reviewedAt: new Date(),
+            }
+          : {
+              approvalStatus: "PENDING",
+              reviewedAt: null,
+            }),
       },
     });
     revalidatePath("/tourism_places");
@@ -371,6 +401,84 @@ export async function deleteTourismPlace(id: string) {
     return { success: true };
   } catch {
     return { error: "تعذر الحذف" };
+  }
+}
+
+export async function getTourismPlaceRequests(): Promise<TourismPlaceRow[]> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== UserRole.SUPER_ADMIN) return [];
+
+  const rows = await prisma.tourismPlace.findMany({
+    where: { approvalStatus: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    include: { city: { select: { id: true, name: true, region: true } } },
+    take: 300,
+  });
+
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    governorate: p.governorate ?? null,
+    description: p.description ?? null,
+    address: p.address ?? null,
+    location: p.location ?? null,
+    imageUrl: p.imageUrl ?? null,
+    cityId: p.cityId ?? null,
+    cityName: p.city?.name ?? null,
+    cityRegion: p.city?.region ?? null,
+    ownerId: p.ownerId,
+    isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
+    createdAt: p.createdAt.toISOString(),
+  }));
+}
+
+export async function approveTourismPlaceRequest(id: string) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== UserRole.SUPER_ADMIN) {
+    return { error: "لا تملك صلاحية الموافقة" };
+  }
+  try {
+    await prisma.tourismPlace.update({
+      where: { id },
+      data: {
+        approvalStatus: "APPROVED",
+        isActive: true,
+        reviewedAt: new Date(),
+      },
+    });
+    revalidatePath("/tourism-requests");
+    revalidatePath("/tourism_places");
+    revalidatePath("/tourism-places");
+    revalidatePath("/home");
+    return { success: true };
+  } catch {
+    return { error: "تعذر تنفيذ الموافقة" };
+  }
+}
+
+export async function rejectTourismPlaceRequest(id: string) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== UserRole.SUPER_ADMIN) {
+    return { error: "لا تملك صلاحية الرفض" };
+  }
+  try {
+    await prisma.tourismPlace.update({
+      where: { id },
+      data: {
+        approvalStatus: "REJECTED",
+        isActive: false,
+        reviewedAt: new Date(),
+      },
+    });
+    revalidatePath("/tourism-requests");
+    revalidatePath("/tourism_places");
+    revalidatePath("/tourism-places");
+    revalidatePath("/home");
+    return { success: true };
+  } catch {
+    return { error: "تعذر تنفيذ الرفض" };
   }
 }
 

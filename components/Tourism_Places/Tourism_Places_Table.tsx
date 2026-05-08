@@ -118,13 +118,17 @@ export default function Tourism_Places_Table({ places }: Props) {
                 </div>
 
                 {/* شارة الحالة */}
-                {p.isActive ? (
+                {p.approvalStatus === "APPROVED" ? (
                   <Badge className="rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-[11px] font-medium text-white shadow backdrop-blur-sm hover:bg-emerald-500">
-                    نشط
+                    معتمد
+                  </Badge>
+                ) : p.approvalStatus === "PENDING" ? (
+                  <Badge className="rounded-full bg-amber-500/90 px-2.5 py-0.5 text-[11px] font-medium text-white shadow backdrop-blur-sm hover:bg-amber-500">
+                    بانتظار الموافقة
                   </Badge>
                 ) : (
-                  <Badge className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-medium text-white/90 shadow backdrop-blur-sm">
-                    موقوف
+                  <Badge className="rounded-full bg-rose-500/90 px-2.5 py-0.5 text-[11px] font-medium text-white shadow backdrop-blur-sm hover:bg-rose-500">
+                    مرفوض
                   </Badge>
                 )}
               </div>

@@ -112,7 +112,12 @@ export default function Sidebar({ user, className }: Props) {
         )}
 
         {canManageTourismPlaces(role) && (
-          <NavLink href="/tourism_places" label="الأماكن السياحية" icon="🧭" />
+          <>
+            <NavLink href="/tourism_places" label="الأماكن السياحية" icon="🧭" />
+            {role === "SUPER_ADMIN" && (
+              <NavLink href="/tourism-requests" label="طلبات اعتماد الأماكن" icon="✅" />
+            )}
+          </>
         )}
 
         {canManageGarages(role) && (
