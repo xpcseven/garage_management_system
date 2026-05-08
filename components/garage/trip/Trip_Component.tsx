@@ -67,15 +67,7 @@ export default function Trip_Component({
         <Trip_Freelance_Create cities={cities} vehicles={freelanceVehicles} />
       )}
       <Trip_Table trips={trips} />
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-purple-700">البرامج السياحية</h2>
-          {showGarageForm && tourismProgramPack && (
-            <Tourism_Program_Create pack={tourismProgramPack} />
-          )}
-        </div>
-        <Tourism_Program_Table rows={tourismPrograms} editPack={tourismProgramPack} />
-      </div>
+
 
     </div>
   );
