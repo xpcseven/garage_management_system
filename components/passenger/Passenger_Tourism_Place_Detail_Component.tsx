@@ -23,18 +23,20 @@ export default function Passenger_Tourism_Place_Detail_Component({
 }: Props) {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero Section */}
-      <div className="relative p-3 h-80 w-full overflow-hidden sm:h-96 lg:h-[28rem]">
+      {/* Hero Section — ارتفاع الصورة يتبع نسبة العرض إلى الارتفاع دون قص */}
+      <div className="relative w-full overflow-hidden bg-slate-100">
         {place.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={place.imageUrl}
-            alt={place.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
+          <div className="flex justify-center px-3 pt-2 sm:px-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={place.imageUrl}
+              alt={place.name}
+              className="mx-auto block h-auto w-full max-w-5xl rounded-lg sm:rounded-xl"
+              loading="lazy"
+            />
+          </div>
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700" />
+          <div className="min-h-48 w-full bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700" />
         )}
 
         {/* طبقة التعتيم */}
@@ -99,7 +101,7 @@ export default function Passenger_Tourism_Place_Detail_Component({
             {place.location && (
               <Button
                 asChild
-                className="w-full gap-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+                className="w-full gap-2 rounded-xl"
               >
                 <a
                   href={`https://www.google.com/maps?q=${encodeURIComponent(
