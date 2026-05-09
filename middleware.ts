@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
 
 import authConfig from "@/auth.config";
 
@@ -11,7 +12,7 @@ import {
   apiAuthPrefix,
  
 } from "@/routes";
-// @ts-expect-error @ts-ignore
+
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
@@ -21,23 +22,21 @@ export default auth((req) => {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   if (isApiAuthRoute) {
-    return null;
+    return NextResponse.next();
   }
 
   if (isAuthRoute) {
     if (isLoggedIn) {
-     
-        return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
-     
+      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
-    return null;
+    return NextResponse.next();
   }
 
   if (!isLoggedIn && !isPublicRoutes) {
     return Response.redirect(new URL("/auth/login", nextUrl));
   }
 
-  return null;
+  return NextResponse.next();
 });
 
 export const config = {
