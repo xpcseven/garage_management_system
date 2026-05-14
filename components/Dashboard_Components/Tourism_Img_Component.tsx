@@ -9,6 +9,7 @@ type SlideItem = {
 };
 
 const fallbackTourismCards: SlideItem[] = [
+  { src: "/System/Tourism_Images/all-hadar_01.png", title: "مدينة الحضر الاثرية" },
 
 ];
 
