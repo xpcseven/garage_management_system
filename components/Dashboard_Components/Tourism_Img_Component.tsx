@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
+import fallbackSliderImage from "@/public/System/Tourism_Images/all-hadar_01.png";
 
 type SlideItem = {
-  src: string;
+  src: string | StaticImageData;
   title: string;
 };
 
@@ -16,11 +17,14 @@ export default function Tourism_Img_Component({ slides = [] }: Props) {
   const normalizedSlides = slides.filter(
     (slide): slide is SlideItem => Boolean(slide?.src && slide?.title)
   );
-  const tourismCards = normalizedSlides;
+  const tourismCards =
+    normalizedSlides.length > 0
+      ? normalizedSlides
+      : [{ src: fallbackSliderImage, title: "صورة افتراضية للسلايدر" }];
   const [index, setIndex] = useState(0);
   const total = tourismCards.length;
   const safeIndex = total > 0 ? Math.min(index, total - 1) : 0;
-  const currentSlide = total > 0 ? tourismCards[safeIndex] : null;
+  const currentSlide = tourismCards[safeIndex]!;
 
   useEffect(() => {
     if (total === 0) return;
@@ -43,16 +47,6 @@ export default function Tourism_Img_Component({ slides = [] }: Props) {
     }, 3500);
     return () => clearInterval(t);
   }, [total]);
-
-  if (!currentSlide) {
-    return (
-      <section className="space-y-5 p-4">
-        <div className="flex h-72 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500 sm:h-80 lg:h-[28rem]">
-          لا توجد صور نشطة في السلايدر حالياً.
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="space-y-5 p-4">
