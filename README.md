@@ -20,20 +20,6 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-## Upload Storage In Production
-
-Uploaded files are served through the `/uploads/...` URL, but in production you should
-store the actual files in a persistent directory outside the app build when possible.
-
-Set the `UPLOAD_DIR` environment variable on the server to an absolute path such as:
-
-```bash
-UPLOAD_DIR=/var/www/garage_management_system/uploads
-```
-
-Then make sure the application process can read and write that directory, and copy any
-existing files from `public/uploads` into the same folder before restarting the app.
-
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
