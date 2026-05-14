@@ -34,7 +34,16 @@ function mapHomeSliderImage(row: {
   };
 }
 
-function ensureSuperAdmin(session: Awaited<ReturnType<typeof auth>>) {
+function ensureSuperAdmin(
+  session:
+    | {
+        user?: {
+          role?: UserRole | string | null;
+        } | null;
+      }
+    | null
+    | undefined
+) {
   return session?.user?.role === UserRole.SUPER_ADMIN;
 }
 
