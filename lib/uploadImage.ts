@@ -3,6 +3,11 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import { mkdir } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
+import {
+  buildUploadFileUrl,
+  getUploadDir,
+  sanitizeUploadFileName,
+} from "@/lib/uploadStorage";
 
 export async function uploadImage(data: FormData) {
   try {
@@ -27,20 +32,20 @@ export async function uploadImage(data: FormData) {
     const buffer = Buffer.from(bytes);
 
     // Define the path where the image will be stored within your project
-    const uploadDir = join(process.cwd(), "public", "uploads");
+    const uploadDir = getUploadDir();
 
     // Create the directory if it doesn't exist
     await mkdir(uploadDir, { recursive: true });
 
     // Generate a unique name for the image using UUID
-    const uniqueFileName = `${uuidv4()}-${file.name}`;
+    const uniqueFileName = `${uuidv4()}-${sanitizeUploadFileName(file.name)}`;
     const filePath = join(uploadDir, uniqueFileName);
 
     // Save the image with the unique name
     await writeFile(filePath, buffer);
 
     // Return the relative path for accessing the image
-    const relativePath = `/uploads/${uniqueFileName}`;
+    const relativePath = buildUploadFileUrl(uniqueFileName);
     return { success: true, path: relativePath };
   } catch (error) {
     throw error;
