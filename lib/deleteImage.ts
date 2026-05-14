@@ -1,21 +1,28 @@
 "use server";
 import { unlink } from "fs/promises";
-import { join } from "path";
+import {
+  getUploadFileNameFromUrl,
+  getUploadPathCandidates,
+} from "@/lib/uploadStorage";
 
 export async function deleteImage(imageUrl: string) {
-  try {
-    // Define the base directory where the uploads are stored
-    const uploadDir = join(process.cwd(), "public", "uploads");
-
-    // Construct the absolute path to the image
-    const filePath = join(uploadDir, imageUrl.replace("/uploads/", ""));
-
-    // Delete the file
-    await unlink(filePath);
-
-    return { success: true, message: "Image deleted successfully" };
-  } catch (error) {
-    console.error("Error deleting image:", error);
-    throw error;
+  const fileName = getUploadFileNameFromUrl(imageUrl);
+  if (!fileName) {
+    throw new Error("Invalid upload URL");
   }
+
+  const candidatePaths = getUploadPathCandidates(fileName);
+  let lastError: unknown = null;
+
+  for (const filePath of candidatePaths) {
+    try {
+      await unlink(filePath);
+      return { success: true, message: "Image deleted successfully" };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  console.error("Error deleting image:", lastError);
+  throw lastError;
 }
