@@ -50,7 +50,7 @@ function NavBar({ user, onToggleSidebar }: Props) {
           size="icon"
           variant="ghost"
           className="
-            md:hidden 
+            md:hidden
             h-9 w-9 rounded-lg
             border border-white/20
             text-white/80

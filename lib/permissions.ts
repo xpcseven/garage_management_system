@@ -4,10 +4,6 @@ export function canManageCities(role: UserRole | string | undefined) {
   return role === UserRole.SUPER_ADMIN;
 }
 
-export function canManageHomeSlider(role: UserRole | string | undefined) {
-  return role === UserRole.SUPER_ADMIN;
-}
-
 export function canManageGarages(role: UserRole | string | undefined) {
   return (
     role === UserRole.SUPER_ADMIN ||
@@ -58,7 +54,6 @@ export function canManageTourismPlaces(role: UserRole | string | undefined) {
 export type DashboardSectionId =
   | "overview"
   | "cities"
-  | "home_slider"
   | "tourism_places"
   | "garages"
   | "vehicles"
@@ -78,7 +73,6 @@ export function dashboardSectionsForRole(
     return [
       "overview",
       "cities",
-      "home_slider",
       "tourism_places",
       "garages",
       "vehicles",

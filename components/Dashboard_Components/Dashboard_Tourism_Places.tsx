@@ -2,8 +2,8 @@ import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import fallbackTourismPlaceImage from "@/public/System/Tourism_Images/all-hadar_01.png";
-import { buildSafeImageSrc } from "@/lib/imageUrl";
+
+const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
 function placeCaption(p: TourismPlaceRow) {
   if (p.governorate) return p.governorate;
@@ -30,11 +30,7 @@ const Dashboard_Tourism_Places = ({
               className="group relative isolate block aspect-[4/3] w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-slate-100 shadow-md ring-1 ring-slate-900/5 transition-[box-shadow,transform] hover:shadow-xl hover:ring-purple-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 sm:aspect-[3/2] lg:aspect-[3/2]"
             >
               <Image
-                src={
-                  featured.imageUrl
-                    ? buildSafeImageSrc(featured.imageUrl)
-                    : fallbackTourismPlaceImage
-                }
+                src={featured.imageUrl || FALLBACK_IMG}
                 alt={featured.name}
                 fill
                 className="object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
