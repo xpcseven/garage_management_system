@@ -35,6 +35,11 @@ const links: Record<
     title: "المدن",
     desc: "إدارة المدن للرحلات",
   },
+  home_slider: {
+    href: "/home-slider",
+    title: "سلايدر الرئيسية",
+    desc: "إدارة صور السلايدر الظاهرة في الصفحة الرئيسية",
+  },
   tourism_places: {
     href: "/tourism_places",
     title: "الأماكن السياحية",
