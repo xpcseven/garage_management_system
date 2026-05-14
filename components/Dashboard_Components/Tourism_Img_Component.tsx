@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image, { type StaticImageData } from "next/image";
 import fallbackSliderImage from "@/public/System/Tourism_Images/all-hadar_01.png";
+import { buildSafeImageSrc } from "@/lib/imageUrl";
 
 type SlideItem = {
   src: string | StaticImageData;
@@ -53,7 +54,11 @@ export default function Tourism_Img_Component({ slides = [] }: Props) {
       <div className="relative overflow-hidden rounded-2xl border border-slate-200">
         <article className="group relative h-72 sm:h-80 lg:h-[28rem]">
           <Image
-            src={currentSlide.src}
+            src={
+              typeof currentSlide.src === "string"
+                ? buildSafeImageSrc(currentSlide.src)
+                : currentSlide.src
+            }
             alt={currentSlide.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
