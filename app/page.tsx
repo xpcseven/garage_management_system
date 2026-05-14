@@ -1,6 +1,9 @@
+import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { getPublicHomeSliderImages } from "@/lib/actions/home_slider.actions";
+import publicGarageImage from "@/public/System/Public_Garagr.png";
+import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
 import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
 import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
@@ -8,15 +11,16 @@ import Dashboard_Tourism_Places from "@/components/Dashboard_Components/Dashboar
 import Dashboard_Travel_Ads from "@/components/Dashboard_Components/Dashboard_Travel_Ads";
 import Dashboard_Details from "@/components/Dashboard_Components/Dashboard_Details";
 
+function placeGovernorate(
+  p: Awaited<ReturnType<typeof getPublicTourismPlacesForLanding>>[number]
+) {
+  if (p.governorate) return p.governorate;
+  if (!p.cityName) return "العراق";
+  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+}
+
 export default async function LandingPage() {
   const tourismPlaces = await getPublicTourismPlacesForLanding();
-  let homeSliderImages: Awaited<ReturnType<typeof getPublicHomeSliderImages>> = [];
-
-  try {
-    homeSliderImages = await getPublicHomeSliderImages();
-  } catch (error) {
-    console.error("Failed to load home slider images:", error);
-  }
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -26,12 +30,7 @@ export default async function LandingPage() {
       </section>
 
       <section>
-        <Tourism_Img_Component
-          slides={homeSliderImages.map((slide) => ({
-            src: slide.imageUrl,
-            title: slide.title,
-          }))}
-        />
+        <Tourism_Img_Component />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">

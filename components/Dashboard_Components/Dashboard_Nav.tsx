@@ -1,7 +1,6 @@
 import { Button } from "../ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import flagsImage from "@/public/System/flags.png";
 
 const Dashboard_Nav = () => {
   return (
@@ -32,7 +31,7 @@ const Dashboard_Nav = () => {
           </div>
           <Image
             className="ms-3 h-[30px] w-[90px] rounded-sm object-cover"
-            src={flagsImage}
+            src="/System/flags.png"
             alt="flag"
             width={100}
             height={100}

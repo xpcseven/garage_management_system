@@ -6,7 +6,6 @@ import type { NavBarUser } from "@/components/NavBar";
 import {
   canManageCities,
   canManageGarages,
-  canManageHomeSlider,
   canManageTrips,
   canManageTourismPlaces,
   canManageVehicles,
@@ -108,10 +107,8 @@ export default function Sidebar({ user, className }: Props) {
           <SectionDivider label="الإدارة" />
         )}
 
-        {canManageCities(role) && <NavLink href="/cities" label="المدن" icon="🏙️" />}
-
-        {canManageHomeSlider(role) && (
-          <NavLink href="/home-slider" label="سلايدر الرئيسية" icon="🖼️" />
+        {canManageCities(role) && (
+          <NavLink href="/cities" label="المدن" icon="🏙️" />
         )}
 
         {canManageTourismPlaces(role) && (
