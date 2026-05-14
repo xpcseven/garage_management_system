@@ -8,26 +8,43 @@ type SlideItem = {
   title: string;
 };
 
-const fallbackTourismCards: SlideItem[] = [
-  { src: "/System/Tourism_Images/all-hadar_01.png", title: "مدينة الحضر الاثرية" },
-
-];
-
 type Props = {
   slides?: SlideItem[];
-  allowFallback?: boolean;
 };
 
-export default function Tourism_Img_Component({
-  slides = [],
-  allowFallback = true,
-}: Props) {
-  const tourismCards =
-    slides.length > 0 ? slides : allowFallback ? fallbackTourismCards : [];
+export default function Tourism_Img_Component({ slides = [] }: Props) {
+  const normalizedSlides = slides.filter(
+    (slide): slide is SlideItem => Boolean(slide?.src && slide?.title)
+  );
+  const tourismCards = normalizedSlides;
   const [index, setIndex] = useState(0);
   const total = tourismCards.length;
+  const safeIndex = total > 0 ? Math.min(index, total - 1) : 0;
+  const currentSlide = total > 0 ? tourismCards[safeIndex] : null;
 
-  if (total === 0) {
+  useEffect(() => {
+    if (total === 0) return;
+    setIndex((prev) => (prev >= total ? 0 : prev));
+  }, [total]);
+
+  const nextSlide = () => {
+    if (total <= 1) return;
+    setIndex((prev) => (prev + 1) % total);
+  };
+  const prevSlide = () => {
+    if (total <= 1) return;
+    setIndex((prev) => (prev - 1 + total) % total);
+  };
+
+  useEffect(() => {
+    if (total <= 1) return;
+    const t = setInterval(() => {
+      setIndex((prev) => (prev + 1) % total);
+    }, 3500);
+    return () => clearInterval(t);
+  }, [total]);
+
+  if (!currentSlide) {
     return (
       <section className="space-y-5 p-4">
         <div className="flex h-72 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500 sm:h-80 lg:h-[28rem]">
@@ -37,27 +54,13 @@ export default function Tourism_Img_Component({
     );
   }
 
-  const nextSlide = () => setIndex((prev) => (prev + 1) % total);
-  const prevSlide = () => setIndex((prev) => (prev - 1 + total) % total);
-
-  useEffect(() => {
-    setIndex(0);
-  }, [total]);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setIndex((prev) => (prev + 1) % total);
-    }, 3500);
-    return () => clearInterval(t);
-  }, [total]);
-
   return (
     <section className="space-y-5 p-4">
       <div className="relative overflow-hidden rounded-2xl border border-slate-200">
         <article className="group relative h-72 sm:h-80 lg:h-[28rem]">
           <Image
-            src={tourismCards[index].src}
-            alt={tourismCards[index].title}
+            src={currentSlide.src}
+            alt={currentSlide.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority
@@ -65,7 +68,7 @@ export default function Tourism_Img_Component({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
           <div className="absolute bottom-0 z-10 w-full p-4 text-white sm:p-6">
             <h3 className="text-lg font-semibold sm:text-2xl">
-              {tourismCards[index].title}
+              {currentSlide.title}
             </h3>
           </div>
         </article>
@@ -96,7 +99,7 @@ export default function Tourism_Img_Component({
             onClick={() => setIndex(i)}
             aria-label={`الانتقال إلى ${item.title}`}
             className={`h-2.5 w-2.5 rounded-full transition ${
-              i === index ? "bg-purple-600" : "bg-slate-300 hover:bg-slate-400"
+              i === safeIndex ? "bg-purple-600" : "bg-slate-300 hover:bg-slate-400"
             }`}
           />
         ))}

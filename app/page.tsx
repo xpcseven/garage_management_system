@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  getPublicHomeSliderImages,
-  hasConfiguredHomeSliderImages,
-} from "@/lib/actions/home_slider.actions";
+import { getPublicHomeSliderImages } from "@/lib/actions/home_slider.actions";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
 import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
 import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
@@ -13,8 +10,13 @@ import Dashboard_Details from "@/components/Dashboard_Components/Dashboard_Detai
 
 export default async function LandingPage() {
   const tourismPlaces = await getPublicTourismPlacesForLanding();
-  const homeSliderImages = await getPublicHomeSliderImages();
-  const hasConfiguredSlider = await hasConfiguredHomeSliderImages();
+  let homeSliderImages: Awaited<ReturnType<typeof getPublicHomeSliderImages>> = [];
+
+  try {
+    homeSliderImages = await getPublicHomeSliderImages();
+  } catch (error) {
+    console.error("Failed to load home slider images:", error);
+  }
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -29,7 +31,6 @@ export default async function LandingPage() {
             src: slide.imageUrl,
             title: slide.title,
           }))}
-          allowFallback={!hasConfiguredSlider}
         />
       </section>
 
