@@ -2,7 +2,7 @@
 
 import { Button } from "../ui/button";
 import Link from "next/link";
-import flagImage from "@/public/System/flags.png";
+const FLAG_SRC = "/System/flags.png";
 
 const Dashboard_Nav = () => {
   return (
@@ -34,7 +34,7 @@ const Dashboard_Nav = () => {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             className="ms-3 h-[30px] w-[90px] rounded-sm object-cover"
-            src={flagImage.src}
+            src={FLAG_SRC}
             alt="علم العراق"
             width={90}
             height={30}

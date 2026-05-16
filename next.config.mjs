@@ -2,8 +2,10 @@
 const nextConfig = {
   reactStrictMode: false,
 
-  // تجنّب /_next/image على السيرفر (مصدر أخطاء 400 عند غياب الملف أو فشل sharp)
+  // لا تستخدم /_next/image — مسارات مباشرة من public و uploads
   images: {
+    loader: "custom",
+    loaderFile: "./lib/passthrough-image-loader.ts",
     unoptimized: true,
     remotePatterns: [
       {

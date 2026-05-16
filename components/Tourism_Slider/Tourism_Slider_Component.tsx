@@ -1,7 +1,6 @@
 import type { TourismSliderSlideRow } from "@/lib/actions/tourism_slider.actions";
 import Tourism_Slider_Create from "./Tourism_Slider_Create";
 import Tourism_Slider_Table from "./Tourism_Slider_Table";
-import Image from "next/image";
 
 type Props = {
   slides: TourismSliderSlideRow[];
@@ -21,12 +20,13 @@ export default function Tourism_Slider_Component({ slides }: Props) {
 
       <div className="flex items-center justify-between border-b border-purple-200 pb-4">
         <Tourism_Slider_Create />
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/System/flags.png"
           alt="Tourism Slider"
           className="h-[30px] w-[90px] object-cover"
-          width={100}
-          height={100}
+          width={90}
+          height={30}
         />
       </div>
 

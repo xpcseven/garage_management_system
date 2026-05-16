@@ -1,9 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import publicGarageImage from "@/public/System/Public_Garagr.png";
-import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
 import { getPublicTourismSliderSlides } from "@/lib/actions/tourism_slider.actions";
 import { normalizePublicImageSrc } from "@/lib/image-src";
