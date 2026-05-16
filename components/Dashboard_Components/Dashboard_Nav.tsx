@@ -2,7 +2,6 @@
 
 import { Button } from "../ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import flagImage from "@/public/System/flags.png";
 
 const Dashboard_Nav = () => {
@@ -32,13 +31,13 @@ const Dashboard_Nav = () => {
           <div className="text-right">
             <p className="text-xs font-medium text-purple-500">IRAQ Tourism and Travel</p>
           </div>
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             className="ms-3 h-[30px] w-[90px] rounded-sm object-cover"
-            src={flagImage}
+            src={flagImage.src}
             alt="علم العراق"
-            width={100}
-            height={100}
-            priority
+            width={90}
+            height={30}
           />
         </div>
       </div>

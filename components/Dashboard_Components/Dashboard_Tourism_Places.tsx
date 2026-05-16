@@ -2,7 +2,6 @@
 
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { resolvePublicImageSrc } from "@/lib/image-src";
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
@@ -30,13 +29,11 @@ const Dashboard_Tourism_Places = ({
               href="/tourism-places"
               className="group relative isolate block aspect-[4/3] w-full overflow-hidden rounded-3xl border border-slate-200/90 bg-slate-100 shadow-md ring-1 ring-slate-900/5 transition-[box-shadow,transform] hover:shadow-xl hover:ring-purple-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 sm:aspect-[3/2] lg:aspect-[3/2]"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={resolvePublicImageSrc(featured.imageUrl)}
-                unoptimized
                 alt={featured.name}
-                fill
-                className="object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
-                sizes="(max-width: 1024px) 100vw, 58vw"
+                className="absolute inset-0 h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
