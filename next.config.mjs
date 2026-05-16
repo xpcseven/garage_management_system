@@ -2,8 +2,22 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    // استخدم remotePatterns فقط (domains أُهمل في إصدارات Next الحديثة)
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "localhost",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        pathname: "/**",
+      },
       {
         protocol: "https",
         hostname: "tr.ashuor.com",
