@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -64,13 +65,12 @@ export default function Passenger_Tourism_Places_Component({ places }: Props) {
         </div>
 
         <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={flagImage.src}
+          <Image
+            src={flagImage}
             alt="علم"
-            width={90}
-            height={30}
-            className="h-[30px] w-[90px] rounded-sm object-cover"
+            width={120}
+            height={60}
+            className="rounded-sm object-cover"
           />
         </div>
       </div>

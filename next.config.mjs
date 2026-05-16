@@ -1,12 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-
-  // لا تستخدم /_next/image — مسارات مباشرة من public و uploads
   images: {
-    loader: "custom",
-    loaderFile: "./lib/passthrough-image-loader.ts",
-    unoptimized: true,
+    // استخدم remotePatterns فقط (domains أُهمل في إصدارات Next الحديثة)
     remotePatterns: [
       {
         protocol: "https",
@@ -18,9 +14,15 @@ const nextConfig = {
         hostname: "tr.ashuor.com",
         pathname: "/**",
       },
+      // S3: bucket.s3.region.amazonaws.com وأشكال مشابهة
       {
         protocol: "https",
-        hostname: "*.amazonaws.com",
+        hostname: "**.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "**.amazonaws.com",
         pathname: "/**",
       },
     ],
@@ -37,18 +39,21 @@ const nextConfig = {
           },
         ],
       },
-      // HTML: لا تخزّن طويلاً حتى لا يبقى مرجعاً لـ chunks قديمة بعد النشر
       {
-        source: "/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)",
+        source: "/sw.js",
         headers: [
           {
             key: "Cache-Control",
-            value: "no-store, must-revalidate",
+            value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "Service-Worker-Allowed",
+            value: "/",
           },
         ],
       },
       {
-        source: "/_next/static/:path*",
+        source: "/manifest.json",
         headers: [
           {
             key: "Cache-Control",

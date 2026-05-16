@@ -1,6 +1,5 @@
-"use client";
-
-import React from "react";
+import React from 'react'
+import Image from 'next/image'
 import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
 const Dashboard_Travel_Ads = () => {
@@ -8,11 +7,12 @@ const Dashboard_Travel_Ads = () => {
         <div className="grid gap-6 lg:grid-cols-2">
             <article className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-lg">
                 <div className="relative h-64 sm:h-72">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={publicGarageImage.src}
+                    <Image
+                        src={publicGarageImage}
                         alt="خدمات النقل العام"
-                        className="absolute inset-0 h-full w-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/50 via-emerald-900/10 to-transparent" />
                     <span className="absolute right-4 top-4 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-bold">
@@ -37,11 +37,12 @@ const Dashboard_Travel_Ads = () => {
 
             <article className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-lg">
                 <div className="relative h-64 sm:h-72">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src={outsideGarageImage.src}
+                    <Image
+                        src={outsideGarageImage}
                         alt="خدمات النقل الخارجي"
-                        className="absolute inset-0 h-full w-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-950/50 via-blue-900/10 to-transparent" />
                     <span className="absolute right-4 top-4 rounded-full bg-blue-500/90 px-3 py-1 text-xs font-bold">

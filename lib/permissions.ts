@@ -42,11 +42,6 @@ export function canViewBookings(role: UserRole | string | undefined) {
   return !!role;
 }
 
-/** إدارة صور سلايدر المعالم السياحية (المشرف العام فقط) */
-export function canManageTourismSlider(role: UserRole | string | undefined) {
-  return role === UserRole.SUPER_ADMIN;
-}
-
 /** إدارة الأماكن السياحية (حالياً: المشرف العام فقط) */
 export function canManageTourismPlaces(role: UserRole | string | undefined) {
   return (
