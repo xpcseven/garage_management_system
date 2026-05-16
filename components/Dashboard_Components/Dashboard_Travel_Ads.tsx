@@ -1,4 +1,6 @@
-import React from 'react'
+"use client";
+
+import React from "react";
 import Image from 'next/image'
 import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";

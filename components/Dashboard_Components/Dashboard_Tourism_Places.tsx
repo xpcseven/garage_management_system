@@ -1,3 +1,5 @@
+"use client";
+
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { resolvePublicImageSrc } from "@/lib/image-src";
 import Image from "next/image";
