@@ -32,12 +32,16 @@ function mapRow(
 export async function getPublicTourismSliderSlides(): Promise<
   TourismSliderSlideRow[]
 > {
-  const rows = await prisma.tourismSliderSlide.findMany({
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    take: 50,
-  });
-  return rows.map(mapRow);
+  try {
+    const rows = await prisma.tourismSliderSlide.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      take: 50,
+    });
+    return rows.map(mapRow);
+  } catch {
+    return [];
+  }
 }
 
 export async function getTourismSliderSlides(): Promise<TourismSliderSlideRow[]> {

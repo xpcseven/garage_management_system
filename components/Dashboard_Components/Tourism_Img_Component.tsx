@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import {
+  FALLBACK_TOURISM_IMAGE,
+  normalizePublicImageSrc,
+} from "@/lib/image-src";
 
 export type TourismSliderCard = {
   id: string;
@@ -12,7 +15,7 @@ export type TourismSliderCard = {
 const fallbackCards: TourismSliderCard[] = [
   {
     id: "fallback-hadar",
-    src: "/System/Tourism_Images/all-hadar_02.png",
+    src: FALLBACK_TOURISM_IMAGE,
     title: "الحضر الأثرية",
   },
 ];
@@ -21,11 +24,22 @@ type Props = {
   slides?: TourismSliderCard[];
 };
 
+function toUsableCards(slides?: TourismSliderCard[]): TourismSliderCard[] {
+  if (!slides?.length) return fallbackCards;
+
+  const usable = slides
+    .map((s) => {
+      const src = normalizePublicImageSrc(s.src);
+      if (!src) return null;
+      return { id: s.id, src, title: s.title };
+    })
+    .filter((s): s is TourismSliderCard => s !== null);
+
+  return usable.length > 0 ? usable : fallbackCards;
+}
+
 export default function Tourism_Img_Component({ slides }: Props) {
-  const tourismCards =
-    slides && slides.length > 0
-      ? slides.map((s) => ({ id: s.id, src: s.src, title: s.title }))
-      : fallbackCards;
+  const tourismCards = useMemo(() => toUsableCards(slides), [slides]);
 
   const [index, setIndex] = useState(0);
   const total = tourismCards.length;
@@ -47,18 +61,18 @@ export default function Tourism_Img_Component({ slides }: Props) {
 
   if (total === 0) return null;
 
-  const current = tourismCards[index];
+  const current = tourismCards[index] ?? tourismCards[0];
 
   return (
     <section className="space-y-5 p-4">
       <div className="relative overflow-hidden rounded-2xl border border-slate-200">
         <article className="group relative h-72 sm:h-80 lg:h-[28rem]">
-          <Image
+          {/* img بدل next/image لتجنب خطأ hostname مع روابط قاعدة البيانات */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={current.src}
             alt={current.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            priority
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
           <div className="absolute bottom-0 z-10 w-full p-4 text-white sm:p-6">

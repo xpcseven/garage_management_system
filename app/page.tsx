@@ -6,6 +6,7 @@ import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
 import { getPublicTourismSliderSlides } from "@/lib/actions/tourism_slider.actions";
+import { normalizePublicImageSrc } from "@/lib/image-src";
 import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
 import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
 import Dashboard_Tourism_Places from "@/components/Dashboard_Components/Dashboard_Tourism_Places";
@@ -26,11 +27,13 @@ export default async function LandingPage() {
     getPublicTourismSliderSlides(),
   ]);
 
-  const sliderCards = sliderSlides.map((s) => ({
-    id: s.id,
-    src: s.imageUrl,
-    title: s.title,
-  }));
+  const sliderCards = sliderSlides
+    .map((s) => {
+      const src = normalizePublicImageSrc(s.imageUrl);
+      if (!src) return null;
+      return { id: s.id, src, title: s.title };
+    })
+    .filter((s): s is { id: string; src: string; title: string } => s !== null);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
