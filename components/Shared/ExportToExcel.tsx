@@ -1,3 +1,5 @@
+"use client";
+
 import { RiFileExcel2Fill } from "react-icons/ri";
 import * as XLSX from "xlsx";
 const ExportToExcel = ({ currentItems }: any) => {

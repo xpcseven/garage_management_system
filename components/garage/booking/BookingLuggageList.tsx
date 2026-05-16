@@ -1,3 +1,4 @@
+'use client'
 import type { BookingLuggageRow } from "@/lib/actions/booking.actions";
 import { luggageKindLabel } from "@/lib/luggage-labels";
 
