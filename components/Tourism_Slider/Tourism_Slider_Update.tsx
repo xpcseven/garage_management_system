@@ -79,7 +79,7 @@ export default function Tourism_Slider_Update({ slide, iconOnly = false }: Props
                 await Swal.fire({
                   icon: "warning",
                   title: "الصورة مطلوبة",
-                  text: "يرجى رفع صورة أو الإبقاء على الصورة الحالية قبل الحفظ",
+                  text: "يرجى الإبقاء على صورة صالحة أو رفع صورة جديدة قبل الحفظ",
                   confirmButtonText: "حسناً",
                 });
                 return;
