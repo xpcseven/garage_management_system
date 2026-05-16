@@ -108,10 +108,7 @@ export default function Sidebar({ user, className }: Props) {
         )}
 
         {canManageCities(role) && (
-          <>
-            <NavLink href="/cities" label="المدن" icon="🏙️" />
-            <NavLink href="/landing-slider" label="سلايدر الرئيسية" icon="🖼️" />
-          </>
+          <NavLink href="/cities" label="المدن" icon="🏙️" />
         )}
 
         {canManageTourismPlaces(role) && (

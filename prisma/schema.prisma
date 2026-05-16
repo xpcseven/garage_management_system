@@ -701,19 +701,3 @@ model AuditLog {
   data      Json?
   createdAt DateTime @default(now())
 }
-
-// ============================================================
-// LANDING PAGE SLIDER
-// ============================================================
-
-model TourismSliderSlide {
-  id        String   @id @default(uuid())
-  title     String
-  imageUrl  String
-  sortOrder Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive, sortOrder])
-}
