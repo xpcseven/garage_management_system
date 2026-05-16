@@ -4,6 +4,11 @@ export function canManageCities(role: UserRole | string | undefined) {
   return role === UserRole.SUPER_ADMIN;
 }
 
+/** إدارة شرائح سلايدر الصفحة الرئيسية */
+export function canManageLandingSlider(role: UserRole | string | undefined) {
+  return role === UserRole.SUPER_ADMIN;
+}
+
 export function canManageGarages(role: UserRole | string | undefined) {
   return (
     role === UserRole.SUPER_ADMIN ||
