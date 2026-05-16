@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import publicGarageImage from "@/public/System/Public_Garagr.png";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
+import { getPublicLandingSliderSlides } from "@/lib/actions/landing_slider.actions";
 import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
 import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
 import Dashboard_Tourism_Places from "@/components/Dashboard_Components/Dashboard_Tourism_Places";
@@ -20,7 +21,10 @@ function placeGovernorate(
 }
 
 export default async function LandingPage() {
-  const tourismPlaces = await getPublicTourismPlacesForLanding();
+  const [tourismPlaces, sliderSlides] = await Promise.all([
+    getPublicTourismPlacesForLanding(),
+    getPublicLandingSliderSlides(),
+  ]);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -30,7 +34,7 @@ export default async function LandingPage() {
       </section>
 
       <section>
-        <Tourism_Img_Component />
+        <Tourism_Img_Component slides={sliderSlides} />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
