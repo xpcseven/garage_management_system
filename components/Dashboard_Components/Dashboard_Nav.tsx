@@ -1,8 +1,6 @@
-"use client";
-
 import { Button } from "../ui/button";
 import Link from "next/link";
-const FLAG_SRC = "/System/flags.png";
+import Image from "next/image";
 
 const Dashboard_Nav = () => {
   return (
@@ -31,13 +29,12 @@ const Dashboard_Nav = () => {
           <div className="text-right">
             <p className="text-xs font-medium text-purple-500">IRAQ Tourism and Travel</p>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             className="ms-3 h-[30px] w-[90px] rounded-sm object-cover"
-            src={FLAG_SRC}
-            alt="علم العراق"
-            width={90}
-            height={30}
+            src="/System/flags.png"
+            alt="flag"
+            width={100}
+            height={100}
           />
         </div>
       </div>

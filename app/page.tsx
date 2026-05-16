@@ -1,9 +1,10 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import publicGarageImage from "@/public/System/Public_Garagr.png";
+import outsideGarageImage from "@/public/System/Outside_Garage.png";
 import { getPublicTourismPlacesForLanding } from "@/lib/actions/tourism_places.actions";
-import { getPublicTourismSliderSlides } from "@/lib/actions/tourism_slider.actions";
-import { normalizePublicImageSrc } from "@/lib/image-src";
 import Tourism_Img_Component from "@/components/Dashboard_Components/Tourism_Img_Component";
 import Dashboard_Nav from "@/components/Dashboard_Components/Dashboard_Nav";
 import Dashboard_Tourism_Places from "@/components/Dashboard_Components/Dashboard_Tourism_Places";
@@ -19,18 +20,7 @@ function placeGovernorate(
 }
 
 export default async function LandingPage() {
-  const [tourismPlaces, sliderSlides] = await Promise.all([
-    getPublicTourismPlacesForLanding(),
-    getPublicTourismSliderSlides(),
-  ]);
-
-  const sliderCards = sliderSlides
-    .map((s) => {
-      const src = normalizePublicImageSrc(s.imageUrl);
-      if (!src) return null;
-      return { id: s.id, src, title: s.title };
-    })
-    .filter((s): s is { id: string; src: string; title: string } => s !== null);
+  const tourismPlaces = await getPublicTourismPlacesForLanding();
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -40,7 +30,7 @@ export default async function LandingPage() {
       </section>
 
       <section>
-        <Tourism_Img_Component slides={sliderCards} />
+        <Tourism_Img_Component />
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">

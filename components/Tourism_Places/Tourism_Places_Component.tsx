@@ -1,6 +1,7 @@
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import Tourism_Places_Create from "./Tourism_Places_Create";
 import Tourism_Places_Table from "./Tourism_Places_Table";
+import Image from "next/image";
 
 type Props = {
   places: TourismPlaceRow[];
@@ -23,14 +24,7 @@ export default function Tourism_Places_Component({ places }: Props) {
 
         <div>
           
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/System/flags.png"
-            alt="Tourism Places"
-            className="h-[30px] w-[90px] object-cover"
-            width={90}
-            height={30}
-          />
+          <Image src="/System/flags.png" alt="Tourism Places" className="w-[90px] h-[30px] object-cover" width={100} height={100} />
         </div>
       </div>
       <Tourism_Places_Table places={places} />

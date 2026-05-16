@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { Check, ChevronsUpDown } from "lucide-react";

@@ -8,7 +8,6 @@ import {
   canManageGarages,
   canManageTrips,
   canManageTourismPlaces,
-  canManageTourismSlider,
   canManageVehicles,
   canUsePassengerPortal,
   canViewBookings,
@@ -110,10 +109,6 @@ export default function Sidebar({ user, className }: Props) {
 
         {canManageCities(role) && (
           <NavLink href="/cities" label="المدن" icon="🏙️" />
-        )}
-
-        {canManageTourismSlider(role) && (
-          <NavLink href="/tourism-slider" label="سلايدر المعالم" icon="🖼️" />
         )}
 
         {canManageTourismPlaces(role) && (
