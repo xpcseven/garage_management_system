@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    // على السيرفر خلف nginx: إن استمر 400 على /_next/image فعّل NEXT_IMAGE_UNOPTIMIZED=true
-    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED === "true",
     // استخدم remotePatterns فقط (domains أُهمل في إصدارات Next الحديثة)
     remotePatterns: [
       {
