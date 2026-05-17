@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Travel
 
 on:
   push:
@@ -7,34 +7,29 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-
-    env:
-      NEXT_WEBSITE_URL: ${{ secrets.NEXT_WEBSITE_URL }}
-
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [20.9.0]
 
+    env:
+      AUTH_SECRET: ${{secrets.AUTH_SECRET}}
+      AUTH_TRUST_HOST: ${{secrets.AUTH_TRUST_HOST}}
+      DATABASE_URL: ${{secrets.DATABASE_URL}}
+      NEXTAUTH_URL: ${{secrets.NEXTAUTH_URL}}
+      NEXT_WEBSITE_URL: ${{secrets.NEXT_WEBSITE_URL}}
+      AWS_REGION: ${{secrets.AWS_REGION}}
+      AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+      AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+      AWS_S3_BUCKET: ${{secrets.AWS_S3_BUCKET}}
     steps:
       - uses: actions/checkout@v4
-
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-
-      # بعد كل build يجب إعادة تشغيل Next حتى تتطابق ملفات _next/static مع الـ HTML
-      - name: Restart application
-        run: |
-          if command -v pm2 >/dev/null 2>&1; then
-            pm2 restart all || pm2 restart new-system || pm2 restart garage_management_system || true
-          fi
-          if command -v systemctl >/dev/null 2>&1; then
-            sudo systemctl restart nextjs || sudo systemctl restart garage || true
-          fi
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build --if-present
+      - name: Change Directory
+        run: cd /home/travel/actions-runner/_work/garage_management_system/garage_management_system
+      - run: pm2 restart 0
