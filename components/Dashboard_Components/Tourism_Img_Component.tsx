@@ -9,7 +9,7 @@ const tourismCards = [
 
 export default function Tourism_Img_Component() {
     const [index, setIndex] = useState(0);
-    const total = tourismCards.length;
+    const total = tourismCards.length; 
 
     const nextSlide = () => setIndex((prev) => (prev + 1) % total);
     const prevSlide = () => setIndex((prev) => (prev - 1 + total) % total);
