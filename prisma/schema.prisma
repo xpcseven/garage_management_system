@@ -689,6 +689,22 @@ model Notification {
 }
 
 // ============================================================
+// HOME SLIDER (landing page — SUPER_ADMIN only)
+// ============================================================
+
+model TourismSliderSlide {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+// ============================================================
 // AUDIT LOG (NEW — ENTERPRISE FEATURE)
 // ============================================================
 
