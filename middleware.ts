@@ -7,18 +7,21 @@ const { auth } = NextAuth(authConfig);
 
 import {
   DEFAULT_LOGIN_REDIRECT,
-  publicRoutes,
   authRoutes,
   apiAuthPrefix,
- 
+  isPublicRoute,
 } from "@/routes";
 
 export default auth((req) => {
   const { nextUrl } = req;
+
+  if (isPublicRoute(nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   const isLoggedIn = !!req.auth;
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   if (isApiAuthRoute) {
@@ -32,7 +35,7 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!isLoggedIn && !isPublicRoutes) {
+  if (!isLoggedIn) {
     return Response.redirect(new URL("/auth/login", nextUrl));
   }
 
@@ -40,5 +43,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|fonts).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|fonts|System/|uploads/).*)",
+  ],
 };
