@@ -1,29 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 import Image from "next/image";
 
 const tourismCards = [
-    { src: "/System/Tourism_Images/all-hadar_01.png", title: "مدينة الحضر الاثرية" },
     { src: "/System/Tourism_Images/all-hadar_02.png", title: "الحضر الأثرية" },
-    { src: "/System/Tourism_Images/all-hadar_03.png", title: "جامع النوري" },
-    { src: "/System/Tourism_Images/all-hadar_04.png", title: "جامع النوري و المنارة الحدباء" },
-    { src: "/System/Tourism_Images/all-mutanabe.png", title: "شارع المتنبي" },
-    { src: "/System/Tourism_Images/baghadad_land.png", title: "جزيرة بغداد السياحية" },
-    { src: "/System/Tourism_Images/baghdad_almadan.png", title: "المدائن السياحية الاثرية" },
-    { src: "/System/Tourism_Images/babilon_lion.png", title: "أسد بابل" },
-    { src: "/System/Tourism_Images/irbil_castle.png", title: "قلعة أربيل" },
-    { src: "/System/Tourism_Images/najaf.png", title: "النجف الأشرف" },
-    { src: "/System/Tourism_Images/nrgal_door_nainwa.png", title: "بوابة نركال - نينوى" },
-    { src: "/System/Tourism_Images/samara.png", title: "سامراء" },
-    { src: "/System/Tourism_Images/hor.png", title: "أهوار العراق" },
-    { src: "/System/Tourism_Images/zaqura_aur.png", title: "زقورة اور الاثرية" },
-    { src: "/System/Tourism_Images/ishtar_door.png", title: "بوابة عشتار" },
 ];
 
 export default function Tourism_Img_Component() {
     const [index, setIndex] = useState(0);
-    const total = tourismCards.length;
+    const total = tourismCards.length; 
 
     const nextSlide = () => setIndex((prev) => (prev + 1) % total);
     const prevSlide = () => setIndex((prev) => (prev - 1 + total) % total);

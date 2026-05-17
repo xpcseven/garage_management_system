@@ -1,18 +1,13 @@
 import NextAuth from "next-auth";
-import { NextResponse } from "next/server";
-
 import authConfig from "@/auth.config";
-
 const { auth } = NextAuth(authConfig);
-
 import {
   DEFAULT_LOGIN_REDIRECT,
   publicRoutes,
   authRoutes,
   apiAuthPrefix,
- 
 } from "@/routes";
-
+// @ts-expect-error @ts-ignore
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
@@ -22,23 +17,25 @@ export default auth((req) => {
   const isAuthRoute = authRoutes.includes(nextUrl.pathname);
 
   if (isApiAuthRoute) {
-    return NextResponse.next();
+    return null;
   }
 
   if (isAuthRoute) {
     if (isLoggedIn) {
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+     
+        return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+     
     }
-    return NextResponse.next();
+    return null;
   }
 
   if (!isLoggedIn && !isPublicRoutes) {
     return Response.redirect(new URL("/auth/login", nextUrl));
   }
 
-  return NextResponse.next();
+  return null;
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|fonts).*)"],
 };
