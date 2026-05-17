@@ -23,14 +23,18 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Clean npm cache
-        run: npm cache clean --force
-
-      - name: Remove old dependencies
-        run: rm -rf node_modules package-lock.json
-
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build project
-        run: npm run build --if-present
+        run: npm run build
+
+      # بعد كل build يجب إعادة تشغيل Next حتى تتطابق ملفات _next/static مع الـ HTML
+      - name: Restart application
+        run: |
+          if command -v pm2 >/dev/null 2>&1; then
+            pm2 restart all || pm2 restart new-system || pm2 restart garage_management_system || true
+          fi
+          if command -v systemctl >/dev/null 2>&1; then
+            sudo systemctl restart nextjs || sudo systemctl restart garage || true
+          fi
