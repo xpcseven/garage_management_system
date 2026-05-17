@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { NavBarUser } from "@/components/NavBar";
 import {
   canManageCities,
+  canManageHomeSlider,
   canManageGarages,
   canManageTrips,
   canManageTourismPlaces,
@@ -109,6 +110,10 @@ export default function Sidebar({ user, className }: Props) {
 
         {canManageCities(role) && (
           <NavLink href="/cities" label="المدن" icon="🏙️" />
+        )}
+
+        {canManageHomeSlider(role) && (
+          <NavLink href="/home-slider" label="سلايدر الرئيسية" icon="🖼️" />
         )}
 
         {canManageTourismPlaces(role) && (
