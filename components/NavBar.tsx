@@ -1,6 +1,8 @@
 "use client";
 
-import { Computer, Menu, Moon, Sun, LogOut, LayoutDashboard } from "lucide-react";
+import { Computer, Menu, Moon, Sun, LogOut, LayoutDashboard, Users } from "lucide-react";
+import { UserRole } from "@/prisma/UserRole.enum";
+import { roleLabelAr } from "@/lib/role-labels";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
@@ -172,7 +174,7 @@ function NavBar({ user, onToggleSidebar }: Props) {
               <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800">
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 <p className="mt-0.5 text-xs font-semibold text-violet-600 dark:text-violet-400">
-                  {user.role}
+                  {roleLabelAr(user.role)}
                 </p>
               </div>
 
@@ -183,6 +185,15 @@ function NavBar({ user, onToggleSidebar }: Props) {
                     لوحة التحكم
                   </Link>
                 </DropdownMenuItem>
+
+                {user.role === UserRole.SUPER_ADMIN && (
+                  <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
+                    <Link href="/users">
+                      <Users className="h-4 w-4 text-violet-500" />
+                      المستخدمون والصلاحيات
+                    </Link>
+                  </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator className="my-1" />
 
