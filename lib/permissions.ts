@@ -9,6 +9,11 @@ export function canManageHomeSlider(role: UserRole | string | undefined) {
   return role === UserRole.SUPER_ADMIN;
 }
 
+/** عرض وإدارة المستخدمين */
+export function canManageUsers(role: UserRole | string | undefined) {
+  return role === UserRole.SUPER_ADMIN;
+}
+
 export function canManageGarages(role: UserRole | string | undefined) {
   return (
     role === UserRole.SUPER_ADMIN ||
