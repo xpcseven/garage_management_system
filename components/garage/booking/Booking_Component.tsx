@@ -1,3 +1,4 @@
+'use client'
 import type { BookingRow } from "@/lib/actions/booking.actions";
 import Booking_Table from "./Booking_Table";
 

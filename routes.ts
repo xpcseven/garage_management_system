@@ -5,6 +5,20 @@
  */
 export const publicRoutes = ["/"];
 
+/** Static assets, uploads, and public marketing pages */
+export const publicRoutePrefixes = [
+  "/System",
+  "/uploads",
+  "/tourism-places",
+];
+
+export function isPublicRoute(pathname: string): boolean {
+  if (publicRoutes.includes(pathname)) return true;
+  return publicRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 /**
  * An array of routes that are accessible to private
  * These routes require authentication
