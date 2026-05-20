@@ -56,10 +56,10 @@ export default function Tourism_Places_Table({ places }: Props) {
               className="group relative h-64 overflow-hidden rounded-2xl shadow-md transition-shadow duration-300 hover:shadow-xl"
             >
               {/* صورة الخلفية */}
-              {p.imageUrl ? (
+              {(p.images?.[0] ?? p.imageUrl) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={p.imageUrl}
+                  src={p.images?.[0] ?? p.imageUrl!}
                   alt={p.name}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
@@ -117,6 +117,12 @@ export default function Tourism_Places_Table({ places }: Props) {
                   </Button>
                 </div>
 
+                <div className="flex flex-col items-end gap-1">
+                {(p.images?.length ?? 0) > 1 && (
+                  <Badge className="rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm">
+                    {p.images!.length} صور
+                  </Badge>
+                )}
                 {/* شارة الحالة */}
                 {p.approvalStatus === "APPROVED" ? (
                   <Badge className="rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-[11px] font-medium text-white shadow backdrop-blur-sm hover:bg-emerald-500">
@@ -131,6 +137,7 @@ export default function Tourism_Places_Table({ places }: Props) {
                     مرفوض
                   </Badge>
                 )}
+                </div>
               </div>
 
               {/* محتوى الكارد السفلي */}

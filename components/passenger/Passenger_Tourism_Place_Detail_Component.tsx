@@ -1,10 +1,18 @@
 "use client";
 
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
+import Tourism_Place_Detail_Gallery from "@/components/Tourism_Places/Tourism_Place_Detail_Gallery";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, MapPin, Navigation } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ArrowRight,
+  MapPin,
+  Navigation,
+  Images,
+  FileText,
+} from "lucide-react";
 
 type Props = {
   place: TourismPlaceRow;
@@ -13,111 +21,129 @@ type Props = {
 
 function cityLabel(p: TourismPlaceRow) {
   if (p.governorate) return p.governorate;
-  if (!p.cityName) return "—";
+  if (!p.cityName) return "العراق";
   return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+}
+
+function placeImages(place: TourismPlaceRow) {
+  if (place.images?.length) return place.images;
+  if (place.imageUrl) return [place.imageUrl];
+  return [];
 }
 
 export default function Passenger_Tourism_Place_Detail_Component({
   place,
   backHref = "/passenger/tourism-places",
 }: Props) {
+  const images = placeImages(place);
+  const imageCount = images.length;
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Hero Section — ارتفاع الصورة يتبع نسبة العرض إلى الارتفاع دون قص */}
-      <div className="relative w-full overflow-hidden bg-slate-100">
-        {place.imageUrl ? (
-          <div className="flex justify-center px-3 pt-2 sm:px-5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={place.imageUrl}
-              alt={place.name}
-              className="mx-auto block h-auto w-full max-w-5xl rounded-lg sm:rounded-xl"
-              loading="lazy"
-            />
-          </div>
-        ) : (
-          <div className="min-h-48 w-full bg-gradient-to-br from-slate-400 via-slate-500 to-slate-700" />
-        )}
-
-        {/* طبقة التعتيم */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10" />
-
-        {/* زر العودة */}
-        <div className="absolute top-4 right-4 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-violet-50/80 via-white to-slate-50">
+      {/* شريط علوي */}
+      <header className="sticky top-0 z-30 border-b border-violet-100/80 bg-white/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Button
             asChild
+            variant="ghost"
             size="sm"
-            className="gap-1.5 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 border border-white/30"
+            className="gap-1.5 text-violet-800 hover:bg-violet-50"
           >
             <Link href={backHref}>
               <ArrowRight className="h-4 w-4" />
-              العودة
+              العودة للأماكن
             </Link>
           </Button>
+          {imageCount > 0 && (
+            <Badge variant="secondary" className="gap-1 bg-violet-100 text-violet-800">
+              <Images className="h-3.5 w-3.5" />
+              {imageCount} {imageCount === 1 ? "صورة" : "صور"}
+            </Badge>
+          )}
         </div>
+      </header>
 
-        {/* العنوان فوق الصورة */}
-        <div className="absolute bottom-0 inset-x-0 z-10 p-5 sm:p-7">
-          <h1 className="text-2xl font-bold text-white drop-shadow-md sm:text-3xl">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        {/* العنوان */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
             {place.name}
           </h1>
-          <div className="mt-1.5 flex items-center gap-1.5 text-white/80">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="text-sm">{cityLabel(place)}</span>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-slate-600">
+            <MapPin className="h-4 w-4 shrink-0 text-violet-600" />
+            <span className="text-sm sm:text-base">{cityLabel(place)}</span>
           </div>
         </div>
-      </div>
 
-      {/* المحتوى */}
-      <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-        <Card className="overflow-hidden border-0 shadow-sm">
-          <CardContent className="space-y-5 p-5 sm:p-6">
+        {/* معرض الصور — اضغط لتكبير */}
+        <section className="mb-8">
+          <p className="mb-3 text-xs text-slate-500">
+            اضغط على أي صورة لعرضها بحجم كامل
+          </p>
+          <Tourism_Place_Detail_Gallery images={images} alt={place.name} />
+        </section>
 
-            {/* الوصف */}
-            <p className="text-sm leading-8 text-slate-600">
-              {place.description ?? "لا يوجد وصف تفصيلي لهذا المكان حالياً."}
-            </p>
-
-            <hr className="border-slate-100" />
-
-            {/* تفاصيل العنوان والموقع */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  العنوان
-                </p>
-                <p className="text-sm text-slate-700">{place.address ?? "—"}</p>
+        {/* التفاصيل */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <Card className="overflow-hidden border-violet-100/80 shadow-sm">
+            <CardContent className="space-y-6 p-5 sm:p-8">
+              <div className="flex items-center gap-2 text-violet-800">
+                <FileText className="h-5 w-5" />
+                <h2 className="text-lg font-semibold">عن المكان</h2>
               </div>
+              <p className="text-base leading-8 text-slate-700 whitespace-pre-line">
+                {place.description?.trim() ||
+                  "لا يوجد وصف تفصيلي لهذا المكان حالياً."}
+              </p>
+            </CardContent>
+          </Card>
 
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  الموقع
-                </p>
-                <p className="text-sm text-slate-700">{place.location ?? "—"}</p>
-              </div>
-            </div>
+          <aside className="space-y-4">
+            <Card className="border-violet-100/80 shadow-sm">
+              <CardContent className="space-y-4 p-5">
+                <h3 className="text-sm font-semibold text-slate-800">
+                  معلومات الوصول
+                </h3>
 
-            {/* زر الخريطة */}
-            {place.location && (
-              <Button
-                asChild
-                className="w-full gap-2 rounded-xl"
-              >
-                <a
-                  href={`https://www.google.com/maps?q=${encodeURIComponent(
-                    place.location
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Navigation className="h-4 w-4" />
-                  فتح الموقع على الخريطة
-                </a>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                <div className="space-y-3">
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="mb-1 text-xs font-medium text-slate-400">
+                      العنوان
+                    </p>
+                    <p className="text-sm leading-relaxed text-slate-700">
+                      {place.address?.trim() || "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="mb-1 text-xs font-medium text-slate-400">
+                      الموقع
+                    </p>
+                    <p className="break-all text-sm leading-relaxed text-slate-700">
+                      {place.location?.trim() || "—"}
+                    </p>
+                  </div>
+                </div>
+
+                {place.location && (
+                  <Button asChild className="w-full gap-2 rounded-xl">
+                    <a
+                      href={`https://www.google.com/maps?q=${encodeURIComponent(
+                        place.location
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Navigation className="h-4 w-4" />
+                      فتح على خرائط Google
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      </main>
     </div>
   );
 }

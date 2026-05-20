@@ -199,6 +199,7 @@ model TourismPlace {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   programPlaces TourismProgramPlace[]
+  images        TourismPlaceImage[]
 
   isActive  Boolean  @default(true)
   approvalStatus TourismApprovalStatus @default(PENDING)
@@ -210,6 +211,19 @@ model TourismPlace {
   @@index([ownerId])
   @@index([isActive])
   @@index([approvalStatus])
+}
+
+model TourismPlaceImage {
+  id             String   @id @default(uuid())
+  tourismPlaceId String
+  imageUrl       String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  place TourismPlace @relation(fields: [tourismPlaceId], references: [id], onDelete: Cascade)
+
+  @@index([tourismPlaceId])
+  @@index([tourismPlaceId, sortOrder])
 }
 
 // ============================================================
