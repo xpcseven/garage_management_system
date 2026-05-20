@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "../app/globals.css";
-import { SessionProvider } from "next-auth/react";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import { ThemeProvider } from "next-themes";
 import { auth } from "@/auth";
 import dynamic from "next/dynamic";
@@ -28,9 +28,9 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
   return (
-    <SessionProvider session={session}>
-      <html lang="en" dir="rtl">
-        <body className={`${cairo.variable} ${cairo.className}`}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className={`${cairo.variable} ${cairo.className}`}>
+        <SessionProviderWrapper session={session}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -40,8 +40,8 @@ export default async function RootLayout({
             <div>{children}</div>
             <ToastProvider />
           </ThemeProvider>
-        </body>
-      </html>
-    </SessionProvider>
+        </SessionProviderWrapper>
+      </body>
+    </html>
   );
 }

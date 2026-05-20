@@ -150,8 +150,12 @@ export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
                 await notify("info", "جارٍ رفع الصورة...");
                 try {
                   const result = await uploadImage(fd);
-                  setImageUrlValue(result.path);
-                  await notify("success", "تم رفع الصورة بنجاح");
+                  if (result.success) {
+                    setImageUrlValue(result.path);
+                    await notify("success", "تم رفع الصورة بنجاح");
+                  } else {
+                    await notify("error", result.error);
+                  }
                 } catch {
                   await notify("error", "فشل رفع الصورة");
                 } finally {

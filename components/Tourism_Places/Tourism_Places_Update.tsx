@@ -5,7 +5,20 @@ import { useRouter } from "next/navigation";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { updateTourismPlace } from "@/lib/actions/tourism_places.actions";
 import { IRAQI_GOVERNORATES } from "@/lib/constants/iraqi-governorates";
-import { uploadImage } from "@/lib/uploadImage";
+import Tourism_Place_Images_Upload, {
+  appendPlaceImagesToFormData,
+  type PlaceImageItem,
+} from "./Tourism_Place_Images_Upload";
+
+function placeToImageItems(place: TourismPlaceRow): PlaceImageItem[] {
+  const urls =
+    place.images?.length > 0
+      ? place.images
+      : place.imageUrl
+        ? [place.imageUrl]
+        : [];
+  return urls.map((url) => ({ preview: url, url }));
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +42,9 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
   const [pending, start] = useTransition();
   const [locationValue, setLocationValue] = useState(place.location ?? "");
   const [locating, setLocating] = useState(false);
-  const [imageUrlValue, setImageUrlValue] = useState(place.imageUrl ?? "");
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageItems, setImageItems] = useState<PlaceImageItem[]>(() =>
+    placeToImageItems(place)
+  );
 
   const defaultGovernorate = useMemo(
     () => place.governorate ?? "",
@@ -63,10 +77,9 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
 
   useEffect(() => {
     if (!open) {
-      setImageUrlValue(place.imageUrl ?? "");
-      setUploadingImage(false);
+      setImageItems(placeToImageItems(place));
     }
-  }, [open, place.imageUrl]);
+  }, [open, place]);
 
   const notify = async (icon: "success" | "error" | "info", title: string) => {
     await Swal.fire({
@@ -99,21 +112,24 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
 
         <form
           className="grid gap-4"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            fd.set("id", place.id);
+            appendPlaceImagesToFormData(fd, imageItems);
+            const savedUrls = imageItems
+              .map((i) => i.url)
+              .filter((u): u is string => !!u);
+
             start(async () => {
-              if (uploadingImage) {
-                await notify("info", "جارٍ رفع الصورة... يرجى الانتظار");
-                return;
-              }
-              fd.set("id", place.id);
-              const res = await updateTourismPlace(fd);
+              const res = await updateTourismPlace(fd, savedUrls);
               if (res.success) {
                 setOpen(false);
                 router.refresh();
                 await Swal.fire({
                   icon: "success",
                   title: "تم التحديث",
-                  text: "تم تحديث المكان بنجاح",
+                  text: "تم تحديث المكان والصور بنجاح",
                   confirmButtonText: "موافق",
                 });
               } else {
@@ -190,49 +206,12 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor={`tp-file-${place.id}`}>تغيير الصورة (اختياري)</Label>
-              <Input
-                id={`tp-file-${place.id}`}
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const fd = new FormData();
-                  fd.set("file", file);
-                  setUploadingImage(true);
-                  await notify("info", "جارٍ رفع الصورة...");
-                  try {
-                    const result = await uploadImage(fd);
-                    setImageUrlValue(result.path);
-                    await notify("success", "تم رفع الصورة بنجاح");
-                  } catch {
-                    await notify("error", "فشل رفع الصورة");
-                  } finally {
-                    setUploadingImage(false);
-                  }
-                }}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>الصورة الحالية</Label>
-              {imageUrlValue ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageUrlValue}
-                  alt={place.name}
-                  className="h-20 w-full rounded-md border object-cover"
-                />
-              ) : (
-                <div className="h-20 w-full rounded-md border bg-muted/30 text-xs text-muted-foreground flex items-center justify-center">
-                  لا توجد صورة حالياً
-                </div>
-              )}
-            </div>
-          </div>
-          <input type="hidden" name="imageUrl" value={imageUrlValue} />
+          <Tourism_Place_Images_Upload
+            items={imageItems}
+            onChange={setImageItems}
+            disabled={pending}
+            idPrefix={`tp-edit-${place.id}`}
+          />
 
           <div className="space-y-1">
             <Label htmlFor={`tp-desc-${place.id}`}>الوصف (اختياري)</Label>
@@ -258,8 +237,8 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
               </select>
             </div>
             <div className="flex items-end justify-end gap-2">
-              <Button type="submit" disabled={pending || uploadingImage} className="">
-                {uploadingImage ? "انتظار رفع الصورة..." : "حفظ"}
+              <Button type="submit" disabled={pending}>
+                {pending ? "جارٍ الحفظ..." : "حفظ"}
               </Button>
             </div>
           </div>

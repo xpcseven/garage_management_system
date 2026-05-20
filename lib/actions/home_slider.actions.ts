@@ -80,6 +80,7 @@ export async function createHomeSliderSlide(formData: FormData) {
       const imageFd = new FormData();
       imageFd.set("file", file);
       const uploaded = await uploadImage(imageFd);
+      if (!uploaded.success) return { error: uploaded.error };
       imageUrl = uploaded.path;
     }
     if (!imageUrl) return { error: "صورة الشريحة مطلوبة" };
@@ -122,6 +123,7 @@ export async function updateHomeSliderSlide(formData: FormData) {
       const imageFd = new FormData();
       imageFd.set("file", file);
       const uploaded = await uploadImage(imageFd);
+      if (!uploaded.success) return { error: uploaded.error };
       imageUrl = uploaded.path;
       if (existing.imageUrl.startsWith("/uploads/")) {
         try {
