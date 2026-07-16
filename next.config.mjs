@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "15mb",
+    },
+  },
   images: {
     // استخدم remotePatterns فقط (domains أُهمل في إصدارات Next الحديثة)
     remotePatterns: [

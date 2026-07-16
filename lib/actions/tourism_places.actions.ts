@@ -1,10 +1,16 @@
 "use server";
 
 import { auth } from "@/auth";
-import { deleteImage } from "@/lib/deleteImage";
 import { prisma } from "@/lib/prisma";
 import { canManageTourismPlaces, canUsePassengerPortal } from "@/lib/permissions";
-import { uploadImage } from "@/lib/uploadImage";
+import {
+  deleteAllTourismPlaceImages,
+  deleteUploadedImageSafe,
+  resolveImageUrlsFromFormData,
+  resolvePlaceImages,
+  syncTourismPlaceImages,
+  tourismPlaceInclude,
+} from "@/lib/tourism-place-images";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/prisma/UserRole.enum";
 
@@ -15,7 +21,10 @@ export type TourismPlaceRow = {
   description: string | null;
   address: string | null;
   location: string | null;
+  /** صورة الغلاف (الأولى) */
   imageUrl: string | null;
+  /** جميع صور المكان */
+  images: string[];
   cityId: string | null;
   cityName: string | null;
   cityRegion: string | null;
@@ -25,6 +34,53 @@ export type TourismPlaceRow = {
   reviewedAt: string | null;
   createdAt: string;
 };
+
+type PlaceDbRow = {
+  id: string;
+  name: string;
+  governorate: string | null;
+  description: string | null;
+  address: string | null;
+  location: string | null;
+  imageUrl: string | null;
+  cityId: string | null;
+  ownerId: string;
+  isActive: boolean;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  reviewedAt: Date | null;
+  createdAt: Date;
+  city: { name: string; region: string | null } | null;
+  images?: { id: string; imageUrl: string; sortOrder: number }[];
+};
+
+function mapTourismPlaceRow(p: PlaceDbRow): TourismPlaceRow {
+  const images = resolvePlaceImages(p);
+  return {
+    id: p.id,
+    name: p.name,
+    governorate: p.governorate ?? null,
+    description: p.description ?? null,
+    address: p.address ?? null,
+    location: p.location ?? null,
+    imageUrl: images[0] ?? null,
+    images,
+    cityId: p.cityId ?? null,
+    cityName: p.city?.name ?? null,
+    cityRegion: p.city?.region ?? null,
+    ownerId: p.ownerId,
+    isActive: p.isActive,
+    approvalStatus: p.approvalStatus,
+    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
+    createdAt: p.createdAt.toISOString(),
+  };
+}
+
+function revalidateTourismPaths() {
+  revalidatePath("/tourism_places");
+  revalidatePath("/tourism-places");
+  revalidatePath("/home");
+  revalidatePath("/");
+}
 
 export async function getTourismPlaces(): Promise<TourismPlaceRow[]> {
   const session = await auth();
@@ -38,27 +94,11 @@ export async function getTourismPlaces(): Promise<TourismPlaceRow[]> {
   const rows = await prisma.tourismPlace.findMany({
     where,
     orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
     take: 200,
   });
 
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  }));
+  return rows.map(mapTourismPlaceRow);
 }
 
 /** عرض الأماكن النشطة للمسافر (قراءة فقط) */
@@ -71,27 +111,11 @@ export async function getPublicTourismPlacesForPassenger(): Promise<
   const rows = await prisma.tourismPlace.findMany({
     where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
     take: 200,
   });
 
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  }));
+  return rows.map(mapTourismPlaceRow);
 }
 
 /** عرض الأماكن النشطة للعامة (بدون تسجيل دخول) */
@@ -101,27 +125,11 @@ export async function getPublicTourismPlacesForLanding(): Promise<
   const rows = await prisma.tourismPlace.findMany({
     where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
     take: 6,
   });
 
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  }));
+  return rows.map(mapTourismPlaceRow);
 }
 
 /** صفحة عامة: كل الأماكن النشطة بدون تسجيل دخول */
@@ -131,27 +139,11 @@ export async function getPublicTourismPlacesForGuest(): Promise<
   const rows = await prisma.tourismPlace.findMany({
     where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
     take: 200,
   });
 
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  }));
+  return rows.map(mapTourismPlaceRow);
 }
 
 export async function getPublicTourismPlaceByIdForPassenger(
@@ -162,27 +154,11 @@ export async function getPublicTourismPlaceByIdForPassenger(
 
   const p = await prisma.tourismPlace.findFirst({
     where: { id: placeId, isActive: true, approvalStatus: "APPROVED" },
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
   });
   if (!p) return null;
 
-  return {
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  };
+  return mapTourismPlaceRow(p);
 }
 
 /** صفحة عامة: تفاصيل مكان نشط بالمعرف بدون تسجيل دخول */
@@ -191,30 +167,17 @@ export async function getPublicTourismPlaceByIdForGuest(
 ): Promise<TourismPlaceRow | null> {
   const p = await prisma.tourismPlace.findFirst({
     where: { id: placeId, isActive: true, approvalStatus: "APPROVED" },
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
   });
   if (!p) return null;
 
-  return {
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  };
+  return mapTourismPlaceRow(p);
 }
 
-export async function createTourismPlace(formData: FormData) {
+export async function createTourismPlace(
+  formData: FormData,
+  imageUrlsFromClient?: string[]
+) {
   const session = await auth();
   if (!session?.user || !canManageTourismPlaces(session.user.role)) {
     return { error: "لا تملك صلاحية إضافة مكان سياحي" };
@@ -227,7 +190,6 @@ export async function createTourismPlace(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const location = String(formData.get("location") ?? "").trim() || null;
-  let imageUrl = String(formData.get("imageUrl") ?? "").trim() || null;
 
   if (!name) return { error: "اسم المكان مطلوب" };
 
@@ -237,15 +199,12 @@ export async function createTourismPlace(formData: FormData) {
   }
 
   try {
-    const file = formData.get("file");
-    if (!imageUrl && file instanceof File && file.size > 0) {
-      const imageFd = new FormData();
-      imageFd.set("file", file);
-      const uploaded = await uploadImage(imageFd);
-      imageUrl = uploaded.path;
-    }
-
+    const imageUrls = await resolveImageUrlsFromFormData(
+      formData,
+      imageUrlsFromClient
+    );
     const autoApprove = session.user.role === UserRole.SUPER_ADMIN;
+
     await prisma.tourismPlace.create({
       data: {
         name,
@@ -254,25 +213,40 @@ export async function createTourismPlace(formData: FormData) {
         description,
         address,
         location,
-        imageUrl,
+        imageUrl: imageUrls[0] ?? null,
         ownerId: session.user.id,
         isActive: true,
         approvalStatus: autoApprove ? "APPROVED" : "PENDING",
         reviewedAt: autoApprove ? new Date() : null,
+        images:
+          imageUrls.length > 0
+            ? {
+                create: imageUrls.map((url, i) => ({
+                  imageUrl: url,
+                  sortOrder: i,
+                })),
+              }
+            : undefined,
       },
     });
-    revalidatePath("/tourism_places");
-    revalidatePath("/home");
+    revalidateTourismPaths();
     return {
       success: true,
       pendingApproval: !autoApprove,
     };
-  } catch {
-    return { error: "تعذر الإنشاء" };
+  } catch (e) {
+    console.error("createTourismPlace", e);
+    return {
+      error:
+        e instanceof Error ? e.message : "تعذر الإنشاء",
+    };
   }
 }
 
-export async function updateTourismPlace(formData: FormData) {
+export async function updateTourismPlace(
+  formData: FormData,
+  imageUrlsFromClient?: string[]
+) {
   const session = await auth();
   if (!session?.user || !canManageTourismPlaces(session.user.role)) {
     return { error: "لا تملك صلاحية التعديل" };
@@ -286,8 +260,6 @@ export async function updateTourismPlace(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const location = String(formData.get("location") ?? "").trim() || null;
-  const imageUrlFromForm = String(formData.get("imageUrl") ?? "").trim();
-  let imageUrl: string | null | undefined = imageUrlFromForm || undefined;
   const isActive = formData.get("isActive") === "true";
 
   if (!id || !name) return { error: "بيانات غير كاملة" };
@@ -310,32 +282,10 @@ export async function updateTourismPlace(formData: FormData) {
       return { error: "لا يمكنك تعديل هذا المكان" };
     }
 
-    const file = formData.get("file");
-    if (!imageUrl && file instanceof File && file.size > 0) {
-      const imageFd = new FormData();
-      imageFd.set("file", file);
-      const uploaded = await uploadImage(imageFd);
-      imageUrl = uploaded.path;
-
-      if (existing.imageUrl?.startsWith("/uploads/")) {
-        try {
-          await deleteImage(existing.imageUrl);
-        } catch {
-          // ignore file cleanup errors to avoid blocking update
-        }
-      }
-    } else if (
-      imageUrl &&
-      existing.imageUrl &&
-      imageUrl !== existing.imageUrl &&
-      existing.imageUrl.startsWith("/uploads/")
-    ) {
-      try {
-        await deleteImage(existing.imageUrl);
-      } catch {
-        // ignore file cleanup errors to avoid blocking update
-      }
-    }
+    const imageUrls = await resolveImageUrlsFromFormData(
+      formData,
+      imageUrlsFromClient
+    );
 
     await prisma.tourismPlace.update({
       where: { id },
@@ -346,12 +296,10 @@ export async function updateTourismPlace(formData: FormData) {
         description,
         address,
         location,
-        ...(imageUrl !== undefined ? { imageUrl } : {}),
         isActive,
         ...(session.user.role === UserRole.SUPER_ADMIN
           ? {
-              approvalStatus:
-                isActive ? "APPROVED" : "REJECTED",
+              approvalStatus: isActive ? "APPROVED" : "REJECTED",
               reviewedAt: new Date(),
             }
           : {
@@ -360,11 +308,25 @@ export async function updateTourismPlace(formData: FormData) {
             }),
       },
     });
-    revalidatePath("/tourism_places");
-    revalidatePath("/home");
+
+    await syncTourismPlaceImages(id, imageUrls);
+
+    if (
+      existing.imageUrl &&
+      !imageUrls.includes(existing.imageUrl) &&
+      existing.imageUrl.startsWith("/uploads/")
+    ) {
+      await deleteUploadedImageSafe(existing.imageUrl);
+    }
+
+    revalidateTourismPaths();
     return { success: true };
-  } catch {
-    return { error: "تعذر التحديث" };
+  } catch (e) {
+    console.error("updateTourismPlace", e);
+    return {
+      error:
+        e instanceof Error ? e.message : "تعذر التحديث",
+    };
   }
 }
 
@@ -387,17 +349,11 @@ export async function deleteTourismPlace(id: string) {
       return { error: "لا يمكنك حذف هذا المكان" };
     }
 
-    if (existing.imageUrl?.startsWith("/uploads/")) {
-      try {
-        await deleteImage(existing.imageUrl);
-      } catch {
-        // ignore file cleanup errors to avoid blocking delete
-      }
-    }
+    await deleteAllTourismPlaceImages(id);
+    await deleteUploadedImageSafe(existing.imageUrl);
 
     await prisma.tourismPlace.delete({ where: { id } });
-    revalidatePath("/tourism_places");
-    revalidatePath("/home");
+    revalidateTourismPaths();
     return { success: true };
   } catch {
     return { error: "تعذر الحذف" };
@@ -411,27 +367,11 @@ export async function getTourismPlaceRequests(): Promise<TourismPlaceRow[]> {
   const rows = await prisma.tourismPlace.findMany({
     where: { approvalStatus: "PENDING" },
     orderBy: { createdAt: "desc" },
-    include: { city: { select: { id: true, name: true, region: true } } },
+    include: tourismPlaceInclude,
     take: 300,
   });
 
-  return rows.map((p) => ({
-    id: p.id,
-    name: p.name,
-    governorate: p.governorate ?? null,
-    description: p.description ?? null,
-    address: p.address ?? null,
-    location: p.location ?? null,
-    imageUrl: p.imageUrl ?? null,
-    cityId: p.cityId ?? null,
-    cityName: p.city?.name ?? null,
-    cityRegion: p.city?.region ?? null,
-    ownerId: p.ownerId,
-    isActive: p.isActive,
-    approvalStatus: p.approvalStatus,
-    reviewedAt: p.reviewedAt ? p.reviewedAt.toISOString() : null,
-    createdAt: p.createdAt.toISOString(),
-  }));
+  return rows.map(mapTourismPlaceRow);
 }
 
 export async function approveTourismPlaceRequest(id: string) {
@@ -449,9 +389,7 @@ export async function approveTourismPlaceRequest(id: string) {
       },
     });
     revalidatePath("/tourism-requests");
-    revalidatePath("/tourism_places");
-    revalidatePath("/tourism-places");
-    revalidatePath("/home");
+    revalidateTourismPaths();
     return { success: true };
   } catch {
     return { error: "تعذر تنفيذ الموافقة" };
@@ -473,12 +411,9 @@ export async function rejectTourismPlaceRequest(id: string) {
       },
     });
     revalidatePath("/tourism-requests");
-    revalidatePath("/tourism_places");
-    revalidatePath("/tourism-places");
-    revalidatePath("/home");
+    revalidateTourismPaths();
     return { success: true };
   } catch {
     return { error: "تعذر تنفيذ الرفض" };
   }
 }
-

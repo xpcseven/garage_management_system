@@ -122,14 +122,19 @@ export default function Home_Slider_Create() {
                 fd.set("file", file);
                 setUploadingImage(true);
                 await notify("info", "جارٍ رفع الصورة...");
-                try {
-                  const result = await uploadImage(fd);
-                  setImageUrlValue(result.path);
-                  await notify("success", "تم رفع الصورة بنجاح");
-                } catch {
-                  setImageUrlValue("");
-                  await notify("error", "فشل رفع الصورة");
-                } finally {
+                  try {
+                    const result = await uploadImage(fd);
+                    if (result.success) {
+                      setImageUrlValue(result.path);
+                      await notify("success", "تم رفع الصورة بنجاح");
+                    } else {
+                      setImageUrlValue("");
+                      await notify("error", result.error);
+                    }
+                  } catch {
+                    setImageUrlValue("");
+                    await notify("error", "فشل رفع الصورة");
+                  } finally {
                   setUploadingImage(false);
                 }
               }}

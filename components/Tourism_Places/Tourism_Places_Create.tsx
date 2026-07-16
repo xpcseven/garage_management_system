@@ -4,7 +4,10 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createTourismPlace } from "@/lib/actions/tourism_places.actions";
 import { IRAQI_GOVERNORATES } from "@/lib/constants/iraqi-governorates";
-import { uploadImage } from "@/lib/uploadImage";
+import Tourism_Place_Images_Upload, {
+  appendPlaceImagesToFormData,
+  type PlaceImageItem,
+} from "./Tourism_Place_Images_Upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,11 +26,10 @@ export default function Tourism_Places_Create() {
   const [pending, start] = useTransition();
   const [locationValue, setLocationValue] = useState("");
   const [locating, setLocating] = useState(false);
-  const [imageUrlValue, setImageUrlValue] = useState("");
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageItems, setImageItems] = useState<PlaceImageItem[]>([]);
 
   const notify = async (icon: "success" | "error" | "info", title: string) => {
-    const r = await Swal.fire({
+    await Swal.fire({
       toast: true,
       position: "top-end",
       showConfirmButton: false,
@@ -36,7 +38,6 @@ export default function Tourism_Places_Create() {
       icon,
       title,
     });
-    return r;
   };
 
   const detectCurrentLocation = () => {
@@ -48,9 +49,7 @@ export default function Tourism_Places_Create() {
         setLocationValue(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
         setLocating(false);
       },
-      () => {
-        setLocating(false);
-      },
+      () => setLocating(false),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
@@ -61,15 +60,15 @@ export default function Tourism_Places_Create() {
 
   useEffect(() => {
     if (!open) {
-      setImageUrlValue("");
-      setUploadingImage(false);
+      setImageItems([]);
+      setLocationValue("");
     }
   }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة مكان سياحي</Button>
+        <Button>إضافة مكان سياحي</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -78,13 +77,16 @@ export default function Tourism_Places_Create() {
 
         <form
           className="grid gap-4"
-          action={(fd) => {
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            appendPlaceImagesToFormData(fd, imageItems);
+            const savedUrls = imageItems
+              .map((i) => i.url)
+              .filter(Boolean) as string[];
+
             start(async () => {
-              if (uploadingImage) {
-                await notify("info", "جارٍ رفع الصورة... يرجى الانتظار");
-                return;
-              }
-              const res = await createTourismPlace(fd);
+              const res = await createTourismPlace(fd, savedUrls);
               if (res.success) {
                 setOpen(false);
                 router.refresh();
@@ -99,7 +101,7 @@ export default function Tourism_Places_Create() {
                   await Swal.fire({
                     icon: "success",
                     title: "تمت الإضافة",
-                    text: "تمت إضافة المكان بنجاح",
+                    text: "تمت إضافة المكان والصور بنجاح",
                     confirmButtonText: "موافق",
                   });
                 }
@@ -165,38 +167,12 @@ export default function Tourism_Places_Create() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor="tp-file">رفع صورة (اختياري)</Label>
-              <Input
-                id="tp-file"
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-
-                  const fd = new FormData();
-                  fd.set("file", file);
-
-                  setUploadingImage(true);
-                  await notify("info", "جارٍ رفع الصورة...");
-                  try {
-                    const result = await uploadImage(fd);
-                    setImageUrlValue(result.path);
-                    await notify("success", "تم رفع الصورة بنجاح");
-                  } catch {
-                    setImageUrlValue("");
-                    await notify("error", "فشل رفع الصورة");
-                  } finally {
-                    setUploadingImage(false);
-                  }
-                }}
-              />
-            </div>
-            <div className="hidden sm:block" />
-          </div>
-          <input type="hidden" name="imageUrl" value={imageUrlValue} />
+          <Tourism_Place_Images_Upload
+            items={imageItems}
+            onChange={setImageItems}
+            disabled={pending}
+            idPrefix="tp-create"
+          />
 
           <div className="space-y-1">
             <Label htmlFor="tp-desc">الوصف (اختياري)</Label>
@@ -209,8 +185,8 @@ export default function Tourism_Places_Create() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="submit" disabled={pending || uploadingImage} className="">
-              {uploadingImage ? "انتظار رفع الصورة..." : "حفظ"}
+            <Button type="submit" disabled={pending}>
+              {pending ? "جارٍ الحفظ..." : "حفظ"}
             </Button>
           </div>
         </form>

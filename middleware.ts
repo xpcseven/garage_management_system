@@ -3,33 +3,37 @@ import authConfig from "@/auth.config";
 const { auth } = NextAuth(authConfig);
 import {
   DEFAULT_LOGIN_REDIRECT,
-  publicRoutes,
   authRoutes,
   apiAuthPrefix,
+  isPublicRoute,
 } from "@/routes";
+
 // @ts-expect-error @ts-ignore
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
+  const pathname = nextUrl.pathname;
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
-  const isAuthRoute = authRoutes.includes(nextUrl.pathname);
-
-  if (isApiAuthRoute) {
+  if (pathname.startsWith(apiAuthPrefix)) {
     return null;
   }
 
-  if (isAuthRoute) {
+  if (pathname.startsWith("/api/upload")) {
+    return null;
+  }
+
+  if (isPublicRoute(pathname)) {
+    return null;
+  }
+
+  if (authRoutes.includes(pathname)) {
     if (isLoggedIn) {
-     
-        return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
-     
+      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return null;
   }
 
-  if (!isLoggedIn && !isPublicRoutes) {
+  if (!isLoggedIn) {
     return Response.redirect(new URL("/auth/login", nextUrl));
   }
 
@@ -37,5 +41,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|fonts).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|fonts|sw.js|manifest.json|uploads/).*)",
+  ],
 };

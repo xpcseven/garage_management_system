@@ -144,6 +144,7 @@ model User {
   tourismProgramBookings TourismProgramBooking[]
   jobPreferences UserJobPreference[]
   tourismPlaces TourismPlace[]
+  apiRefreshTokens ApiRefreshToken[]
 
   @@index([email])
   @@index([phone])
@@ -199,6 +200,7 @@ model TourismPlace {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   programPlaces TourismProgramPlace[]
+  images        TourismPlaceImage[]
 
   isActive  Boolean  @default(true)
   approvalStatus TourismApprovalStatus @default(PENDING)
@@ -210,6 +212,19 @@ model TourismPlace {
   @@index([ownerId])
   @@index([isActive])
   @@index([approvalStatus])
+}
+
+model TourismPlaceImage {
+  id             String   @id @default(uuid())
+  tourismPlaceId String
+  imageUrl       String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  place TourismPlace @relation(fields: [tourismPlaceId], references: [id], onDelete: Cascade)
+
+  @@index([tourismPlaceId])
+  @@index([tourismPlaceId, sortOrder])
 }
 
 // ============================================================
@@ -702,6 +717,25 @@ model TourismSliderSlide {
   updatedAt DateTime @updatedAt
 
   @@index([isActive, sortOrder])
+}
+
+// ============================================================
+// API REFRESH TOKENS (mobile / external clients)
+// ============================================================
+
+model ApiRefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // ============================================================
