@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "../app/globals.css";
+import "./globals.css";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 import { ThemeProvider } from "next-themes";
 import { auth } from "@/auth";

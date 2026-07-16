@@ -30,6 +30,14 @@ const config = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        savecolor: "#e8b202",
+        titlecolor: "#FFFFFF",
+        colorthree: "#0282c2",
+        purple1: "#065985",
+        brand: {
+          primary: "#009ee7",
+          secondary: "#bb4c2a",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

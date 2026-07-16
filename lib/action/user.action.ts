@@ -3,10 +3,12 @@
 import { prisma } from "@/lib/prisma";
 
 export const getUserByEmail = async (email: string) => {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: {
-        email,
+        email: { equals: normalized, mode: "insensitive" },
       },
     });
 
