@@ -20,8 +20,6 @@
 
 @layer base {
   :root {
-    --primary: #009ee7;
-    --secondary: #bb4c2a;
     --savecolor: #e8b202;
     --titlecolor: #FFFFFF;
     --background: 0 0% 100%;
