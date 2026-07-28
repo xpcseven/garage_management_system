@@ -1,18 +1,40 @@
 "use server";
 import { LoginSchema } from "@/schemas";
 import * as z from "zod";
+import bcrypt from "bcryptjs";
 import { signIn } from "@/auth";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { AuthError } from "next-auth";
+import { getUserByEmail } from "@/lib/action/user.action";
+import { resendVerificationEmail } from "@/lib/action/auth/resend-verification";
 
 export const login = async (values: z.infer<typeof LoginSchema>) => {
   const validateFields = LoginSchema.safeParse(values);
 
   if (!validateFields.success) {
-    return { error: "Invalid  fields" };
+    return { error: "بيانات غير صالحة" };
   }
 
   const { email, password } = validateFields.data;
+
+  const user = await getUserByEmail(email);
+  if (!user?.password || user.isDeleted || !user.isActive) {
+    return { error: "البريد أو كلمة المرور غير صحيحة" };
+  }
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    return { error: "البريد أو كلمة المرور غير صحيحة" };
+  }
+
+  if (!user.emailVerified) {
+    return {
+      error:
+        "يجب تأكيد بريدك الإلكتروني قبل تسجيل الدخول. تحقق من صندوق الوارد أو أعد إرسال رابط التحقق.",
+      code: "EMAIL_NOT_VERIFIED" as const,
+      emailForResend: user.email,
+    };
+  }
 
   try {
     await signIn("credentials", {
@@ -20,17 +42,20 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
       password,
       redirectTo: DEFAULT_LOGIN_REDIRECT,
     });
-    return { success: "Login successfully" };
+    return { success: "تم تسجيل الدخول بنجاح" };
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
           return { error: "البريد أو كلمة المرور غير صحيحة" };
-
         default:
-          return { error: "An error occurred while logging in" };
+          return { error: "حدث خطأ أثناء تسجيل الدخول" };
       }
     }
     throw error;
   }
 };
+
+export async function resendVerification(email: string) {
+  return resendVerificationEmail(email);
+}

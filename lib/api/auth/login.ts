@@ -21,7 +21,7 @@ export async function apiLogin(
   email: string,
   password: string,
   userAgent?: string | null
-): Promise<ApiAuthResult | { error: string }> {
+): Promise<ApiAuthResult | { error: string; code?: string }> {
   const normalizedEmail = email.trim().toLowerCase();
   const parsed = LoginSchema.safeParse({
     email: normalizedEmail,
@@ -39,6 +39,14 @@ export async function apiLogin(
   const match = await bcrypt.compare(parsed.data.password, user.password);
   if (!match) {
     return { error: "البريد أو كلمة المرور غير صالحة" };
+  }
+
+  if (!user.emailVerified) {
+    return {
+      error:
+        "يرجى تأكيد بريدك الإلكتروني أولاً قبل تسجيل الدخول من التطبيق",
+      code: "EMAIL_NOT_VERIFIED",
+    };
   }
 
   const profile: ApiTokenUser = {

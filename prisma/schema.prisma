@@ -125,6 +125,7 @@ model User {
 
   avatar   String?
   isActive Boolean @default(true)
+  emailVerified Boolean @default(false)
 
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
@@ -149,6 +150,17 @@ model User {
   @@index([email])
   @@index([phone])
   @@index([isDeleted])
+}
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+
+  @@index([email])
+  @@index([token])
+  @@map("verification_tokens")
 }
 
 // تفضيلات نوع النقل عند التسجيل (صاحب كراج) — السائق يُخزَّن في DriverJob

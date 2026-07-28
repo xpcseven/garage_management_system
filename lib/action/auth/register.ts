@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getUserByEmail } from "../user.action";
 import { JobType, Role } from "@prisma/client";
+import { createAndSendVerificationToken } from "@/lib/action/auth/verify-email";
 
 export async function register(values: z.infer<typeof RegisterSchema>) {
   try {
@@ -33,21 +34,22 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
     const prismaRole = role as Role;
     const uniqueJobTypes = [...new Set(jobTypes)] as JobType[];
 
-    await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
         data: {
           email,
           name,
           password: hashedPassword,
           role: prismaRole,
           isActive: true,
+          emailVerified: false,
         },
       });
 
       if (prismaRole === Role.GARAGE_OWNER && uniqueJobTypes.length > 0) {
         await tx.userJobPreference.createMany({
           data: uniqueJobTypes.map((jobType) => ({
-            userId: user.id,
+            userId: created.id,
             jobType,
           })),
           skipDuplicates: true,
@@ -57,7 +59,7 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
       if (prismaRole === Role.DRIVER && uniqueJobTypes.length > 0) {
         const profile = await tx.driverProfile.create({
           data: {
-            userId: user.id,
+            userId: created.id,
             isFreelancer: true,
             isVerified: false,
             isActive: true,
@@ -72,9 +74,33 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
           skipDuplicates: true,
         });
       }
+
+      return created;
     });
 
-    return { success: "تم إنشاء الحساب بنجاح. يمكنك تسجيل الدخول." };
+    const mailed = await createAndSendVerificationToken({
+      email: user.email,
+      name: user.name,
+    });
+
+    console.info("[register] verification email result", {
+      email: user.email,
+      ok: mailed.ok,
+      error: !mailed.ok ? mailed.error : undefined,
+    });
+
+    if (!mailed.ok) {
+      return {
+        error:
+          "تم إنشاء الحساب، لكن تعذر إرسال رسالة التحقق. استخدم «إعادة إرسال رابط التحقق» من صفحة الدخول.",
+        warning: mailed.error,
+      };
+    }
+
+    return {
+      success:
+        "تم إنشاء الحساب. أرسلنا رابط تحقق إلى بريدك — أكّد البريد قبل تسجيل الدخول (تحقق أيضاً من مجلد السبام).",
+    };
   } catch (error) {
     console.error(error);
     return { error: "تعذر إنشاء الحساب. تحقق من الاتصال بقاعدة البيانات." };

@@ -16,7 +16,7 @@ import { z } from "zod";
 import { LoginSchema } from "@/schemas";
 import { Button } from "../ui/button";
 
-import { login } from "@/lib/action/auth/login";
+import { login, resendVerification } from "@/lib/action/auth/login";
 import FormError from "./FormError";
 import FormSuccess from "./FormSuccess";
 import Image from "next/image";
@@ -26,6 +26,8 @@ import outsideGarageImage from "@/public/System/Outside_Garage.png";
 const LoginForm = () => {
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
+  const [needsVerify, setNeedsVerify] = useState(false);
+  const [emailForResend, setEmailForResend] = useState("");
   const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -38,10 +40,30 @@ const LoginForm = () => {
   async function onSubmit(values: z.infer<typeof LoginSchema>) {
     setError("");
     setSuccess("");
+    setNeedsVerify(false);
+    setEmailForResend("");
     startTransition(() => {
       login(values).then((data) => {
         setSuccess(data?.success);
         setError(data?.error);
+        if (data && "code" in data && data.code === "EMAIL_NOT_VERIFIED") {
+          setNeedsVerify(true);
+          setEmailForResend(
+            ("emailForResend" in data && data.emailForResend) || values.email
+          );
+        }
+      });
+    });
+  }
+
+  function onResend() {
+    const email = emailForResend || form.getValues("email");
+    setError("");
+    setSuccess("");
+    startTransition(() => {
+      resendVerification(email).then((data) => {
+        if ("success" in data) setSuccess(data.success);
+        if ("error" in data) setError(data.error);
       });
     });
   }
@@ -115,6 +137,18 @@ const LoginForm = () => {
 
                 <FormError message={error} />
                 <FormSuccess message={success} />
+
+                {needsVerify && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isPending}
+                    onClick={onResend}
+                    className="h-10 w-full"
+                  >
+                    إعادة إرسال رابط التحقق
+                  </Button>
+                )}
 
                 <Button
                   disabled={isPending}
