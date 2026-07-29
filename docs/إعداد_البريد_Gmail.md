@@ -43,24 +43,24 @@ node scripts/test-smtp.js
 | `GMAIL_USER` حساب مختلف عن منشئ الـ App Password | يجب أن يكونا نفس الحساب |
 | لم تُعد تشغيل السيرفر بعد تعديل `.env` | أعد التشغيل |
 
-## بديل سريع: Resend
+## بديل للإنتاج: Resend + نطاق ashuor.com
 
-إذا استمر رفض Gmail:
+**للوصول لصندوق الوارد** راجع الدليل الكامل:
 
-1. أنشئ مفتاحاً من https://resend.com
-2. أضف إلى `.env`:
+`docs/وصول_البريد_لصندوق_الوارد.md`
+
+ملخص سريع:
 
 ```env
 RESEND_API_KEY=re_xxxx
-RESEND_FROM_EMAIL=onboarding@resend.dev
+RESEND_FROM_EMAIL=Ashuor Tourism <noreply@ashuor.com>
+NEXTAUTH_URL=https://tr.ashuor.com
 ```
 
-النظام يجرب Gmail أولاً، وإن فشل ينتقل تلقائياً إلى Resend.
+النظام يستخدم Resend **أولاً** عند توفر المفتاح.
 
-## أثناء التطوير بدون بريد
+## Gmail (تطوير فقط)
 
-عند فشل الإرسال يُطبع رابط التحقق في الطرفية وفي صفحة التسجيل (محلياً فقط):
-
-`http://localhost:3000/auth/verify-email?token=...`
+Gmail مناسب للاختبار، لكن الرسائل قد تذهب للسبام في الإنتاج.
 
 التفاصيل الكاملة للتدفق: `Plan/verifidEmail.md`

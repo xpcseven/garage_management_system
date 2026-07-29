@@ -82,14 +82,15 @@
     @apply border-border;
   }
 
+  html {
+    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-cairo), sans-serif;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
-html,
-body,
 button,
 input,
 select,
@@ -102,8 +103,8 @@ textarea {
     display: none;
   }
   body {
-    font-family: "Cairo", sans-serif; /* تأكد من تحميل الخط "Cairo" */
-    color: #000; /* النص باللون الأسود للطباعة الواضحة */
+    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    color: #000;
   }
 
   .highlight {

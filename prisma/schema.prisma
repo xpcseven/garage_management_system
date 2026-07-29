@@ -21,6 +21,35 @@ enum Role {
   DRIVER
   USER
   TOURISM_OWNER
+  HOTEL_OWNER
+  RESTAURANT_OWNER
+  FARM_OWNER
+}
+
+enum VehicleCategory {
+  SEDAN
+  BUS
+  VAN
+  MINIBUS
+  SUV
+  PICKUP
+  COACH
+}
+
+enum HotelRoomType {
+  SINGLE
+  DOUBLE
+  TWIN
+  TRIPLE
+  SUITE
+  FAMILY
+}
+
+enum FarmOccasionType {
+  FAMILY
+  YOUTH
+  WEDDING
+  OTHER
 }
 
 enum GarageRole {
@@ -146,6 +175,12 @@ model User {
   jobPreferences UserJobPreference[]
   tourismPlaces TourismPlace[]
   apiRefreshTokens ApiRefreshToken[]
+  hotelsOwned      Hotel[]
+  restaurantsOwned Restaurant[]
+  farmsOwned       Farm[]
+  hotelBookings    HotelBooking[]
+  restaurantBookings RestaurantBooking[]
+  farmBookings     FarmBooking[]
 
   @@index([email])
   @@index([phone])
@@ -190,6 +225,9 @@ model City {
   tripsTo   Trip[]     @relation("TripToCity")
   tripStops TripStop[]
   tourismPlaces TourismPlace[]
+  hotels      Hotel[]
+  restaurants Restaurant[]
+  farms       Farm[]
 }
 
 // ============================================================
@@ -294,15 +332,18 @@ model GarageMember {
 // ============================================================
 
 model Vehicle {
-  id            String        @id @default(uuid())
+  id            String          @id @default(uuid())
   brand         String
   model         String
   year          Int
-  plateNumber   String        @unique
+  plateNumber   String          @unique
   color         String?
   totalSeats    Int
+  category      VehicleCategory @default(SEDAN)
+  /// قالب المقاعد: { rows, cols, seats: [{n,row,col,label,isDriver?}] }
+  seatLayoutJson Json?
   transportType TransportType
-  isActive      Boolean       @default(true)
+  isActive      Boolean         @default(true)
   // اسم السائق المعيّن للمركبة عند ربطها بكراج
   driverName String?
 
@@ -318,6 +359,7 @@ model Vehicle {
 
   @@index([ownerId])
   @@index([garageId])
+  @@index([category])
 }
 
 // ============================================================
@@ -582,11 +624,14 @@ model TripStop {
 // ============================================================
 
 model Seat {
-  id         String     @id @default(uuid())
-  tripId     String
-  seatNumber Int
-  priceModifier Decimal @default(0.0) @db.Decimal(10, 2)
-  status     SeatStatus @default(AVAILABLE)
+  id           String     @id @default(uuid())
+  tripId       String
+  seatNumber   Int
+  row          Int?
+  col          Int?
+  label        String?
+  priceModifier Decimal    @default(0.0) @db.Decimal(10, 2)
+  status       SeatStatus @default(AVAILABLE)
 
   trip    Trip     @relation(fields: [tripId], references: [id])
   booking Booking?
@@ -762,4 +807,259 @@ model AuditLog {
   entityId  String
   data      Json?
   createdAt DateTime @default(now())
+}
+
+// ============================================================
+// HOTEL (HOTEL_OWNER)
+// ============================================================
+
+model Hotel {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  phone       String?
+  address     String?
+  location    String?
+  imageUrl    String?
+  isActive    Boolean @default(true)
+  approvalStatus TourismApprovalStatus @default(PENDING)
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  ownerId String
+  cityId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User   @relation(fields: [ownerId], references: [id])
+  city  City?  @relation(fields: [cityId], references: [id])
+  rooms HotelRoom[]
+  bookings HotelBooking[]
+  images HotelImage[]
+
+  @@index([ownerId])
+  @@index([cityId])
+  @@index([isActive])
+  @@index([approvalStatus])
+  @@index([isDeleted])
+}
+
+model HotelImage {
+  id        String   @id @default(uuid())
+  hotelId   String
+  imageUrl  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId])
+  @@index([hotelId, sortOrder])
+}
+
+model HotelRoom {
+  id         String        @id @default(uuid())
+  hotelId    String
+  roomNumber String
+  roomType   HotelRoomType @default(DOUBLE)
+  capacity   Int           @default(2)
+  pricePerNight Decimal    @db.Decimal(10, 2)
+  amenities  String?
+  description String?
+  isActive   Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel    Hotel          @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings HotelBooking[]
+
+  @@unique([hotelId, roomNumber])
+  @@index([hotelId])
+  @@index([isActive])
+}
+
+model HotelBooking {
+  id     String @id @default(uuid())
+  userId String
+  hotelId String
+  roomId String
+
+  checkIn  DateTime
+  checkOut DateTime
+  guests   Int      @default(1)
+  status   BookingStatus @default(PENDING)
+  priceAtBooking Decimal @db.Decimal(10, 2)
+  notes    String?
+
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User      @relation(fields: [userId], references: [id])
+  hotel Hotel    @relation(fields: [hotelId], references: [id])
+  room  HotelRoom @relation(fields: [roomId], references: [id])
+
+  @@index([userId])
+  @@index([hotelId])
+  @@index([roomId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+}
+
+// ============================================================
+// RESTAURANT (RESTAURANT_OWNER)
+// ============================================================
+
+model Restaurant {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  phone       String?
+  address     String?
+  location    String?
+  imageUrl    String?
+  capacity    Int     @default(20)
+  openHours   String?
+  isActive    Boolean @default(true)
+  approvalStatus TourismApprovalStatus @default(PENDING)
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  ownerId String
+  cityId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User @relation(fields: [ownerId], references: [id])
+  city     City? @relation(fields: [cityId], references: [id])
+  bookings RestaurantBooking[]
+  images   RestaurantImage[]
+
+  @@index([ownerId])
+  @@index([cityId])
+  @@index([isActive])
+  @@index([approvalStatus])
+  @@index([isDeleted])
+}
+
+model RestaurantImage {
+  id        String   @id @default(uuid())
+  restaurantId String
+  imageUrl  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+  @@index([restaurantId, sortOrder])
+}
+
+model RestaurantBooking {
+  id           String @id @default(uuid())
+  userId       String
+  restaurantId String
+
+  reservedAt DateTime
+  guests     Int      @default(2)
+  status     BookingStatus @default(PENDING)
+  notes      String?
+
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([userId])
+  @@index([restaurantId])
+  @@index([status])
+  @@index([reservedAt])
+}
+
+// ============================================================
+// FARM (FARM_OWNER)
+// ============================================================
+
+model Farm {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  phone       String?
+  address     String?
+  location    String?
+  imageUrl    String?
+  capacity    Int     @default(30)
+  amenities   String?
+  isActive    Boolean @default(true)
+  approvalStatus TourismApprovalStatus @default(PENDING)
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  ownerId String
+  cityId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User @relation(fields: [ownerId], references: [id])
+  city     City? @relation(fields: [cityId], references: [id])
+  bookings FarmBooking[]
+  images   FarmImage[]
+
+  @@index([ownerId])
+  @@index([cityId])
+  @@index([isActive])
+  @@index([approvalStatus])
+  @@index([isDeleted])
+}
+
+model FarmImage {
+  id        String   @id @default(uuid())
+  farmId    String
+  imageUrl  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId])
+  @@index([farmId, sortOrder])
+}
+
+model FarmBooking {
+  id     String @id @default(uuid())
+  userId String
+  farmId String
+
+  /// فترة الحجز: من
+  startAt DateTime
+  /// فترة الحجز: إلى
+  endAt   DateTime
+  /// نوع المناسبة: عائلة / شباب / عرس / أخرى
+  occasionType  FarmOccasionType @default(FAMILY)
+  occasionOther String?
+
+  guests Int           @default(2)
+  status BookingStatus @default(PENDING)
+  notes  String?
+
+  cancelledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  farm Farm @relation(fields: [farmId], references: [id])
+
+  @@index([userId])
+  @@index([farmId])
+  @@index([status])
+  @@index([startAt, endAt])
 }

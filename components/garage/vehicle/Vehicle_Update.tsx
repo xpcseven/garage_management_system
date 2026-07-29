@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { VehicleRow } from "@/lib/actions/vehicle.actions";
 import { updateVehicle } from "@/lib/actions/vehicle.actions";
@@ -14,14 +14,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  VEHICLE_BRAND_SUGGESTIONS,
+  VEHICLE_CATEGORY_LABELS,
+  countBookableSeats,
+  getDefaultSeatLayout,
+} from "@/lib/vehicle-seat-layouts";
+import type { VehicleCategory } from "@prisma/client";
+import { SeatLayoutPreview } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
 
 type Props = { vehicle: VehicleRow };
+
+const CATEGORIES = Object.keys(VEHICLE_CATEGORY_LABELS) as VehicleCategory[];
 
 export default function Vehicle_Update({ vehicle }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const [category, setCategory] = useState<VehicleCategory>(vehicle.category);
+
+  const layout = useMemo(() => getDefaultSeatLayout(category), [category]);
+  const seatsCount = countBookableSeats(layout);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -30,7 +44,7 @@ export default function Vehicle_Update({ vehicle }: Props) {
           تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>تعديل المركبة</DialogTitle>
         </DialogHeader>
@@ -38,6 +52,8 @@ export default function Vehicle_Update({ vehicle }: Props) {
           className="space-y-3"
           action={(fd) => {
             fd.set("id", vehicle.id);
+            fd.set("category", category);
+            fd.set("totalSeats", String(seatsCount));
             start(async () => {
               const res = await updateVehicle(fd);
               if (res.success) {
@@ -61,15 +77,40 @@ export default function Vehicle_Update({ vehicle }: Props) {
           }}
         >
           <input type="hidden" name="id" value={vehicle.id} />
-          <p className="text-xs text-muted-foreground">اللوحة: {vehicle.plateNumber}</p>
+          <p className="text-xs text-muted-foreground">
+            اللوحة: {vehicle.plateNumber}
+          </p>
+
+          <div className="space-y-1">
+            <Label>نوع السيارة</Label>
+            <select
+              name="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as VehicleCategory)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {VEHICLE_CATEGORY_LABELS[c]}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="space-y-1">
             <Label htmlFor={`vb-${vehicle.id}`}>الماركة</Label>
             <Input
               id={`vb-${vehicle.id}`}
               name="brand"
+              list={`brand-list-${vehicle.id}`}
               required
               defaultValue={vehicle.brand}
             />
+            <datalist id={`brand-list-${vehicle.id}`}>
+              {VEHICLE_BRAND_SUGGESTIONS.map((b) => (
+                <option key={b} value={b} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-1">
             <Label htmlFor={`vm-${vehicle.id}`}>الموديل</Label>
@@ -91,15 +132,19 @@ export default function Vehicle_Update({ vehicle }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor={`vs-${vehicle.id}`}>المقاعد</Label>
+            <Label htmlFor={`vs-${vehicle.id}`}>المقاعد (تلقائي)</Label>
             <Input
               id={`vs-${vehicle.id}`}
               name="totalSeats"
               type="number"
-              required
-              defaultValue={vehicle.totalSeats}
+              readOnly
+              value={seatsCount}
+              className="bg-muted"
             />
           </div>
+
+          <SeatLayoutPreview layout={layout} />
+
           <div className="space-y-1">
             <Label htmlFor={`vc-${vehicle.id}`}>اللون</Label>
             <Input

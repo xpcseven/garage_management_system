@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
-import { getAvailableSeatsForTrip } from "@/lib/actions/passenger.actions";
+import { getTripSeatsForMap } from "@/lib/actions/passenger.actions";
 import { bookSeatOnTrip } from "@/lib/actions/booking.actions";
 import {
   LUGGAGE_KIND_OPTIONS,
@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SeatMap, { type SeatMapSeat } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
 
 type Props = { tripId: string };
@@ -61,14 +62,16 @@ function rowsToPayload(rows: LuggageFormRow[]): BookTripLuggagePayload[] {
 export default function PassengerTripBookButton({ tripId }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [seats, setSeats] = useState<{ id: string; seatNumber: number }[]>([]);
+  const [seats, setSeats] = useState<SeatMapSeat[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [luggageRows, setLuggageRows] = useState<LuggageFormRow[]>([]);
   const [pending, start] = useTransition();
 
   function loadSeats() {
     start(async () => {
-      const list = await getAvailableSeatsForTrip(tripId);
+      const list = await getTripSeatsForMap(tripId);
       setSeats(list);
+      setSelectedId(null);
     });
   }
 
@@ -79,6 +82,31 @@ export default function PassengerTripBookButton({ tripId }: Props) {
     setLuggageRows((prev) =>
       prev.map((r) => (r.key === key ? { ...r, ...patch } : r))
     );
+  }
+
+  function confirmBook(seatId: string) {
+    const payload = rowsToPayload(luggageRows);
+    start(async () => {
+      const res = await bookSeatOnTrip(tripId, seatId, payload);
+      if (res.success) {
+        setOpen(false);
+        router.refresh();
+        await Swal.fire({
+          icon: "success",
+          title: "تم الحجز",
+          text: "تم حجز المقعد بنجاح",
+          confirmButtonText: "موافق",
+        });
+      } else {
+        await Swal.fire({
+          icon: "error",
+          title: "تعذر الحجز",
+          text: res.error,
+          confirmButtonText: "حسناً",
+        });
+        loadSeats();
+      }
+    });
   }
 
   return (
@@ -93,21 +121,25 @@ export default function PassengerTripBookButton({ tripId }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="">
-          حجز
-        </Button>
+        <Button size="sm">حجز</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>حجز مقعد</DialogTitle>
           <p className="text-sm text-muted-foreground text-right pt-1">
-            يمكنك السفر دون أمتعة. إن رغبت بتسجيل أغراض، اضغط «إضافة غرض» ثم املأ
-            الحقول. للحقيبة أو الكرتون: الوزن والحجم مطلوبان. للكيس: عدد الأكياس
-            مطلوب والوزن اختياري.
+            اختر مقعداً من المخطط (الأحمر = محجوز). الأمتعة اختيارية.
           </p>
         </DialogHeader>
 
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <SeatMap
+              seats={seats}
+              selectedId={selectedId}
+              onSelect={(id) => setSelectedId(id)}
+            />
+          </div>
+
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label className="text-base">أمتعة مرافقة (اختياري)</Label>
             <Button
@@ -121,13 +153,6 @@ export default function PassengerTripBookButton({ tripId }: Props) {
               إضافة غرض
             </Button>
           </div>
-
-          {luggageRows.length === 0 && (
-            <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/25 bg-muted/20 px-3 py-4 text-center">
-              لا توجد أغراض مضافة — اختر مقعداً بالأسفل للحجز بدون أمتعة، أو أضف
-              غرضاً أولاً.
-            </p>
-          )}
 
           {luggageRows.map((row, idx) => {
             const isSack = row.kind === "SACK";
@@ -153,7 +178,6 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                     حذف
                   </Button>
                 </div>
-
                 <div className="space-y-2">
                   <Label className="text-xs">نوع الغرض</Label>
                   <Select
@@ -174,19 +198,16 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {isSack ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label className="text-xs">عدد الأكياس</Label>
                       <Input
                         inputMode="numeric"
-                        min={1}
                         value={row.quantity}
                         onChange={(e) =>
                           updateRow(row.key, { quantity: e.target.value })
                         }
-                        placeholder="مثال: 3"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -197,7 +218,6 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                         onChange={(e) =>
                           updateRow(row.key, { weightKg: e.target.value })
                         }
-                        placeholder="إجمالي أو تقديري"
                       />
                     </div>
                   </div>
@@ -212,19 +232,16 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                           onChange={(e) =>
                             updateRow(row.key, { weightKg: e.target.value })
                           }
-                          placeholder="مثال: 18"
                         />
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">عدد القطع</Label>
                         <Input
                           inputMode="numeric"
-                          min={1}
                           value={row.quantity}
                           onChange={(e) =>
                             updateRow(row.key, { quantity: e.target.value })
                           }
-                          placeholder="1"
                         />
                       </div>
                     </div>
@@ -235,7 +252,6 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                         onChange={(e) =>
                           updateRow(row.key, { dimensions: e.target.value })
                         }
-                        placeholder="مثال: 75×50×32 سم"
                       />
                     </div>
                   </div>
@@ -245,46 +261,20 @@ export default function PassengerTripBookButton({ tripId }: Props) {
           })}
         </div>
 
-        <div className="border-t pt-3 space-y-2">
-          <Label className="text-sm">اختر مقعداً</Label>
-          <div className="flex flex-wrap gap-2">
-            {seats.map((s) => (
-              <Button
-                key={s.id}
-                type="button"
-                variant="outline"
-                disabled={pending}
-                onClick={() => {
-                  const payload = rowsToPayload(luggageRows);
-                  start(async () => {
-                    const res = await bookSeatOnTrip(tripId, s.id, payload);
-                    if (res.success) {
-                      setOpen(false);
-                      router.refresh();
-                      await Swal.fire({
-                        icon: "success",
-                        title: "تم الحجز",
-                        text: "تم حجز المقعد بنجاح",
-                        confirmButtonText: "موافق",
-                      });
-                    } else {
-                      await Swal.fire({
-                        icon: "error",
-                        title: "تعذر الحجز",
-                        text: res.error,
-                        confirmButtonText: "حسناً",
-                      });
-                    }
-                  });
-                }}
-              >
-                مقعد {s.seatNumber}
-              </Button>
-            ))}
-            {seats.length === 0 && !pending && (
-              <p className="text-sm text-muted-foreground">لا توجد مقاعد متاحة.</p>
-            )}
-          </div>
+        <div className="border-t pt-3">
+          <Button
+            type="button"
+            className="w-full"
+            disabled={pending || !selectedId}
+            onClick={() => selectedId && confirmBook(selectedId)}
+          >
+            تأكيد حجز المقعد
+          </Button>
+          {seats.length === 0 && !pending && (
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              لا توجد مقاعد لهذه الرحلة.
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -39,6 +39,8 @@ export default function Vehicle_Table({ vehicles }: Props) {
             <tr className="border-b text-right">
               <th className="p-2">اللوحة</th>
               <th className="p-2">المركبة</th>
+              <th className="p-2">الفئة</th>
+              <th className="p-2">المقاعد</th>
               <th className="p-2">السائق</th>
               <th className="p-2">الشركة السياحية</th>
               <th className="p-2">النوع</th>
@@ -52,6 +54,12 @@ export default function Vehicle_Table({ vehicles }: Props) {
                 <td className="p-2 font-mono" data-label="اللوحة">{v.plateNumber}</td>
                 <td className="p-2" data-label="المركبة">
                   {v.brand} {v.model} ({v.year})
+                </td>
+                <td className="p-2" data-label="الفئة">
+                  {v.categoryLabel}
+                </td>
+                <td className="p-2" data-label="المقاعد">
+                  {v.totalSeats}
                 </td>
                 <td className="p-2 text-muted-foreground" data-label="السائق">
                   {v.driverName ?? "—"}
@@ -72,7 +80,7 @@ export default function Vehicle_Table({ vehicles }: Props) {
             ))}
             {vehicles.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                <td colSpan={9} className="p-6 text-center text-muted-foreground">
                   لا توجد مركبات
                 </td>
               </tr>

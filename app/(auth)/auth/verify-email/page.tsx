@@ -30,11 +30,11 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
           {ok ? "✓" : "!"}
         </div>
         <h1 className="text-xl font-bold text-purple-800">
-          {ok ? "تم التحقق" : "تعذر التحقق"}
+          {ok ? "تم تفعيل الحساب" : "تعذر التفعيل"}
         </h1>
         <p className="mt-3 text-sm leading-7 text-slate-600">
           {ok
-            ? "تم تأكيد بريدك بنجاح. يمكنك الآن تسجيل الدخول."
+            ? "تم تفعيل حسابك بنجاح. يمكنك الآن تسجيل الدخول."
             : result.error ?? "رابط غير صالح"}
         </p>
         <div className="mt-8 flex flex-col gap-2">

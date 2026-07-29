@@ -32,7 +32,7 @@ export async function apiLogin(
   }
 
   const user = await getUserByEmail(parsed.data.email);
-  if (!user?.password || user.isDeleted || !user.isActive) {
+  if (!user?.password || user.isDeleted) {
     return { error: "البريد أو كلمة المرور غير صالحة" };
   }
 
@@ -41,10 +41,10 @@ export async function apiLogin(
     return { error: "البريد أو كلمة المرور غير صالحة" };
   }
 
-  if (!user.emailVerified) {
+  if (!user.emailVerified || !user.isActive) {
     return {
       error:
-        "يرجى تأكيد بريدك الإلكتروني أولاً قبل تسجيل الدخول من التطبيق",
+        "حسابك غير مفعّل. افتح رابط التفعيل في بريدك ثم حاول تسجيل الدخول مجدداً.",
       code: "EMAIL_NOT_VERIFIED",
     };
   }

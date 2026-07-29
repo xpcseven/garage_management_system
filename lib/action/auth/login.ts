@@ -18,7 +18,7 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
   const { email, password } = validateFields.data;
 
   const user = await getUserByEmail(email);
-  if (!user?.password || user.isDeleted || !user.isActive) {
+  if (!user?.password || user.isDeleted) {
     return { error: "البريد أو كلمة المرور غير صحيحة" };
   }
 
@@ -27,10 +27,10 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     return { error: "البريد أو كلمة المرور غير صحيحة" };
   }
 
-  if (!user.emailVerified) {
+  if (!user.emailVerified || !user.isActive) {
     return {
       error:
-        "يجب تأكيد بريدك الإلكتروني قبل تسجيل الدخول. تحقق من صندوق الوارد أو أعد إرسال رابط التحقق.",
+        "حسابك غير مفعّل بعد. افتح رابط التفعيل في بريدك أو أعد إرسال الرابط من الأسفل.",
       code: "EMAIL_NOT_VERIFIED" as const,
       emailForResend: user.email,
     };

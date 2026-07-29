@@ -16,6 +16,8 @@ const cairo = Cairo({
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
   variable: "--font-cairo",
+  preload: true,
+  fallback: ["system-ui", "Segoe UI", "Tahoma", "Arial", "sans-serif"],
 });
 export const metadata: Metadata = {
   title: "MANAGE-Instituion | Home",
@@ -28,8 +30,8 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className={`${cairo.variable} ${cairo.className}`}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning className={cairo.variable}>
+      <body className={`${cairo.className} min-h-screen bg-background font-sans antialiased`}>
         <SessionProviderWrapper session={session}>
           <ThemeProvider
             attribute="class"

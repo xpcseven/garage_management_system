@@ -36,6 +36,6 @@ export async function resendVerificationEmail(email: string) {
 
   return {
     success:
-      "تم إرسال رابط التحقق إلى بريدك. تحقق من صندوق الوارد ومجلد الرسائل غير المرغوب فيها.",
+      "تم إرسال رابط التفعيل إلى بريدك. تحقق من صندوق الوارد.",
   };
 }

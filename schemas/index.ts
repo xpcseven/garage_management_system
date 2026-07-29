@@ -13,6 +13,9 @@ export const SelfRegisterRoleSchema = z.enum([
   "USER",
   "DRIVER",
   "TOURISM_OWNER",
+  "HOTEL_OWNER",
+  "RESTAURANT_OWNER",
+  "FARM_OWNER",
 ]);
 
 export const RegisterJobTypeSchema = z.enum([

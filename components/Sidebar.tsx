@@ -10,9 +10,14 @@ import {
   canManageTrips,
   canManageTourismPlaces,
   canManageVehicles,
+  canManageHotels,
+  canManageRestaurants,
+  canManageFarms,
   canUsePassengerPortal,
   canViewBookings,
 } from "@/lib/permissions";
+import { UserRole } from "@/prisma/UserRole.enum";
+import { roleLabelAr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -133,6 +138,35 @@ export default function Sidebar({ user, className }: Props) {
           <NavLink href="/vehicles" label="المركبات" icon="🚐" />
         )}
 
+        {canManageHotels(role) && (
+          <>
+            <SectionDivider label="الفندق" />
+            <NavLink href="/hotels" label="فندقي" icon="🏨" />
+            <NavLink href="/hotel-rooms" label="الغرف" icon="🛏️" />
+            <NavLink href="/hotel-bookings" label="حجوزات الفندق" icon="📋" />
+          </>
+        )}
+
+        {canManageRestaurants(role) && (
+          <>
+            <SectionDivider label="المطعم" />
+            <NavLink href="/restaurants" label="مطعمي" icon="🍽️" />
+            <NavLink
+              href="/restaurant-bookings"
+              label="حجوزات المطعم"
+              icon="📋"
+            />
+          </>
+        )}
+
+        {canManageFarms(role) && (
+          <>
+            <SectionDivider label="المزرعة" />
+            <NavLink href="/farms" label="مزرعتي" icon="🌿" />
+            <NavLink href="/farm-bookings" label="حجوزات المزرعة" icon="📋" />
+          </>
+        )}
+
         {canManageTrips(role) && (
           <>
             <SectionDivider label="الرحلات" />
@@ -156,10 +190,16 @@ export default function Sidebar({ user, className }: Props) {
               label="أماكن سياحية"
               icon="🧳"
             />
+            <NavLink href="/passenger/hotels" label="فنادق" icon="🏨" />
+            <NavLink href="/passenger/restaurants" label="مطاعم" icon="🍽️" />
+            <NavLink href="/passenger/farms" label="مزارع" icon="🌿" />
           </>
         )}
 
-        {canViewBookings(role) && (
+        {canViewBookings(role) &&
+          role !== UserRole.HOTEL_OWNER &&
+          role !== UserRole.RESTAURANT_OWNER &&
+          role !== UserRole.FARM_OWNER && (
           <>
             <SectionDivider label="الحجوزات" />
             <NavLink href="/bookings" label="الحجوزات" icon="🎫" />
@@ -178,7 +218,7 @@ export default function Sidebar({ user, className }: Props) {
               {user.name ?? "المستخدم"}
             </p>
             <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">
-              {role ?? "—"}
+              {roleLabelAr(role ?? "")}
             </p>
           </div>
         </div>

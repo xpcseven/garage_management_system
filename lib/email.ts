@@ -4,6 +4,8 @@ export const VERIFICATION_EXPIRY_HOURS = 24;
 export const VERIFICATION_TOKEN_EXPIRY_MS =
   VERIFICATION_EXPIRY_HOURS * 60 * 60 * 1000;
 
+const SITE_NAME = "Ashuor Tourism";
+
 export function createVerificationTokenValue(): string {
   return uuidv4();
 }
@@ -35,88 +37,181 @@ export function buildVerificationUrl(token: string): string {
   return `${getAppBaseUrl()}/auth/verify-email?token=${encodeURIComponent(token)}`;
 }
 
-function gmailUser(): string | undefined {
+function sanitizeName(name?: string): string {
+  return (name?.trim() || "Member").replace(/[<>&"']/g, "");
+}
+
+function smtpUser(): string | undefined {
   return (
-    process.env.GMAIL_USER?.trim() ||
     process.env.SMTP_USER?.trim() ||
+    process.env.GMAIL_USER?.trim() ||
     undefined
   );
 }
 
-function gmailAppPassword(): string | undefined {
+function smtpPass(): string | undefined {
   const raw =
-    process.env.GMAIL_APP_PASSWORD?.trim() ||
     process.env.SMTP_PASS?.trim() ||
+    process.env.GMAIL_APP_PASSWORD?.trim() ||
     "";
   const pass = raw.replace(/\s+/g, "");
   return pass || undefined;
 }
 
-function mailConfigured(): boolean {
-  return Boolean(
-    (gmailUser() && gmailAppPassword()) || process.env.RESEND_API_KEY?.trim()
+function smtpFromAddress(): string {
+  const configured = process.env.SMTP_FROM?.trim().replace(/^["']|["']$/g, "");
+  if (configured) return configured;
+
+  const user = smtpUser();
+  if (user && !user.endsWith("@gmail.com")) {
+    return `"${SITE_NAME}" <${user}>`;
+  }
+
+  if (user) return `"${SITE_NAME}" <${user}>`;
+  return `"${SITE_NAME}" <noreply@ashuor.com>`;
+}
+
+function replyToAddress(): string | undefined {
+  return (
+    process.env.EMAIL_REPLY_TO?.trim() ||
+    process.env.SMTP_REPLY_TO?.trim() ||
+    smtpUser()
   );
 }
 
-async function createGmailTransport() {
+function mailConfigured(): boolean {
+  return Boolean(
+    process.env.RESEND_API_KEY?.trim() ||
+      (smtpUser() && smtpPass())
+  );
+}
+
+type MailContent = {
+  subject: string;
+  text: string;
+  html: string;
+  recipient: string;
+  displayName: string;
+};
+
+function buildMailContent(
+  to: string,
+  token: string,
+  name?: string
+): MailContent {
+  const verifyUrl = buildVerificationUrl(token);
+  const displayName = sanitizeName(name);
+  const recipient = to.trim().toLowerCase();
+  const siteUrl = getAppBaseUrl();
+
+  // عنوان مختلط — أقل عرضة للتصنيف كسبام من العربية فقط
+  const subject = `${SITE_NAME} — Activate your account / تفعيل حسابك`;
+
+  const text = `${SITE_NAME}
+${siteUrl}
+
+Hello ${displayName},
+
+Please activate your account by opening this link:
+${verifyUrl}
+
+This link expires in ${VERIFICATION_EXPIRY_HOURS} hours.
+If you did not create an account, you can ignore this message.
+
+---
+مرحباً ${displayName},
+
+لتفعيل حسابك افتح الرابط:
+${verifyUrl}
+
+صلاحية الرابط ${VERIFICATION_EXPIRY_HOURS} ساعة.
+إذا لم تنشئ حساباً، تجاهل هذه الرسالة.
+
+${SITE_NAME}
+${siteUrl}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${SITE_NAME}</title>
+</head>
+<body style="margin:0;padding:20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222;background:#fff">
+  <p style="margin:0 0 16px">Hello ${displayName},</p>
+  <p style="margin:0 0 16px">Please activate your ${SITE_NAME} account:</p>
+  <p style="margin:0 0 20px">
+    <a href="${verifyUrl}" style="color:#1a56db">${verifyUrl}</a>
+  </p>
+  <p style="margin:0 0 16px;color:#555">Link expires in ${VERIFICATION_EXPIRY_HOURS} hours.</p>
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+  <p dir="rtl" style="margin:0 0 16px">مرحباً ${displayName}،</p>
+  <p dir="rtl" style="margin:0 0 16px">لتفعيل حسابك في ${SITE_NAME}:</p>
+  <p dir="rtl" style="margin:0 0 20px">
+    <a href="${verifyUrl}" style="color:#1a56db">${verifyUrl}</a>
+  </p>
+  <p dir="rtl" style="margin:0;color:#555">صلاحية الرابط ${VERIFICATION_EXPIRY_HOURS} ساعة.</p>
+  <p style="margin:24px 0 0;font-size:13px;color:#888">${SITE_NAME} · ${siteUrl}</p>
+</body>
+</html>`;
+
+  return { subject, text, html, recipient, displayName };
+}
+
+function formatRecipient(name: string, email: string): string {
+  const safe = name.replace(/"/g, "");
+  return `"${safe}" <${email}>`;
+}
+
+async function sendViaSmtp(content: MailContent): Promise<void> {
   const nodemailer = await import("nodemailer");
-  const user = gmailUser();
-  const pass = gmailAppPassword();
+  const user = smtpUser();
+  const pass = smtpPass();
   if (!user || !pass) {
-    throw new Error("Gmail غير مضبوط (GMAIL_USER / GMAIL_APP_PASSWORD)");
+    throw new Error("SMTP غير مضبوط");
   }
 
+  const host = process.env.SMTP_HOST?.trim() || "smtp.gmail.com";
+  const port = Number(process.env.SMTP_PORT ?? 587);
+  const secure = process.env.SMTP_SECURE === "true";
+
   const transport = nodemailer.default.createTransport({
-    host: process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === "true",
+    host,
+    port,
+    secure,
     auth: { user, pass },
+    tls: { minVersion: "TLSv1.2" },
   });
 
   await transport.verify();
-  return { transport, user };
-}
 
-async function sendViaGmail(opts: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}): Promise<void> {
-  const { transport, user } = await createGmailTransport();
-
-  const from =
-    process.env.SMTP_FROM?.trim().replace(/^["']|["']$/g, "") ||
-    `Ashuor Tourism <${user}>`;
+  const from = smtpFromAddress();
+  const replyTo = replyToAddress();
 
   const info = await transport.sendMail({
     from,
-    to: opts.to,
-    subject: opts.subject,
-    text: opts.text,
-    html: opts.html,
+    to: formatRecipient(content.displayName, content.recipient),
+    replyTo: replyTo || undefined,
+    subject: content.subject,
+    text: content.text,
+    html: content.html,
   });
 
-  console.info("[email] Gmail sent OK", {
-    to: opts.to,
+  console.info("[email] SMTP sent OK", {
+    host,
+    from,
+    to: content.recipient,
     messageId: info.messageId,
-    accepted: info.accepted,
-    rejected: info.rejected,
   });
 }
 
-async function sendViaResend(opts: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}): Promise<void> {
+async function sendViaResend(content: MailContent): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY غير مضبوط");
-  }
+  if (!apiKey) throw new Error("RESEND_API_KEY غير مضبوط");
+
   const from =
-    process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev";
+    process.env.RESEND_FROM_EMAIL?.trim() ||
+    `"${SITE_NAME}" <noreply@ashuor.com>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -126,10 +221,12 @@ async function sendViaResend(opts: {
     },
     body: JSON.stringify({
       from,
-      to: [opts.to],
-      subject: opts.subject,
-      text: opts.text,
-      html: opts.html,
+      to: [content.recipient],
+      reply_to: replyToAddress() || undefined,
+      subject: content.subject,
+      text: content.text,
+      html: content.html,
+      tags: [{ name: "category", value: "account-verification" }],
     }),
   });
 
@@ -138,90 +235,64 @@ async function sendViaResend(opts: {
     throw new Error(`Resend failed: ${res.status} ${body}`);
   }
 
-  console.info("[email] Resend sent OK", { to: opts.to });
+  console.info("[email] Resend sent OK", { from, to: content.recipient });
 }
 
 /**
- * إرسال بريد تأكيد الحساب.
- * الأولوية: Gmail SMTP ثم Resend.
+ * إرسال بريد تفعيل الحساب.
+ * الأولوية: Resend (نطاق مُوثَّق) → SMTP مخصص → Gmail.
  */
 export async function sendVerificationEmail(
   to: string,
   token: string,
   name?: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const verifyUrl = buildVerificationUrl(token);
-  const displayName = name?.trim() || "المستخدم";
-  const recipient = to.trim().toLowerCase();
-
-  const subject = "تأكيد بريدك الإلكتروني — التحقق من الحساب";
-  const text = `مرحباً ${displayName}،
-
-شكراً لتسجيلك. أكّد بريدك عبر الرابط التالي (صالح لمدة ${VERIFICATION_EXPIRY_HOURS} ساعة):
-${verifyUrl}
-
-إذا لم تطلب إنشاء حساب، تجاهل هذه الرسالة.`;
-
-  const html = `
-  <div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;line-height:1.7;color:#1e293b;max-width:560px;margin:0 auto">
-    <h2 style="color:#6d28d9">تأكيد بريدك الإلكتروني</h2>
-    <p>مرحباً <strong>${displayName}</strong>،</p>
-    <p>اضغط الزر أدناه لتأكيد حسابك. الرابط صالح لمدة ${VERIFICATION_EXPIRY_HOURS} ساعة.</p>
-    <p style="margin:28px 0;text-align:center">
-      <a href="${verifyUrl}" style="background:#6d28d9;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;display:inline-block">تأكيد البريد</a>
-    </p>
-    <p style="font-size:13px;color:#64748b">أو انسخ الرابط:<br/><a href="${verifyUrl}">${verifyUrl}</a></p>
-  </div>`;
+  const content = buildMailContent(to, token, name);
 
   if (!mailConfigured()) {
-    console.error("[email] mail not configured — missing GMAIL_* or RESEND_API_KEY");
+    console.error("[email] mail not configured");
     return {
       ok: false,
       error:
-        "مزود البريد غير مضبوط. أضف GMAIL_USER و GMAIL_APP_PASSWORD أو RESEND_API_KEY",
+        "مزود البريد غير مضبوط. أضف RESEND_API_KEY (مُفضّل) أو SMTP/Gmail في .env",
     };
   }
 
-  console.info("[email] sending verification", { to: recipient });
+  console.info("[email] sending verification", { to: content.recipient });
 
-  try {
-    let lastError: unknown;
+  const providers: Array<{ name: string; send: () => Promise<void> }> = [];
 
-    if (gmailUser() && gmailAppPassword()) {
-      try {
-        await sendViaGmail({
-          to: recipient,
-          subject,
-          text,
-          html,
-        });
-        return { ok: true };
-      } catch (e) {
-        lastError = e;
-        console.error("[email] Gmail failed, trying Resend if configured…", e);
-      }
-    }
-
-    if (process.env.RESEND_API_KEY?.trim()) {
-      await sendViaResend({ to: recipient, subject, text, html });
-      return { ok: true };
-    }
-
-    throw lastError ?? new Error("لا يوجد مزود بريد بديل");
-  } catch (e) {
-    console.error("[email] send failed", e);
-    const msg = e instanceof Error ? e.message : "";
-    if (
-      msg.includes("Invalid login") ||
-      msg.includes("BadCredentials") ||
-      msg.includes("EAUTH")
-    ) {
-      return {
-        ok: false,
-        error:
-          "فشل إرسال البريد — تحقق من GMAIL_APP_PASSWORD وأعد تشغيل السيرفر.",
-      };
-    }
-    return { ok: false, error: "تعذر إرسال رسالة التأكيد إلى بريدك" };
+  if (process.env.RESEND_API_KEY?.trim()) {
+    providers.push({ name: "resend", send: () => sendViaResend(content) });
   }
+
+  if (smtpUser() && smtpPass()) {
+    providers.push({ name: "smtp", send: () => sendViaSmtp(content) });
+  }
+
+  let lastError: unknown;
+
+  for (const provider of providers) {
+    try {
+      await provider.send();
+      return { ok: true };
+    } catch (e) {
+      lastError = e;
+      console.error(`[email] ${provider.name} failed`, e);
+    }
+  }
+
+  const msg = lastError instanceof Error ? lastError.message : "";
+  if (
+    msg.includes("Invalid login") ||
+    msg.includes("BadCredentials") ||
+    msg.includes("EAUTH")
+  ) {
+    return {
+      ok: false,
+      error: "فشل إرسال البريد — تحقق من إعدادات SMTP/Gmail في .env",
+    };
+  }
+
+  return { ok: false, error: "تعذر إرسال رسالة التفعيل إلى بريدك" };
 }

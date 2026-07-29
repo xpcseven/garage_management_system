@@ -11,6 +11,12 @@ export function roleLabelAr(role: string): string {
       return "سائق";
     case UserRole.TOURISM_OWNER:
       return "صاحب مكان سياحي";
+    case UserRole.HOTEL_OWNER:
+      return "صاحب فندق";
+    case UserRole.RESTAURANT_OWNER:
+      return "صاحب مطعم";
+    case UserRole.FARM_OWNER:
+      return "صاحب مزرعة";
     case UserRole.USER:
       return "مسافر";
     default:

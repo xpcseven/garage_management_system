@@ -214,12 +214,15 @@ const RegisterForm = () => {
                               disabled={isPending}
                               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors"
                             >
-                              <option value="USER">عميل الشركة السياحية</option>
+                              <option value="USER">مسافر / عميل</option>
                               <option value="GARAGE_OWNER">مالك شركة سياحية</option>
                               <option value="DRIVER">سائق مستقل</option>
                               <option value="TOURISM_OWNER">
                                 مالك مكان سياحي
                               </option>
+                              <option value="HOTEL_OWNER">صاحب فندق</option>
+                              <option value="RESTAURANT_OWNER">صاحب مطعم</option>
+                              <option value="FARM_OWNER">صاحب مزرعة</option>
                             </select>
                           </FormControl>
                           <FormMessage />

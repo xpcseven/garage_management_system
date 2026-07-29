@@ -71,6 +71,14 @@ const config = {
 
       },
       fontFamily: {
+        sans: [
+          "var(--font-cairo)",
+          "system-ui",
+          "Segoe UI",
+          "Tahoma",
+          "Arial",
+          "sans-serif",
+        ],
         cairo: ["var(--font-cairo)", "sans-serif"],
       },
       borderRadius: {

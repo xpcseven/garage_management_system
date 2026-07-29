@@ -206,9 +206,13 @@ export async function getFreelanceTripsForPassenger(): Promise<
 export type TripSeatOption = {
   id: string;
   seatNumber: number;
+  row: number | null;
+  col: number | null;
+  label: string | null;
+  status: string;
 };
 
-export async function getAvailableSeatsForTrip(
+export async function getTripSeatsForMap(
   tripId: string
 ): Promise<TripSeatOption[]> {
   const session = await auth();
@@ -221,12 +225,30 @@ export async function getAvailableSeatsForTrip(
   if (!tripOk) return [];
 
   const seats = await prisma.seat.findMany({
-    where: {
-      tripId,
-      status: SeatStatus.AVAILABLE,
-    },
+    where: { tripId },
     orderBy: { seatNumber: "asc" },
-    select: { id: true, seatNumber: true },
+    select: {
+      id: true,
+      seatNumber: true,
+      row: true,
+      col: true,
+      label: true,
+      status: true,
+    },
   });
-  return seats;
+  return seats.map((s) => ({
+    id: s.id,
+    seatNumber: s.seatNumber,
+    row: s.row,
+    col: s.col,
+    label: s.label,
+    status: s.status,
+  }));
+}
+
+export async function getAvailableSeatsForTrip(
+  tripId: string
+): Promise<TripSeatOption[]> {
+  const all = await getTripSeatsForMap(tripId);
+  return all.filter((s) => s.status === "AVAILABLE");
 }

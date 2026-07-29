@@ -41,7 +41,7 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
           name,
           password: hashedPassword,
           role: prismaRole,
-          isActive: true,
+          isActive: false,
           emailVerified: false,
         },
       });
@@ -99,7 +99,7 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
 
     return {
       success:
-        "تم إنشاء الحساب. أرسلنا رابط تحقق إلى بريدك — أكّد البريد قبل تسجيل الدخول (تحقق أيضاً من مجلد السبام).",
+        "تم إنشاء حسابك وهو معطّل مؤقتاً. أرسلنا رابط التفعيل إلى بريدك — افتح الرابط لتفعيل الحساب وتسجيل الدخول.",
     };
   } catch (error) {
     console.error(error);

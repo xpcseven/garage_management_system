@@ -13,7 +13,7 @@ export default function DashboardShell({ user, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div dir="rtl" className="font-cairo min-h-screen flex flex-col">
+    <div dir="rtl" className="min-h-screen flex flex-col">
       <div className="print:hidden">
         <NavBar user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
       </div>

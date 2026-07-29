@@ -26,6 +26,12 @@ function roleBadgeClass(role: string): string {
       return "bg-amber-600 hover:bg-amber-600";
     case UserRole.TOURISM_OWNER:
       return "bg-emerald-600 hover:bg-emerald-600";
+    case UserRole.HOTEL_OWNER:
+      return "bg-cyan-600 hover:bg-cyan-600";
+    case UserRole.RESTAURANT_OWNER:
+      return "bg-orange-600 hover:bg-orange-600";
+    case UserRole.FARM_OWNER:
+      return "bg-lime-700 hover:bg-lime-700";
     case UserRole.USER:
       return "bg-slate-600 hover:bg-slate-600";
     default:
