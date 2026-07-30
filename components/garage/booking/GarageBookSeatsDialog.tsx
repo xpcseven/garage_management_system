@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, Plus, Trash2 } from "lucide-react";
+import {
+  bookSeatsOnTrip,
+  getBookableTripsForGarage,
+  type GarageBookableTrip,
+} from "@/lib/actions/booking.actions";
 import { getTripSeatsForMap } from "@/lib/actions/passenger.actions";
-import { bookSeatsOnTrip } from "@/lib/actions/booking.actions";
 import {
   LUGGAGE_KIND_OPTIONS,
   type BookTripLuggagePayload,
@@ -12,6 +16,7 @@ import {
 } from "@/lib/luggage-labels";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +33,6 @@ import {
 } from "@/components/ui/select";
 import SeatMap, { type SeatMapSeat } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
-
-type Props = { tripId: string };
 
 type LuggageFormRow = {
   key: string;
@@ -58,22 +61,44 @@ function rowsToPayload(rows: LuggageFormRow[]): BookTripLuggagePayload[] {
   }));
 }
 
-export default function PassengerTripBookButton({ tripId }: Props) {
+export default function GarageBookSeatsDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [trips, setTrips] = useState<GarageBookableTrip[]>([]);
+  const [tripId, setTripId] = useState("");
   const [seats, setSeats] = useState<SeatMapSeat[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [luggageRows, setLuggageRows] = useState<LuggageFormRow[]>([]);
   const [showLuggage, setShowLuggage] = useState(false);
   const [pending, start] = useTransition();
 
-  function loadSeats() {
+  function loadTrips() {
     start(async () => {
-      const list = await getTripSeatsForMap(tripId);
+      const list = await getBookableTripsForGarage();
+      setTrips(list);
+      setTripId((prev) =>
+        prev && list.some((t) => t.id === prev) ? prev : list[0]?.id ?? ""
+      );
+    });
+  }
+
+  function loadSeats(id: string) {
+    if (!id) {
+      setSeats([]);
+      setSelectedIds([]);
+      return;
+    }
+    start(async () => {
+      const list = await getTripSeatsForMap(id);
       setSeats(list);
       setSelectedIds([]);
     });
   }
+
+  useEffect(() => {
+    if (open && tripId) loadSeats(tripId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId, open]);
 
   function toggleSeat(id: string) {
     setSelectedIds((prev) =>
@@ -91,7 +116,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
   }
 
   function confirmBook() {
-    if (selectedIds.length === 0) return;
+    if (!tripId || selectedIds.length === 0) return;
     const payload = rowsToPayload(luggageRows);
     start(async () => {
       const res = await bookSeatsOnTrip(tripId, selectedIds, payload);
@@ -114,7 +139,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
           text: res.error,
           confirmButtonText: "حسناً",
         });
-        loadSeats();
+        loadSeats(tripId);
       }
     });
   }
@@ -129,49 +154,75 @@ export default function PassengerTripBookButton({ tripId }: Props) {
       onOpenChange={(o) => {
         setOpen(o);
         if (o) {
-          loadSeats();
+          loadTrips();
           setLuggageRows([]);
           setShowLuggage(false);
+          setSelectedIds([]);
         }
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm">حجز</Button>
+        <Button>حجز مقاعد</Button>
       </DialogTrigger>
 
       <DialogContent className="w-max max-w-[min(96vw,72rem)] gap-0 overflow-hidden border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)]">
-        <div className="w-full min-w-[min(96vw,20rem)] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/10">
-          <DialogHeader className="space-y-1 border-b border-slate-100 bg-gradient-to-l from-emerald-50 to-white px-4 py-3 text-right">
-            <DialogTitle className="text-base font-bold text-slate-900">
-              حجز المقاعد
+        <div className="w-full min-w-[min(96vw,22rem)] overflow-hidden rounded-2xl border border-plum/15 bg-white shadow-plum dark:border-orchid/20 dark:bg-dusk">
+          <DialogHeader className="space-y-1 border-b border-plum/10 bg-gradient-to-l from-plum/10 via-orchid/5 to-white px-4 py-3 text-end dark:from-plum/30 dark:to-dusk">
+            <DialogTitle className="font-display text-lg text-plum dark:text-orchid-light">
+              حجز مقاعد من الشركة
             </DialogTitle>
-            <p className="text-[11px] text-slate-500">
-              اضغط المقاعد لاختيارها — يمكنك اختيار أكثر من مقعد
+            <p className="text-[11px] text-dusk/55 dark:text-mist/55">
+              اختر رحلة من رحلات شركتك ثم حدد المقاعد
             </p>
           </DialogHeader>
 
           <div className="space-y-3 px-3 py-3">
-            <div className="w-full rounded-xl bg-slate-50/90 p-2.5 ring-1 ring-slate-100">
-              <SeatMap
-                seats={seats}
-                selectedIds={selectedIds}
-                onSelect={toggleSeat}
-                orientation="horizontal"
-                fitWidth
-              />
-              {seats.length === 0 && !pending && (
-                <p className="mt-2 text-center text-xs text-slate-400">
-                  لا توجد مقاعد لهذه الرحلة
-                </p>
-              )}
+            <div className="space-y-1.5">
+              <Label htmlFor="garage-book-trip" className="text-xs">
+                الرحلة
+              </Label>
+              <select
+                id="garage-book-trip"
+                value={tripId}
+                onChange={(e) => setTripId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                disabled={pending || trips.length === 0}
+              >
+                {trips.length === 0 ? (
+                  <option value="">لا توجد رحلات متاحة للحجز</option>
+                ) : (
+                  trips.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
+
+            {tripId && (
+              <div className="w-full rounded-xl bg-slate-50/90 p-2.5 ring-1 ring-slate-100">
+                <SeatMap
+                  seats={seats}
+                  selectedIds={selectedIds}
+                  onSelect={toggleSeat}
+                  orientation="horizontal"
+                  fitWidth
+                />
+                {seats.length === 0 && !pending && (
+                  <p className="mt-2 text-center text-xs text-slate-400">
+                    لا توجد مقاعد لهذه الرحلة
+                  </p>
+                )}
+              </div>
+            )}
 
             {selectedIds.length > 0 && (
               <div className="flex flex-wrap justify-end gap-1.5">
                 {selectedLabels.map((label) => (
                   <span
                     key={label}
-                    className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-800"
+                    className="rounded-full bg-orchid/15 px-2.5 py-0.5 text-[11px] font-medium text-plum"
                   >
                     {label}
                   </span>
@@ -191,7 +242,7 @@ export default function PassengerTripBookButton({ tripId }: Props) {
                     setLuggageRows([emptyRow()]);
                   }
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 py-2 text-xs text-slate-500 transition hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-800"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-plum/25 py-2 text-xs text-dusk/55 transition hover:border-orchid/40 hover:bg-plum/5 hover:text-plum"
               >
                 <Briefcase className="h-3.5 w-3.5" />
                 إضافة أمتعة (اختياري)
@@ -307,8 +358,8 @@ export default function PassengerTripBookButton({ tripId }: Props) {
           <div className="border-t border-slate-100 bg-slate-50/80 px-4 py-3">
             <Button
               type="button"
-              className="h-10 w-full rounded-xl bg-violet-600 text-sm font-semibold text-white hover:bg-violet-700"
-              disabled={pending || selectedIds.length === 0}
+              className="h-10 w-full rounded-xl bg-gradient-to-l from-plum to-orchid text-sm font-semibold text-white shadow-orchid hover:from-plum-light hover:to-orchid-light focus-visible:ring-orchid"
+              disabled={pending || !tripId || selectedIds.length === 0}
               onClick={confirmBook}
             >
               {selectedIds.length > 1

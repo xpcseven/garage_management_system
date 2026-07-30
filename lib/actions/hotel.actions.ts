@@ -117,7 +117,10 @@ export async function createHotel(formData: FormData) {
       address,
       location: String(formData.get("location") ?? "").trim() || null,
       ownerId: session.user.id,
-      approvalStatus: TourismApprovalStatus.APPROVED,
+      approvalStatus:
+        session.user.role === UserRole.SUPER_ADMIN
+          ? TourismApprovalStatus.APPROVED
+          : TourismApprovalStatus.PENDING,
       isActive: true,
       imageUrl: urls[0] ?? null,
     },

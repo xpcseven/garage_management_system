@@ -97,7 +97,10 @@ export async function createRestaurant(formData: FormData) {
       openHours: String(formData.get("openHours") ?? "").trim() || null,
       capacity: Number(formData.get("capacity") ?? 20) || 20,
       ownerId: session.user.id,
-      approvalStatus: TourismApprovalStatus.APPROVED,
+      approvalStatus:
+        session.user.role === UserRole.SUPER_ADMIN
+          ? TourismApprovalStatus.APPROVED
+          : TourismApprovalStatus.PENDING,
       isActive: true,
       imageUrl: urls[0] ?? null,
     },

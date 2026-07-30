@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/action/auth/logout";
+import NotificationBell from "@/components/NotificationBell";
 
 export type NavBarUser = {
   id: string;
@@ -34,111 +35,108 @@ function NavBar({ user, onToggleSidebar }: Props) {
     <header
       dir="rtl"
       className="
-        sticky top-0 z-50
+        fixed inset-x-0 top-0 z-50
         flex items-center justify-between
-        gap-3 px-4 py-3
-        border-b border-violet-600/40
-        bg-gradient-to-l from-indigo-950 via-violet-900 to-purple-800
-        shadow-[0_2px_20px_rgba(109,40,217,0.3)]
-        backdrop-blur-sm
+        gap-3 px-4 py-3.5
+        border-b border-white/10
+        bg-plum-dark/95
+        backdrop-blur-md
         print:hidden
       "
     >
-      {/* ── Right side: sidebar toggle + theme switcher ── */}
-      <div className="flex items-center gap-2">
-        {/* Sidebar toggle (mobile only) */}
+      {/* زخرفة خفيفة أعلى الهيدر */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
+        <div className="absolute -start-10 -top-16 h-40 w-40 rounded-full bg-orchid/30 blur-3xl" />
+        <div className="absolute -end-8 top-0 h-32 w-48 rounded-full bg-fuchsia-brand/20 blur-3xl" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-orchid-light/60 to-transparent" />
+      </div>
+
+      <div className="relative z-10 flex items-center gap-2">
         <Button
           type="button"
           size="icon"
           variant="ghost"
           className="
             md:hidden
-            h-9 w-9 rounded-lg
-            border border-white/20
-            text-white/80
+            h-9 w-9 rounded-xl
+            border border-white/15
+            text-white/85
             hover:bg-white/10 hover:text-white
-            transition-colors
           "
           onClick={onToggleSidebar}
         >
           <Menu className="h-4 w-4" />
-          <span className="sr-only">Toggle sidebar</span>
+          <span className="sr-only">فتح القائمة</span>
         </Button>
 
-        {/* Theme switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
               variant="ghost"
               className="
-                h-9 w-9 rounded-lg
-                border border-white/20
-                text-white/80
+                h-9 w-9 rounded-xl
+                border border-white/15
+                text-white/85
                 hover:bg-white/10 hover:text-white
-                transition-colors
               "
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <span className="sr-only">المظهر</span>
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
             align="start"
-            className="
-              mt-1 w-36 rounded-xl
-              border border-violet-200/20
-              bg-white/95 backdrop-blur-sm
-              shadow-xl shadow-violet-900/20
-              dark:bg-slate-900/95
-            "
+            className="mt-1 w-36 rounded-2xl border-plum/15 bg-mist/95 shadow-orchid backdrop-blur-sm dark:bg-dusk/95"
           >
             <DropdownMenuItem
               onClick={() => setTheme("light")}
-              className="gap-2 rounded-lg text-sm font-medium"
+              className="gap-2 rounded-xl text-sm font-medium"
             >
-              <Sun className="h-4 w-4 text-amber-500" />
+              <Sun className="h-4 w-4 text-orchid" />
               فاتح
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setTheme("dark")}
-              className="gap-2 rounded-lg text-sm font-medium"
+              className="gap-2 rounded-xl text-sm font-medium"
             >
-              <Moon className="h-4 w-4 text-violet-500" />
+              <Moon className="h-4 w-4 text-plum" />
               داكن
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setTheme("system")}
-              className="gap-2 rounded-lg text-sm font-medium"
+              className="gap-2 rounded-xl text-sm font-medium"
             >
-              <Computer className="h-4 w-4 text-slate-500" />
+              <Computer className="h-4 w-4 text-dusk/50" />
               النظام
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {user && <NotificationBell />}
       </div>
 
-      {/* ── Center: brand / title ── */}
-      <div className="absolute left-1/2 -translate-x-1/2">
+      <div className="absolute left-1/2 z-10 -translate-x-1/2">
         <Link
           href="/"
           className="
             block max-w-[58vw] truncate text-center
-            text-sm sm:text-base lg:text-lg
-            font-bold tracking-wide text-white
-            hover:text-violet-200
+            font-display text-lg tracking-wide text-white
             transition-colors duration-200
+            hover:text-orchid-light
+            sm:text-xl
           "
         >
-          <span>آشور للسياحة و السفر</span>
-          <span className="hidden sm:inline"> - Ashuor Tourism and Travel</span>
+          آشور للسياحة والسفر
         </Link>
       </div>
 
-      {/* ── Left side: user menu ── */}
-      <div className="flex items-center">
+      <div className="relative z-10 flex items-center">
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -146,14 +144,10 @@ function NavBar({ user, onToggleSidebar }: Props) {
                 variant="ghost"
                 size="sm"
                 className="
-                  h-9 max-w-[10rem]
-                  rounded-lg
-                  border border-white/20
-                  bg-white/10
+                  h-9 max-w-[10rem] truncate rounded-xl
+                  border border-white/15 bg-white/10
                   px-3 text-sm font-medium text-white
                   hover:bg-white/20
-                  truncate
-                  transition-colors
                 "
               >
                 {user.name || user.email}
@@ -162,34 +156,29 @@ function NavBar({ user, onToggleSidebar }: Props) {
 
             <DropdownMenuContent
               align="end"
-              className="
-                mt-1 w-56 rounded-xl
-                border border-violet-200/20
-                bg-white/95 backdrop-blur-sm
-                shadow-xl shadow-violet-900/20
-                dark:bg-slate-900/95
-              "
+              className="mt-1 w-56 rounded-2xl border-plum/15 bg-mist/95 shadow-orchid backdrop-blur-sm dark:bg-dusk/95"
             >
-              {/* User info header */}
-              <div className="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                <p className="mt-0.5 text-xs font-semibold text-violet-600 dark:text-violet-400">
+              <div className="border-b border-plum/10 px-3 py-2.5 dark:border-orchid/20">
+                <p className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-plum dark:text-orchid-light">
                   {roleLabelAr(user.role)}
                 </p>
               </div>
 
               <div className="p-1">
-                <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
+                <DropdownMenuItem asChild className="gap-2 rounded-xl text-sm">
                   <Link href="/home">
-                    <LayoutDashboard className="h-4 w-4 text-violet-500" />
+                    <LayoutDashboard className="h-4 w-4 text-plum" />
                     لوحة التحكم
                   </Link>
                 </DropdownMenuItem>
 
                 {user.role === UserRole.SUPER_ADMIN && (
-                  <DropdownMenuItem asChild className="gap-2 rounded-lg text-sm">
+                  <DropdownMenuItem asChild className="gap-2 rounded-xl text-sm">
                     <Link href="/users">
-                      <Users className="h-4 w-4 text-violet-500" />
+                      <Users className="h-4 w-4 text-orchid" />
                       المستخدمون والصلاحيات
                     </Link>
                   </DropdownMenuItem>
@@ -198,12 +187,7 @@ function NavBar({ user, onToggleSidebar }: Props) {
                 <DropdownMenuSeparator className="my-1" />
 
                 <DropdownMenuItem
-                  className="
-                    gap-2 rounded-lg text-sm
-                    text-red-600
-                    focus:bg-red-50 focus:text-red-600
-                    dark:focus:bg-red-950/40
-                  "
+                  className="gap-2 rounded-xl text-sm text-fuchsia-brand focus:bg-fuchsia-soft focus:text-fuchsia-brand"
                   onClick={() => logout()}
                 >
                   <LogOut className="h-4 w-4" />
@@ -213,7 +197,6 @@ function NavBar({ user, onToggleSidebar }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          // placeholder to keep layout balanced when no user
           <div className="h-9 w-9" />
         )}
       </div>

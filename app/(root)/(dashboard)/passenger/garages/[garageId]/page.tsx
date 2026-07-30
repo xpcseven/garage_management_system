@@ -4,6 +4,7 @@ import {
   getPublicGarageByIdForPassenger,
   getTripsForGaragePassenger,
 } from "@/lib/actions/passenger.actions";
+import { listAcceptedPartnersForGarage } from "@/lib/actions/partnership.actions";
 import { canUsePassengerPortal } from "@/lib/permissions";
 import Passenger_Garage_Detail_Component from "@/components/passenger/Passenger_Garage_Detail_Component";
 import UnAuthorized from "@/components/UnAuthorized";
@@ -23,7 +24,16 @@ export default async function PassengerGarageDetailPage({ params }: Props) {
     notFound();
   }
 
-  const trips = await getTripsForGaragePassenger(params.garageId);
+  const [trips, partners] = await Promise.all([
+    getTripsForGaragePassenger(params.garageId),
+    listAcceptedPartnersForGarage(params.garageId),
+  ]);
 
-  return <Passenger_Garage_Detail_Component garage={garage} trips={trips} />;
+  return (
+    <Passenger_Garage_Detail_Component
+      garage={garage}
+      trips={trips}
+      partners={partners}
+    />
+  );
 }

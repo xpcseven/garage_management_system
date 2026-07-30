@@ -113,7 +113,10 @@ export async function createFarm(formData: FormData) {
       amenities: String(formData.get("amenities") ?? "").trim() || null,
       capacity: Number(formData.get("capacity") ?? 30) || 30,
       ownerId: session.user.id,
-      approvalStatus: TourismApprovalStatus.APPROVED,
+      approvalStatus:
+        session.user.role === UserRole.SUPER_ADMIN
+          ? TourismApprovalStatus.APPROVED
+          : TourismApprovalStatus.PENDING,
       isActive: true,
       imageUrl: urls[0] ?? null,
     },

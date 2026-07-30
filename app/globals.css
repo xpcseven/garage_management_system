@@ -1,9 +1,7 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* تعريف الكلاسات المخصصة */
 @layer base {
   .bg-background {
     background-color: hsl(var(--background));
@@ -20,62 +18,60 @@
 
 @layer base {
   :root {
-    --savecolor: #e8b202;
-    --titlecolor: #FFFFFF;
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* بنفسج آشور — mist / dusk / plum */
+    --savecolor: #a855f7;
+    --titlecolor: #ffffff;
+    --background: 255 100% 98%; /* mist */
+    --foreground: 244 47% 20%; /* dusk */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 244 47% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
+    --popover-foreground: 244 47% 20%;
+    --primary: 263 70% 42%; /* plum #5B21B6 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 271 91% 65%; /* orchid-ish */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 255 60% 95%;
+    --muted-foreground: 244 20% 40%;
+    --accent: 255 80% 95%;
+    --accent-foreground: 263 70% 32%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --border: 255 40% 88%;
+    --input: 255 40% 88%;
+    --ring: 263 70% 42%;
+    --radius: 1rem;
   }
-  
 
   .dark {
-    /* Warmer dark palette aligned with brand colors */
-    --background: 24 15% 8%;
-    --foreground: 0 0% 98%;
-    --navbar-bg: 24 15% 10%;
+    --background: 244 40% 8%;
+    --foreground: 255 60% 96%;
+    --navbar-bg: 263 55% 14%;
 
-    --card: 24 15% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 24 15% 10%;
-    --popover-foreground: 0 0% 98%;
+    --card: 244 35% 12%;
+    --card-foreground: 255 60% 96%;
+    --popover: 244 35% 12%;
+    --popover-foreground: 255 60% 96%;
 
-    /* Brand accents (match #942f10 and #bb4c2a) */
-    --primary: 14 80% 32%;
+    --primary: 263 70% 58%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 14 63% 45%;
+    --secondary: 271 80% 62%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 24 12% 18%;
-    --muted-foreground: 0 0% 75%;
-    --accent: 24 12% 18%;
-    --accent-foreground: 0 0% 98%;
+    --muted: 244 25% 18%;
+    --muted-foreground: 255 20% 72%;
+    --accent: 244 25% 18%;
+    --accent-foreground: 255 60% 96%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 24 12% 20%;
-    --input: 24 12% 20%;
-    --ring: 14 80% 32%;
-    --chart-1: 14 80% 45%;
-    --chart-2: 24 60% 55%;
-    --chart-3: 34 70% 50%;
-    --chart-4: 204 60% 45%;
-    --chart-5: 284 55% 60%;
+    --border: 244 25% 22%;
+    --input: 244 25% 22%;
+    --ring: 263 70% 58%;
+    --chart-1: 263 70% 55%;
+    --chart-2: 291 70% 55%;
+    --chart-3: 280 60% 60%;
+    --chart-4: 250 60% 55%;
+    --chart-5: 230 50% 60%;
   }
 
   * {
@@ -83,11 +79,45 @@
   }
 
   html {
-    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial,
+      sans-serif;
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
+    background-color: #f5f3ff;
+    background-image:
+      radial-gradient(
+        ellipse 80% 50% at 100% -10%,
+        rgba(139, 92, 246, 0.18),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at -5% 30%,
+        rgba(192, 38, 211, 0.08),
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        rgba(91, 33, 182, 0.06),
+        transparent 45%
+      );
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(
+        ellipse 70% 40% at 90% 0%,
+        rgba(124, 58, 237, 0.25),
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse 50% 30% at 0% 40%,
+        rgba(192, 38, 211, 0.12),
+        transparent 45%
+      );
   }
 }
 
@@ -99,39 +129,40 @@ textarea {
 }
 
 @media print {
-  .header, .footer {
+  .header,
+  .footer {
     display: none;
   }
   body {
-    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial, sans-serif;
+    font-family: var(--font-cairo), system-ui, "Segoe UI", Tahoma, Arial,
+      sans-serif;
     color: #000;
+    background: #fff !important;
   }
 
   .highlight {
-    background: #ffe423 !important; /* لون خلفية محدد عند الضرورة */
+    background: #ede9fe !important;
   }
 
   .no-print {
     display: none;
-     /* العناصر غير الضرورية للطباعة */
   }
 
   .print-only {
-    display: block !important; /* عناصر تظهر فقط أثناء الطباعة */
+    display: block !important;
   }
 
   a {
-    color: #000 !important; /* تعديل لون الروابط للطباعة */
-    text-decoration: underline; /* إضافة خط تحت النص للوضوح */
+    color: #000 !important;
+    text-decoration: underline;
   }
 
   img {
-    max-width: 100%; /* تأكد من تناسب الصور للطباعة */
+    max-width: 100%;
     height: auto;
   }
 }
 
-/* Responsive tables: each row becomes a card on small screens */
 @media (max-width: 768px) {
   .responsive-table thead {
     display: none;
@@ -147,7 +178,7 @@ textarea {
 
   .responsive-table tr {
     border: 1px solid hsl(var(--border));
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     padding: 0.5rem;
     margin-bottom: 0.75rem;
     background: hsl(var(--card));
@@ -170,5 +201,19 @@ textarea {
     font-weight: 700;
     color: hsl(var(--foreground));
     white-space: nowrap;
+  }
+}
+
+@layer components {
+  .ticket-notch {
+    @apply absolute z-10 size-4 rounded-full bg-mist dark:bg-dusk;
+  }
+
+  .ashur-panel {
+    @apply rounded-2xl border border-plum/10 bg-white/80 shadow-plum backdrop-blur-sm dark:border-orchid/20 dark:bg-dusk/60;
+  }
+
+  .ashur-page-title {
+    @apply font-display text-3xl tracking-wide text-plum dark:text-orchid-light;
   }
 }

@@ -13,6 +13,15 @@ export default async function BookingsPage() {
     user.role === UserRole.USER ||
     user.role === UserRole.SUPER_ADMIN ||
     user.role === UserRole.GARAGE_OWNER;
+  const canBookSeats =
+    user.role === UserRole.GARAGE_OWNER ||
+    user.role === UserRole.SUPER_ADMIN;
 
-  return <Booking_Component bookings={bookings} canCancel={canCancel} />;
+  return (
+    <Booking_Component
+      bookings={bookings}
+      canCancel={canCancel}
+      canBookSeats={canBookSeats}
+    />
+  );
 }

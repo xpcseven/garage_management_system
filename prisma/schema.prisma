@@ -124,6 +124,25 @@ enum NotificationType {
   PAYMENT_RECEIVED
   NEW_REVIEW
   GENERAL
+  PARTNERSHIP_INVITE
+  PARTNERSHIP_ACCEPTED
+  PARTNERSHIP_REJECTED
+  PARTNERSHIP_MESSAGE
+  PACKAGE_INCLUDED
+}
+
+enum BusinessPartnerType {
+  HOTEL
+  RESTAURANT
+  FARM
+}
+
+enum PartnershipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  ENDED
 }
 
 enum TourismApprovalStatus {
@@ -181,6 +200,9 @@ model User {
   hotelBookings    HotelBooking[]
   restaurantBookings RestaurantBooking[]
   farmBookings     FarmBooking[]
+  partnershipsInvited   BusinessPartnership[] @relation("PartnershipInviter")
+  partnershipsResponded BusinessPartnership[] @relation("PartnershipResponder")
+  partnershipMessages   PartnershipMessage[]
 
   @@index([email])
   @@index([phone])
@@ -303,6 +325,7 @@ model Garage {
   trips    Trip[]
   tourismPrograms TourismProgram[]
   reviews  Review[]       @relation("GarageReview")
+  partnerships BusinessPartnership[]
 
   @@index([ownerId])
   @@index([isDeleted])
@@ -555,6 +578,7 @@ model TourismProgram {
 
   places   TourismProgramPlace[]
   bookings TourismProgramBooking[]
+  partners TourismProgramPartner[]
 
   @@index([garageId])
   @@index([vehicleId])
@@ -578,6 +602,30 @@ model TourismProgramPlace {
   @@unique([programId, stopOrder])
   @@index([programId])
   @@index([tourismPlaceId])
+}
+
+model TourismProgramPartner {
+  id String @id @default(uuid())
+
+  programId     String
+  partnershipId String
+  partnerType   BusinessPartnerType
+  stopOrder     Int      @default(0)
+  notes         String?
+  includedNights Int?
+  mealPlan      String?
+  visitWindow   String?
+  priceAddon    Decimal  @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  program     TourismProgram     @relation(fields: [programId], references: [id], onDelete: Cascade)
+  partnership BusinessPartnership @relation(fields: [partnershipId], references: [id])
+
+  @@unique([programId, partnershipId])
+  @@index([programId])
+  @@index([partnershipId])
 }
 
 model TourismProgramBooking {
@@ -838,6 +886,7 @@ model Hotel {
   rooms HotelRoom[]
   bookings HotelBooking[]
   images HotelImage[]
+  partnerships BusinessPartnership[]
 
   @@index([ownerId])
   @@index([cityId])
@@ -939,6 +988,7 @@ model Restaurant {
   city     City? @relation(fields: [cityId], references: [id])
   bookings RestaurantBooking[]
   images   RestaurantImage[]
+  partnerships BusinessPartnership[]
 
   @@index([ownerId])
   @@index([cityId])
@@ -1013,6 +1063,7 @@ model Farm {
   city     City? @relation(fields: [cityId], references: [id])
   bookings FarmBooking[]
   images   FarmImage[]
+  partnerships BusinessPartnership[]
 
   @@index([ownerId])
   @@index([cityId])
@@ -1062,4 +1113,66 @@ model FarmBooking {
   @@index([farmId])
   @@index([status])
   @@index([startAt, endAt])
+}
+
+// ============================================================
+// BUSINESS PARTNERSHIP (Garage ↔ Hotel/Restaurant/Farm)
+// ============================================================
+
+model BusinessPartnership {
+  id String @id @default(uuid())
+
+  garageId    String
+  partnerType BusinessPartnerType
+  hotelId      String?
+  restaurantId String?
+  farmId       String?
+
+  status PartnershipStatus @default(PENDING)
+  inviteMessage   String
+  responseMessage String?
+  isPublicOnDirectory Boolean @default(true)
+
+  invitedByUserId   String
+  respondedByUserId String?
+
+  invitedAt   DateTime  @default(now())
+  respondedAt DateTime?
+  endedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  garage     Garage      @relation(fields: [garageId], references: [id], onDelete: Cascade)
+  hotel      Hotel?      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  farm       Farm?       @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  invitedBy  User @relation("PartnershipInviter", fields: [invitedByUserId], references: [id])
+  respondedBy User? @relation("PartnershipResponder", fields: [respondedByUserId], references: [id])
+
+  messages PartnershipMessage[]
+  programLinks TourismProgramPartner[]
+
+  @@index([garageId, status])
+  @@index([hotelId, status])
+  @@index([restaurantId, status])
+  @@index([farmId, status])
+  @@index([partnerType])
+  @@index([status])
+}
+
+model PartnershipMessage {
+  id            String @id @default(uuid())
+  partnershipId String
+  senderUserId  String
+  body          String
+
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  partnership BusinessPartnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  sender      User @relation(fields: [senderUserId], references: [id])
+
+  @@index([partnershipId, createdAt])
+  @@index([senderUserId])
 }

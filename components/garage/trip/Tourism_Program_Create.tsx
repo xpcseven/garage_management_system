@@ -27,6 +27,7 @@ export default function Tourism_Program_Create({ pack }: Props) {
   const [garageId, setGarageId] = useState(pack.garages[0]?.id ?? "");
   const [placeIdToAdd, setPlaceIdToAdd] = useState(pack.places[0]?.id ?? "");
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+  const [selectedPartnershipIds, setSelectedPartnershipIds] = useState<string[]>([]);
 
   const selectedGarage = useMemo(
     () => pack.garages.find((g) => g.id === garageId),
@@ -94,7 +95,10 @@ export default function Tourism_Program_Create({ pack }: Props) {
               id="tp-garage"
               name="garageId"
               value={garageId}
-              onChange={(e) => setGarageId(e.target.value)}
+              onChange={(e) => {
+                setGarageId(e.target.value);
+                setSelectedPartnershipIds([]);
+              }}
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
@@ -230,6 +234,53 @@ export default function Tourism_Program_Create({ pack }: Props) {
             <p className="text-xs text-muted-foreground">
               يمكنك إضافة أكثر من مكان. الترتيب يعتمد على ترتيب الإضافة.
             </p>
+          </div>
+
+          <div className="space-y-1 sm:col-span-2">
+            <Label>شركاء الباقة (اختياري — شركاء مقبولون فقط)</Label>
+            {(selectedGarage?.partners ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                لا توجد شراكات مقبولة لهذه الشركة. أضف شركاء من صفحة الشراكات أولاً.
+              </p>
+            ) : (
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-input p-2">
+                {(selectedGarage?.partners ?? []).map((partner) => {
+                  const checked = selectedPartnershipIds.includes(partner.id);
+                  return (
+                    <label
+                      key={partner.id}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedPartnershipIds((prev) =>
+                            checked
+                              ? prev.filter((x) => x !== partner.id)
+                              : [...prev, partner.id]
+                          )
+                        }
+                      />
+                      <span>
+                        {partner.partnerName}{" "}
+                        <span className="text-xs text-muted-foreground">
+                          ({partner.partnerType === "HOTEL"
+                            ? "فندق"
+                            : partner.partnerType === "RESTAURANT"
+                              ? "مطعم"
+                              : "مزرعة"}
+                          )
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {selectedPartnershipIds.map((pid) => (
+              <input key={pid} type="hidden" name="partnershipIds" value={pid} />
+            ))}
           </div>
 
           <div className="space-y-1 sm:col-span-2">

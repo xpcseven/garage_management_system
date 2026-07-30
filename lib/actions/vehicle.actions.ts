@@ -7,9 +7,9 @@ import { GarageRole, TransportType, VehicleCategory } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
   countBookableSeats,
-  getDefaultSeatLayout,
   VEHICLE_CATEGORY_LABELS,
 } from "@/lib/vehicle-seat-layouts";
+import { resolveVehicleSeatLayout } from "@/lib/vehicle-models";
 
 export type VehicleRow = {
   id: string;
@@ -124,8 +124,14 @@ export async function createVehicle(formData: FormData) {
   const model = String(formData.get("model") ?? "").trim();
   const plateNumber = String(formData.get("plateNumber") ?? "").trim();
   const year = Number(formData.get("year"));
+  const modelId = String(formData.get("modelId") ?? "").trim() || null;
   const category = parseCategory(String(formData.get("category") ?? "SEDAN"));
-  const layout = getDefaultSeatLayout(category);
+  const layout = resolveVehicleSeatLayout({
+    modelId,
+    brand,
+    model,
+    category,
+  });
   const totalSeats = countBookableSeats(layout);
   const color = String(formData.get("color") ?? "").trim() || null;
   const transportType = String(
@@ -223,10 +229,16 @@ export async function updateVehicle(formData: FormData) {
   const brand = String(formData.get("brand") ?? "").trim();
   const model = String(formData.get("model") ?? "").trim();
   const year = Number(formData.get("year"));
+  const modelId = String(formData.get("modelId") ?? "").trim() || null;
   const category = parseCategory(
     String(formData.get("category") ?? v.category)
   );
-  const layout = getDefaultSeatLayout(category);
+  const layout = resolveVehicleSeatLayout({
+    modelId,
+    brand,
+    model,
+    category,
+  });
   const totalSeats = countBookableSeats(layout);
   const color = String(formData.get("color") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "true";

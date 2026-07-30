@@ -12,27 +12,35 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import {
-  getDefaultSeatLayout,
   parseSeatLayout,
   seatsForTripCreate,
   type SeatLayout,
 } from "@/lib/vehicle-seat-layouts";
+import { resolveVehicleSeatLayout } from "@/lib/vehicle-models";
 import type { VehicleCategory } from "@prisma/client";
 
 function resolveVehicleLayout(vehicle: {
+  brand?: string;
+  model?: string;
   totalSeats: number;
   seatLayoutJson: unknown;
   category: VehicleCategory;
 }): SeatLayout {
   return (
     parseSeatLayout(vehicle.seatLayoutJson) ??
-    getDefaultSeatLayout(vehicle.category)
+    resolveVehicleSeatLayout({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      category: vehicle.category,
+    })
   );
 }
 
 function tripSeatRows(
   tripId: string,
   vehicle: {
+    brand?: string;
+    model?: string;
     totalSeats: number;
     seatLayoutJson: unknown;
     category: VehicleCategory;

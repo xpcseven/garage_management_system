@@ -216,13 +216,28 @@ export async function getTripSeatsForMap(
   tripId: string
 ): Promise<TripSeatOption[]> {
   const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
+  if (!session?.user) return [];
 
-  const tripOk = await prisma.trip.findFirst({
+  const role = session.user.role;
+  const trip = await prisma.trip.findFirst({
     where: { id: tripId, status: TripStatus.SCHEDULED },
-    select: { id: true },
+    select: {
+      id: true,
+      garageId: true,
+      garage: { select: { ownerId: true } },
+    },
   });
-  if (!tripOk) return [];
+  if (!trip) return [];
+
+  if (role === UserRole.USER) {
+    // passengers can view any scheduled trip seats
+  } else if (role === UserRole.SUPER_ADMIN) {
+    // ok
+  } else if (role === UserRole.GARAGE_OWNER) {
+    if (!trip.garageId || trip.garage?.ownerId !== session.user.id) return [];
+  } else {
+    return [];
+  }
 
   const seats = await prisma.seat.findMany({
     where: { tripId },

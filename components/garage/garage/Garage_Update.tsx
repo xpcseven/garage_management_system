@@ -15,9 +15,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
-import { MapPin } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 
 type Props = { garage: GarageRow };
+
+function geolocationErrorMessage(code?: number) {
+  if (code === 1) return "يرجى السماح بالوصول إلى الموقع من المتصفح";
+  if (code === 2) return "تعذر الحصول على الموقع حالياً";
+  if (code === 3) return "انتهت مهلة تحديد الموقع، حاول مرة أخرى";
+  return "تعذر تحديث الموقع";
+}
 
 export default function Garage_Update({ garage }: Props) {
   const router = useRouter();
@@ -37,25 +44,38 @@ export default function Garage_Update({ garage }: Props) {
   }
 
   function requestCurrentLocation() {
-    if (!("geolocation" in navigator)) return;
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      void Swal.fire({
+        icon: "error",
+        title: "المتصفح لا يدعم تحديد الموقع",
+      });
+      return;
+    }
+
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude.toFixed(6);
         const lng = pos.coords.longitude.toFixed(6);
-        const coords = `${lat}, ${lng}`;
-        setAddress(coords);
+        setAddress(`${lat}, ${lng}`);
         setLocating(false);
       },
-      () => setLocating(false),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      (err) => {
+        setLocating(false);
+        void Swal.fire({
+          icon: "error",
+          title: "تعذر تحديث الموقع",
+          text: geolocationErrorMessage(err.code),
+        });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }
 
   useEffect(() => {
     if (!open) return;
-    const initial = garage.address ?? "";
-    setAddress(initial);
+    setAddress(garage.address ?? "");
+    setLocating(false);
   }, [open, garage.address]);
 
   return (
@@ -73,6 +93,7 @@ export default function Garage_Update({ garage }: Props) {
           className="space-y-3"
           action={(fd) => {
             fd.set("id", garage.id);
+            fd.set("address", address.trim());
             start(async () => {
               const res = await updateGarage(fd);
               if (res.success) {
@@ -122,31 +143,55 @@ export default function Garage_Update({ garage }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label>موقع الشركة السياحية</Label>
-            <input type="hidden" name="address" value={address} required />
-            <button
-              type="button"
-              onClick={requestCurrentLocation}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-input hover:bg-muted disabled:opacity-60"
-              disabled={locating}
-              title="أخذ/تحديث الموقع الحالي"
-            >
-              <MapPin
-                className={`h-5 w-5 ${
-                  address ? "text-purple-600" : "text-muted-foreground"
-                }`}
+            <Label htmlFor={`ga-${garage.id}`}>موقع الشركة السياحية</Label>
+            <div className="flex gap-2">
+              <Input
+                id={`ga-${garage.id}`}
+                name="address"
+                required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="اضغط أيقونة الموقع لتحديث موقعك الحالي"
+                className="flex-1"
+                dir="ltr"
               />
-            </button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="ms-2"
-              disabled={!address}
-              onClick={() => openMap(address)}
-            >
-              عرض على الخريطة
-            </Button>
+              <button
+                type="button"
+                onClick={requestCurrentLocation}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-input hover:bg-muted disabled:opacity-60"
+                disabled={locating || pending}
+                title="أخذ/تحديث الموقع الحالي"
+                aria-label="تحديث الموقع الحالي"
+              >
+                {locating ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                ) : (
+                  <MapPin
+                    className={`h-5 w-5 ${
+                      address ? "text-purple-600" : "text-muted-foreground"
+                    }`}
+                  />
+                )}
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!address || locating}
+                onClick={() => openMap(address)}
+              >
+                عرض على الخريطة
+              </Button>
+              {locating ? (
+                <span className="text-xs text-muted-foreground">
+                  جارٍ تحديث الموقع...
+                </span>
+              ) : address ? (
+                <span className="text-xs text-emerald-700">تم تحديث الموقع</span>
+              ) : null}
+            </div>
           </div>
           <div className="space-y-1">
             <Label htmlFor={`gac-${garage.id}`}>الحالة</Label>
@@ -160,7 +205,7 @@ export default function Garage_Update({ garage }: Props) {
               <option value="false">موقوف</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full">
+          <Button type="submit" disabled={pending || locating} className="w-full">
             تحديث
           </Button>
         </form>
