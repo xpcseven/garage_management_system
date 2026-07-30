@@ -39,7 +39,7 @@ function NavLink({ href, label, icon }: NavItem) {
     <Link
       href={href}
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
+        "group relative flex items-center justify-start gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
         "hover:bg-plum/10 hover:text-plum-dark dark:hover:bg-orchid/15 dark:hover:text-orchid-light",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orchid",
         "motion-reduce:transition-none",
@@ -49,12 +49,12 @@ function NavLink({ href, label, icon }: NavItem) {
       )}
     >
       {isActive && (
-        <span className="absolute end-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-s-full bg-white/50" />
+        <span className="absolute start-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-e-full bg-white/50" />
       )}
 
       <span
         className={cn(
-          "flex h-7 w-7 items-center justify-center rounded-xl text-base transition-all duration-200",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-base transition-all duration-200",
           isActive
             ? "bg-white/20 text-white"
             : "bg-mist-dark text-plum/60 group-hover:bg-plum/15 group-hover:text-plum dark:bg-dusk dark:text-mist/50"
@@ -63,7 +63,7 @@ function NavLink({ href, label, icon }: NavItem) {
         {icon}
       </span>
 
-      <span className="flex-1 text-end">{label}</span>
+      <span className="text-start leading-none">{label}</span>
     </Link>
   );
 }
@@ -95,8 +95,8 @@ export default function Sidebar({ user, className }: Props) {
         className
       )}
     >
-      <div className="mb-3 flex items-center gap-2.5 border-b border-plum/10 px-3 pb-3 dark:border-orchid/15">
-        <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-plum to-orchid shadow-orchid">
+      <div className="mb-3 flex items-center justify-start gap-2.5 border-b border-plum/10 px-3 pb-3 dark:border-orchid/15">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-plum to-orchid shadow-orchid">
           <span className="text-sm text-white">🚌</span>
         </div>
         <span className="font-display text-sm tracking-wide text-dusk dark:text-mist">
