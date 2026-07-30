@@ -11,6 +11,49 @@ import {
   TripStatus,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  parseSeatLayout,
+  seatsForTripCreate,
+  type SeatLayout,
+} from "@/lib/vehicle-seat-layouts";
+import { resolveVehicleSeatLayout } from "@/lib/vehicle-models";
+import type { VehicleCategory } from "@prisma/client";
+
+function resolveVehicleLayout(vehicle: {
+  brand?: string;
+  model?: string;
+  totalSeats: number;
+  seatLayoutJson: unknown;
+  category: VehicleCategory;
+}): SeatLayout {
+  return (
+    parseSeatLayout(vehicle.seatLayoutJson) ??
+    resolveVehicleSeatLayout({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      category: vehicle.category,
+    })
+  );
+}
+
+function tripSeatRows(
+  tripId: string,
+  vehicle: {
+    brand?: string;
+    model?: string;
+    totalSeats: number;
+    seatLayoutJson: unknown;
+    category: VehicleCategory;
+  },
+  maxSeats: number
+) {
+  const layout = resolveVehicleLayout(vehicle);
+  return seatsForTripCreate(tripId, layout, maxSeats).map((s) => ({
+    ...s,
+    status: SeatStatus.AVAILABLE,
+    priceModifier: new Prisma.Decimal(0),
+  }));
+}
 
 export type TripManageRow = {
   id: string;
@@ -299,12 +342,7 @@ export async function createGarageTrip(formData: FormData) {
         },
       });
       await tx.seat.createMany({
-        data: Array.from({ length: maxSeats }, (_, i) => ({
-          tripId: trip.id,
-          seatNumber: i + 1,
-          status: SeatStatus.AVAILABLE,
-          priceModifier: new Prisma.Decimal(0),
-        })),
+        data: tripSeatRows(trip.id, vehicle, maxSeats),
       });
     });
     revalidatePath("/trips");
@@ -395,12 +433,7 @@ export async function createFreelanceTrip(formData: FormData) {
         },
       });
       await tx.seat.createMany({
-        data: Array.from({ length: maxSeats }, (_, i) => ({
-          tripId: trip.id,
-          seatNumber: i + 1,
-          status: SeatStatus.AVAILABLE,
-          priceModifier: new Prisma.Decimal(0),
-        })),
+        data: tripSeatRows(trip.id, vehicle, maxSeats),
       });
     });
     revalidatePath("/trips");

@@ -24,7 +24,11 @@ export async function POST(req: Request) {
 
     const result = await apiLogin(email, password, userAgentFromRequest(req));
     if ("error" in result) {
-      return apiError(result.error, 401, "INVALID_CREDENTIALS");
+      return apiError(
+        result.error,
+        401,
+        result.code ?? "INVALID_CREDENTIALS"
+      );
     }
     return apiOk(result);
   } catch (e) {

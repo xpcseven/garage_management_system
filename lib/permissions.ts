@@ -52,13 +52,25 @@ export function canViewBookings(role: UserRole | string | undefined) {
   return !!role;
 }
 
-/** إدارة الأماكن السياحية (حالياً: المشرف العام فقط) */
+/** إدارة الأماكن السياحية */
 export function canManageTourismPlaces(role: UserRole | string | undefined) {
   return (
     role === UserRole.SUPER_ADMIN ||
     role === UserRole.TOURISM_OWNER ||
     role === UserRole.GARAGE_OWNER
   );
+}
+
+export function canManageHotels(role: UserRole | string | undefined) {
+  return role === UserRole.SUPER_ADMIN || role === UserRole.HOTEL_OWNER;
+}
+
+export function canManageRestaurants(role: UserRole | string | undefined) {
+  return role === UserRole.SUPER_ADMIN || role === UserRole.RESTAURANT_OWNER;
+}
+
+export function canManageFarms(role: UserRole | string | undefined) {
+  return role === UserRole.SUPER_ADMIN || role === UserRole.FARM_OWNER;
 }
 
 export type DashboardSectionId =
@@ -70,9 +82,19 @@ export type DashboardSectionId =
   | "vehicles"
   | "trips"
   | "bookings"
+  | "hotels"
+  | "hotel_rooms"
+  | "hotel_bookings"
+  | "restaurants"
+  | "restaurant_bookings"
+  | "farms"
+  | "farm_bookings"
   | "passenger_garages"
   | "passenger_trips"
   | "passenger_tourism_places"
+  | "passenger_hotels"
+  | "passenger_restaurants"
+  | "passenger_farms"
   | "tourism_place_requests";
 
 export function dashboardSectionsForRole(
@@ -89,12 +111,24 @@ export function dashboardSectionsForRole(
       "garages",
       "vehicles",
       "trips",
+      "hotels",
+      "restaurants",
+      "farms",
       "bookings",
       "tourism_place_requests",
     ];
   }
   if (role === UserRole.TOURISM_OWNER) {
     return ["overview", "tourism_places", "bookings"];
+  }
+  if (role === UserRole.HOTEL_OWNER) {
+    return ["overview", "hotels", "hotel_rooms", "hotel_bookings"];
+  }
+  if (role === UserRole.RESTAURANT_OWNER) {
+    return ["overview", "restaurants", "restaurant_bookings"];
+  }
+  if (role === UserRole.FARM_OWNER) {
+    return ["overview", "farms", "farm_bookings"];
   }
   if (role === UserRole.GARAGE_OWNER) {
     return ["overview", "garages", "vehicles", "trips", "bookings"];
@@ -108,6 +142,9 @@ export function dashboardSectionsForRole(
       "passenger_garages",
       "passenger_trips",
       "passenger_tourism_places",
+      "passenger_hotels",
+      "passenger_restaurants",
+      "passenger_farms",
       "bookings",
     ];
   }

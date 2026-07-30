@@ -21,7 +21,7 @@ export async function apiLogin(
   email: string,
   password: string,
   userAgent?: string | null
-): Promise<ApiAuthResult | { error: string }> {
+): Promise<ApiAuthResult | { error: string; code?: string }> {
   const normalizedEmail = email.trim().toLowerCase();
   const parsed = LoginSchema.safeParse({
     email: normalizedEmail,
@@ -32,13 +32,21 @@ export async function apiLogin(
   }
 
   const user = await getUserByEmail(parsed.data.email);
-  if (!user?.password || user.isDeleted || !user.isActive) {
+  if (!user?.password || user.isDeleted) {
     return { error: "البريد أو كلمة المرور غير صالحة" };
   }
 
   const match = await bcrypt.compare(parsed.data.password, user.password);
   if (!match) {
     return { error: "البريد أو كلمة المرور غير صالحة" };
+  }
+
+  if (!user.emailVerified || !user.isActive) {
+    return {
+      error:
+        "حسابك غير مفعّل. افتح رابط التفعيل في بريدك ثم حاول تسجيل الدخول مجدداً.",
+      code: "EMAIL_NOT_VERIFIED",
+    };
   }
 
   const profile: ApiTokenUser = {

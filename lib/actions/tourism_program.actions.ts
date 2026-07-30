@@ -3,7 +3,15 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/prisma/UserRole.enum";
-import { BookingStatus, GarageRole, Prisma } from "@prisma/client";
+import {
+  BookingStatus,
+  BusinessPartnerType,
+  FarmOccasionType,
+  GarageRole,
+  PartnershipStatus,
+  Prisma,
+} from "@prisma/client";
+import { createNotification } from "@/lib/actions/notification.actions";
 import { revalidatePath } from "next/cache";
 
 export type TourismProgramCreatePack = {
@@ -12,8 +20,22 @@ export type TourismProgramCreatePack = {
     name: string;
     vehicles: { id: string; label: string; totalSeats: number }[];
     drivers: { id: string; name: string }[];
+    partners: {
+      id: string;
+      partnerType: string;
+      partnerName: string;
+    }[];
   }[];
   places: { id: string; name: string; governorate: string | null }[];
+};
+
+export type TourismProgramPartnerRow = {
+  partnershipId: string;
+  partnerType: string;
+  partnerName: string;
+  partnerId: string;
+  order: number;
+  priceAddon: string;
 };
 
 export type TourismProgramManageRow = {
@@ -35,6 +57,7 @@ export type TourismProgramManageRow = {
   status: string;
   isActive: boolean;
   places: { id: string; name: string; order: number }[];
+  partners: TourismProgramPartnerRow[];
 };
 
 export type TourismProgramPassengerRow = TourismProgramManageRow;
@@ -54,7 +77,7 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
       ? { isDeleted: false, isActive: true }
       : { isDeleted: false, isActive: true, ownerId: session.user.id };
 
-  const [garages, places] = await Promise.all([
+  const [garages, places, acceptedPartnerships] = await Promise.all([
     prisma.garage.findMany({
       where: garageWhere,
       orderBy: { name: "asc" },
@@ -83,7 +106,33 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
       select: { id: true, name: true, governorate: true },
       take: 300,
     }),
+    prisma.businessPartnership.findMany({
+      where: {
+        status: PartnershipStatus.ACCEPTED,
+        garage: garageWhere,
+      },
+      include: {
+        hotel: { select: { id: true, name: true } },
+        restaurant: { select: { id: true, name: true } },
+        farm: { select: { id: true, name: true } },
+      },
+    }),
   ]);
+
+  const partnersByGarage = new Map<
+    string,
+    { id: string; partnerType: string; partnerName: string }[]
+  >();
+  for (const p of acceptedPartnerships) {
+    const name = p.hotel?.name ?? p.restaurant?.name ?? p.farm?.name ?? "—";
+    const list = partnersByGarage.get(p.garageId) ?? [];
+    list.push({
+      id: p.id,
+      partnerType: p.partnerType,
+      partnerName: name,
+    });
+    partnersByGarage.set(p.garageId, list);
+  }
 
   return {
     garages: garages.map((g) => {
@@ -102,6 +151,7 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
           id,
           name,
         })),
+        partners: partnersByGarage.get(g.id) ?? [],
       };
     }),
     places,
@@ -130,6 +180,10 @@ export async function createTourismProgram(formData: FormData) {
   const maxSeats = Number(formData.get("maxSeats"));
   const placeIds = formData
     .getAll("placeIds")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const partnershipIds = formData
+    .getAll("partnershipIds")
     .map((v) => String(v).trim())
     .filter(Boolean);
 
@@ -162,6 +216,7 @@ export async function createTourismProgram(formData: FormData) {
   }
 
   const uniquePlaceIds = Array.from(new Set(placeIds));
+  const uniquePartnershipIds = Array.from(new Set(partnershipIds));
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -200,6 +255,20 @@ export async function createTourismProgram(formData: FormData) {
       });
       if (placesCount !== uniquePlaceIds.length) throw new Error("places");
 
+      if (uniquePartnershipIds.length > 0) {
+        const accepted = await tx.businessPartnership.findMany({
+          where: {
+            id: { in: uniquePartnershipIds },
+            garageId: garage.id,
+            status: PartnershipStatus.ACCEPTED,
+          },
+          select: { id: true, partnerType: true },
+        });
+        if (accepted.length !== uniquePartnershipIds.length) {
+          throw new Error("partners");
+        }
+      }
+
       const program = await tx.tourismProgram.create({
         data: {
           title,
@@ -225,6 +294,25 @@ export async function createTourismProgram(formData: FormData) {
           stopOrder: idx + 1,
         })),
       });
+
+      if (uniquePartnershipIds.length > 0) {
+        const accepted = await tx.businessPartnership.findMany({
+          where: {
+            id: { in: uniquePartnershipIds },
+            garageId: garage.id,
+            status: PartnershipStatus.ACCEPTED,
+          },
+          select: { id: true, partnerType: true },
+        });
+        await tx.tourismProgramPartner.createMany({
+          data: accepted.map((p, idx) => ({
+            programId: program.id,
+            partnershipId: p.id,
+            partnerType: p.partnerType,
+            stopOrder: idx + 1,
+          })),
+        });
+      }
     });
 
     revalidatePath("/trips");
@@ -242,6 +330,7 @@ export async function createTourismProgram(formData: FormData) {
     if (msg === "vehicle") return { error: "المركبة غير مرتبطة بهذه الشركة" };
     if (msg === "driver") return { error: "السائق غير مصرح له لهذه الشركة" };
     if (msg === "places") return { error: "بعض الأماكن السياحية المحددة غير صالحة" };
+    if (msg === "partners") return { error: "بعض الشركاء المحددين غير مقبولين لهذه الشركة" };
     if (msg === "seats") return { error: "عدد المقاعد يتجاوز سعة المركبة المختارة" };
     return { error: "تعذر إنشاء البرنامج السياحي" };
   }
@@ -269,6 +358,20 @@ function mapProgramRow(p: {
     stopOrder: number;
     place: { id: string; name: string };
   }[];
+  partners?: {
+    stopOrder: number;
+    partnershipId: string;
+    partnerType: string;
+    priceAddon: Prisma.Decimal;
+    partnership: {
+      hotelId: string | null;
+      restaurantId: string | null;
+      farmId: string | null;
+      hotel: { id: string; name: string } | null;
+      restaurant: { id: string; name: string } | null;
+      farm: { id: string; name: string } | null;
+    };
+  }[];
 }): TourismProgramManageRow {
   return {
     id: p.id,
@@ -295,8 +398,41 @@ function mapProgramRow(p: {
         order: x.stopOrder,
       }))
       .sort((a, b) => a.order - b.order),
+    partners: (p.partners ?? [])
+      .map((x) => {
+        const partner =
+          x.partnership.hotel ??
+          x.partnership.restaurant ??
+          x.partnership.farm;
+        return {
+          partnershipId: x.partnershipId,
+          partnerType: x.partnerType,
+          partnerName: partner?.name ?? "—",
+          partnerId: partner?.id ?? "",
+          order: x.stopOrder,
+          priceAddon: String(x.priceAddon),
+        };
+      })
+      .sort((a, b) => a.order - b.order),
   };
 }
+
+const programPartnerInclude = {
+  stopOrder: true,
+  partnershipId: true,
+  partnerType: true,
+  priceAddon: true,
+  partnership: {
+    select: {
+      hotelId: true,
+      restaurantId: true,
+      farmId: true,
+      hotel: { select: { id: true, name: true } },
+      restaurant: { select: { id: true, name: true } },
+      farm: { select: { id: true, name: true } },
+    },
+  },
+} as const;
 
 export async function getManagedTourismPrograms(): Promise<TourismProgramManageRow[]> {
   const session = await auth();
@@ -325,6 +461,7 @@ export async function getManagedTourismPrograms(): Promise<TourismProgramManageR
           place: { select: { id: true, name: true } },
         },
       },
+      partners: { select: programPartnerInclude },
     },
   });
   return rows.map(mapProgramRow);
@@ -356,6 +493,7 @@ export async function getTourismProgramsForPassenger(): Promise<
           place: { select: { id: true, name: true } },
         },
       },
+      partners: { select: programPartnerInclude },
     },
   });
   return rows.map(mapProgramRow);
@@ -374,6 +512,8 @@ export async function bookTourismProgram(programId: string, passengersCount: num
   }
 
   try {
+    const notifyTargets: { userId: string; title: string; body: string }[] = [];
+
     await prisma.$transaction(async (tx) => {
       const p = await tx.tourismProgram.findFirst({
         where: {
@@ -382,7 +522,25 @@ export async function bookTourismProgram(programId: string, passengersCount: num
           status: "SCHEDULED",
           availableSeats: { gte: passengersCount },
         },
-        select: { id: true, basePrice: true },
+        select: {
+          id: true,
+          title: true,
+          basePrice: true,
+          startAt: true,
+          endAt: true,
+          partners: {
+            include: {
+              partnership: {
+                include: {
+                  hotel: { select: { id: true, ownerId: true, name: true } },
+                  restaurant: { select: { id: true, ownerId: true, name: true } },
+                  farm: { select: { id: true, ownerId: true, name: true } },
+                },
+              },
+            },
+            orderBy: { stopOrder: "asc" },
+          },
+        },
       });
       if (!p) throw new Error("program");
 
@@ -396,12 +554,18 @@ export async function bookTourismProgram(programId: string, passengersCount: num
       });
       if (exists) throw new Error("duplicate");
 
+      let totalAddon = new Prisma.Decimal(0);
+      for (const link of p.partners) {
+        totalAddon = totalAddon.add(link.priceAddon);
+      }
+      const priceAtBooking = p.basePrice.add(totalAddon);
+
       await tx.tourismProgramBooking.create({
         data: {
           programId: p.id,
           userId: session.user.id,
           status: BookingStatus.PENDING,
-          priceAtBooking: p.basePrice,
+          priceAtBooking,
           passengersCount,
         },
       });
@@ -410,10 +574,97 @@ export async function bookTourismProgram(programId: string, passengersCount: num
         where: { id: p.id },
         data: { availableSeats: { decrement: passengersCount } },
       });
+
+      const checkIn = p.startAt;
+      const checkOut =
+        p.endAt && p.endAt > p.startAt
+          ? p.endAt
+          : new Date(p.startAt.getTime() + 24 * 60 * 60 * 1000);
+      const packageNote = `حجز ضمن الباقة السياحية: ${p.title}`;
+
+      for (const link of p.partners) {
+        const ps = link.partnership;
+        if (ps.hotel) {
+          const room = await tx.hotelRoom.findFirst({
+            where: { hotelId: ps.hotel.id, isActive: true },
+            orderBy: { roomNumber: "asc" },
+            select: { id: true, pricePerNight: true },
+          });
+          if (room) {
+            await tx.hotelBooking.create({
+              data: {
+                userId: session.user.id,
+                hotelId: ps.hotel.id,
+                roomId: room.id,
+                checkIn,
+                checkOut,
+                guests: passengersCount,
+                status: BookingStatus.PENDING,
+                priceAtBooking: room.pricePerNight,
+                notes: packageNote,
+              },
+            });
+            notifyTargets.push({
+              userId: ps.hotel.ownerId,
+              title: "طلب حجز فندق ضمن باقة",
+              body: `تم إنشاء طلب حجز في ${ps.hotel.name} ضمن البرنامج «${p.title}».`,
+            });
+          }
+        } else if (ps.restaurant) {
+          await tx.restaurantBooking.create({
+            data: {
+              userId: session.user.id,
+              restaurantId: ps.restaurant.id,
+              reservedAt: checkIn,
+              guests: passengersCount,
+              status: BookingStatus.PENDING,
+              notes: packageNote,
+            },
+          });
+          notifyTargets.push({
+            userId: ps.restaurant.ownerId,
+            title: "طلب حجز مطعم ضمن باقة",
+            body: `تم إنشاء طلب حجز في ${ps.restaurant.name} ضمن البرنامج «${p.title}».`,
+          });
+        } else if (ps.farm) {
+          await tx.farmBooking.create({
+            data: {
+              userId: session.user.id,
+              farmId: ps.farm.id,
+              startAt: checkIn,
+              endAt: checkOut,
+              occasionType: FarmOccasionType.FAMILY,
+              guests: passengersCount,
+              status: BookingStatus.PENDING,
+              notes: packageNote,
+            },
+          });
+          notifyTargets.push({
+            userId: ps.farm.ownerId,
+            title: "طلب حجز مزرعة ضمن باقة",
+            body: `تم إنشاء طلب حجز في ${ps.farm.name} ضمن البرنامج «${p.title}».`,
+          });
+        }
+      }
     });
+
+    await Promise.all(
+      notifyTargets.map((n) =>
+        createNotification({
+          userId: n.userId,
+          type: "PACKAGE_INCLUDED",
+          title: n.title,
+          body: n.body,
+          data: { programId: id },
+        })
+      )
+    );
 
     revalidatePath("/passenger/tourism-programs");
     revalidatePath("/bookings");
+    revalidatePath("/hotel-bookings");
+    revalidatePath("/restaurant-bookings");
+    revalidatePath("/farm-bookings");
     revalidatePath("/home");
     return { success: true };
   } catch (e) {
@@ -450,6 +701,10 @@ export async function updateTourismProgram(formData: FormData) {
     .getAll("placeIds")
     .map((v) => String(v).trim())
     .filter(Boolean);
+  const partnershipIds = formData
+    .getAll("partnershipIds")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
 
   if (!id || !title || !garageId || !vehicleId || !driverId || !startAtRaw || !basePriceRaw || !maxSeats || placeIds.length === 0) {
     return { error: "أكمل الحقول المطلوبة، وحدد مكاناً سياحياً واحداً على الأقل" };
@@ -475,6 +730,7 @@ export async function updateTourismProgram(formData: FormData) {
   }
 
   const uniquePlaceIds = Array.from(new Set(placeIds));
+  const uniquePartnershipIds = Array.from(new Set(partnershipIds));
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -520,6 +776,22 @@ export async function updateTourismProgram(formData: FormData) {
       });
       if (placesCount !== uniquePlaceIds.length) throw new Error("places");
 
+      let acceptedPartners: { id: string; partnerType: BusinessPartnerType }[] =
+        [];
+      if (uniquePartnershipIds.length > 0) {
+        acceptedPartners = await tx.businessPartnership.findMany({
+          where: {
+            id: { in: uniquePartnershipIds },
+            garageId: garage.id,
+            status: PartnershipStatus.ACCEPTED,
+          },
+          select: { id: true, partnerType: true },
+        });
+        if (acceptedPartners.length !== uniquePartnershipIds.length) {
+          throw new Error("partners");
+        }
+      }
+
       await tx.tourismProgram.update({
         where: { id: existing.id },
         data: {
@@ -547,6 +819,18 @@ export async function updateTourismProgram(formData: FormData) {
           stopOrder: idx + 1,
         })),
       });
+
+      await tx.tourismProgramPartner.deleteMany({ where: { programId: existing.id } });
+      if (acceptedPartners.length > 0) {
+        await tx.tourismProgramPartner.createMany({
+          data: acceptedPartners.map((p, idx) => ({
+            programId: existing.id,
+            partnershipId: p.id,
+            partnerType: p.partnerType,
+            stopOrder: idx + 1,
+          })),
+        });
+      }
     });
 
     revalidatePath("/trips");
@@ -562,6 +846,7 @@ export async function updateTourismProgram(formData: FormData) {
     if (msg === "vehicle") return { error: "المركبة غير مرتبطة بهذه الشركة" };
     if (msg === "driver") return { error: "السائق غير مصرح له لهذه الشركة" };
     if (msg === "places") return { error: "بعض الأماكن السياحية المحددة غير صالحة" };
+    if (msg === "partners") return { error: "بعض الشركاء المحددين غير مقبولين لهذه الشركة" };
     if (msg === "seats") return { error: "عدد المقاعد غير صالح مقارنة بالحجوزات أو سعة المركبة" };
     return { error: "تعذر تعديل البرنامج السياحي" };
   }

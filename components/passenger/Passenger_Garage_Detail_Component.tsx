@@ -5,6 +5,7 @@ import type {
   PassengerTripRow,
   PublicGarageRow,
 } from "@/lib/actions/passenger.actions";
+import type { PartnershipRow } from "@/lib/actions/partnership.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,17 +15,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import PassengerTripBookButton from "./PassengerTripBookButton";
+import PassengerGaragePartners from "./PassengerGaragePartners";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
 import TablePagination from "@/components/Shared/TablePagination";
 
 type Props = {
   garage: PublicGarageRow;
   trips: PassengerTripRow[];
+  partners?: PartnershipRow[];
 };
 
 export default function Passenger_Garage_Detail_Component({
   garage,
   trips,
+  partners = [],
 }: Props) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
@@ -42,11 +46,11 @@ export default function Passenger_Garage_Detail_Component({
     <div className="space-y-6 p-4 max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-purple-800">
+          <Button asChild variant="ghost" size="sm" className="h-8 px-0 text-plum">
             <Link href="/passenger/garages">العودة إلى قائمة الشركات السياحية</Link>
           </Button>
-          <h1 className="text-2xl font-bold text-purple-800">{garage.name}</h1>
-          <div className="space-y-1 text-sm text-muted-foreground max-w-xl">
+          <h1 className="ashur-page-title">{garage.name}</h1>
+          <div className="max-w-xl space-y-1 text-sm text-dusk/60">
             {garage.description && <p>{garage.description}</p>}
             {garage.phone && <p>هاتف: {garage.phone}</p>}
             {garage.address && <p>{garage.address}</p>}
@@ -56,6 +60,8 @@ export default function Passenger_Garage_Detail_Component({
           <Link href="/passenger/trips">البحث في كل الرحلات</Link>
         </Button>
       </div>
+
+      <PassengerGaragePartners partners={partners} />
 
       <Card>
         <CardHeader>

@@ -44,6 +44,9 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>(
     [...row.places].sort((a, b) => a.order - b.order).map((p) => p.id)
   );
+  const [selectedPartnershipIds, setSelectedPartnershipIds] = useState<string[]>(
+    row.partners.map((p) => p.partnershipId)
+  );
 
   const selectedGarage = useMemo(
     () => pack.garages.find((g) => g.id === garageId),
@@ -114,7 +117,10 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
               id={`tp-garage-${row.id}`}
               name="garageId"
               value={garageId}
-              onChange={(e) => setGarageId(e.target.value)}
+              onChange={(e) => {
+                setGarageId(e.target.value);
+                setSelectedPartnershipIds([]);
+              }}
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
@@ -294,6 +300,53 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
             </div>
             {selectedPlaceIds.map((pid) => (
               <input key={pid} type="hidden" name="placeIds" value={pid} />
+            ))}
+          </div>
+
+          <div className="space-y-1 sm:col-span-2">
+            <Label>شركاء الباقة (اختياري — شركاء مقبولون فقط)</Label>
+            {(selectedGarage?.partners ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                لا توجد شراكات مقبولة لهذه الشركة.
+              </p>
+            ) : (
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-input p-2">
+                {(selectedGarage?.partners ?? []).map((partner) => {
+                  const checked = selectedPartnershipIds.includes(partner.id);
+                  return (
+                    <label
+                      key={partner.id}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedPartnershipIds((prev) =>
+                            checked
+                              ? prev.filter((x) => x !== partner.id)
+                              : [...prev, partner.id]
+                          )
+                        }
+                      />
+                      <span>
+                        {partner.partnerName}{" "}
+                        <span className="text-xs text-muted-foreground">
+                          ({partner.partnerType === "HOTEL"
+                            ? "فندق"
+                            : partner.partnerType === "RESTAURANT"
+                              ? "مطعم"
+                              : "مزرعة"}
+                          )
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {selectedPartnershipIds.map((pid) => (
+              <input key={pid} type="hidden" name="partnershipIds" value={pid} />
             ))}
           </div>
 

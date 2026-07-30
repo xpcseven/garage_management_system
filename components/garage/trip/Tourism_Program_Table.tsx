@@ -78,6 +78,15 @@ export default function Tourism_Program_Table({ rows, editPack }: Props) {
                         {x.order}. {x.name}
                       </div>
                     ))}
+                    {p.partners.length > 0 && (
+                      <div className="mt-2 border-t border-muted pt-1 space-y-1">
+                        {p.partners.map((x) => (
+                          <div key={x.partnershipId} className="text-xs text-teal-700">
+                            شريك: {x.partnerName}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="p-2 whitespace-nowrap" data-label="الانطلاق">

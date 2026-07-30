@@ -206,27 +206,64 @@ export async function getFreelanceTripsForPassenger(): Promise<
 export type TripSeatOption = {
   id: string;
   seatNumber: number;
+  row: number | null;
+  col: number | null;
+  label: string | null;
+  status: string;
 };
+
+export async function getTripSeatsForMap(
+  tripId: string
+): Promise<TripSeatOption[]> {
+  const session = await auth();
+  if (!session?.user) return [];
+
+  const role = session.user.role;
+  const trip = await prisma.trip.findFirst({
+    where: { id: tripId, status: TripStatus.SCHEDULED },
+    select: {
+      id: true,
+      garageId: true,
+      garage: { select: { ownerId: true } },
+    },
+  });
+  if (!trip) return [];
+
+  if (role === UserRole.USER) {
+    // passengers can view any scheduled trip seats
+  } else if (role === UserRole.SUPER_ADMIN) {
+    // ok
+  } else if (role === UserRole.GARAGE_OWNER) {
+    if (!trip.garageId || trip.garage?.ownerId !== session.user.id) return [];
+  } else {
+    return [];
+  }
+
+  const seats = await prisma.seat.findMany({
+    where: { tripId },
+    orderBy: { seatNumber: "asc" },
+    select: {
+      id: true,
+      seatNumber: true,
+      row: true,
+      col: true,
+      label: true,
+      status: true,
+    },
+  });
+  return seats.map((s) => ({
+    id: s.id,
+    seatNumber: s.seatNumber,
+    row: s.row,
+    col: s.col,
+    label: s.label,
+    status: s.status,
+  }));
+}
 
 export async function getAvailableSeatsForTrip(
   tripId: string
 ): Promise<TripSeatOption[]> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
-
-  const tripOk = await prisma.trip.findFirst({
-    where: { id: tripId, status: TripStatus.SCHEDULED },
-    select: { id: true },
-  });
-  if (!tripOk) return [];
-
-  const seats = await prisma.seat.findMany({
-    where: {
-      tripId,
-      status: SeatStatus.AVAILABLE,
-    },
-    orderBy: { seatNumber: "asc" },
-    select: { id: true, seatNumber: true },
-  });
-  return seats;
+  const all = await getTripSeatsForMap(tripId);
+  return all.filter((s) => s.status === "AVAILABLE");
 }

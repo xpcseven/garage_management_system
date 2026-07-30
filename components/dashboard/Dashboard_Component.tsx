@@ -5,6 +5,7 @@ import {
   dashboardSectionsForRole,
   type DashboardSectionId,
 } from "@/lib/permissions";
+import { roleLabelAr } from "@/lib/role-labels";
 import {
   Card,
   CardContent,
@@ -56,6 +57,41 @@ const links: Record<
     title: "المركبات",
     desc: "أسطول المركبات",
   },
+  hotels: {
+    href: "/hotels",
+    title: "الفنادق",
+    desc: "إدارة الفندق والتفاصيل",
+  },
+  hotel_rooms: {
+    href: "/hotel-rooms",
+    title: "غرف الفندق",
+    desc: "إضافة وتعديل الغرف",
+  },
+  hotel_bookings: {
+    href: "/hotel-bookings",
+    title: "حجوزات الفندق",
+    desc: "طلبات حجز الغرف",
+  },
+  restaurants: {
+    href: "/restaurants",
+    title: "المطاعم",
+    desc: "إدارة المطعم",
+  },
+  restaurant_bookings: {
+    href: "/restaurant-bookings",
+    title: "حجوزات المطعم",
+    desc: "طلبات حجز الطاولات",
+  },
+  farms: {
+    href: "/farms",
+    title: "المزارع",
+    desc: "إدارة المزرعة",
+  },
+  farm_bookings: {
+    href: "/farm-bookings",
+    title: "حجوزات المزرعة",
+    desc: "طلبات زيارة المزرعة",
+  },
   bookings: {
     href: "/bookings",
     title: "الحجوزات",
@@ -80,6 +116,21 @@ const links: Record<
     href: "/passenger/tourism-places",
     title: "أماكن سياحية",
     desc: "استكشف الأماكن السياحية المتاحة",
+  },
+  passenger_hotels: {
+    href: "/passenger/hotels",
+    title: "فنادق",
+    desc: "تصفح واحجز غرفة",
+  },
+  passenger_restaurants: {
+    href: "/passenger/restaurants",
+    title: "مطاعم",
+    desc: "احجز طاولة في مطعم",
+  },
+  passenger_farms: {
+    href: "/passenger/farms",
+    title: "مزارع",
+    desc: "احجز زيارة مزرعة",
   },
   tourism_place_requests: {
     href: "/tourism-requests",
@@ -127,18 +178,7 @@ function Stat({
 export default function Dashboard_Component({ user, snapshot }: Props) {
   const sections = dashboardSectionsForRole(user.role);
   const isPassenger = user.role === UserRole.USER;
-  const roleLabel =
-    user.role === UserRole.SUPER_ADMIN
-      ? "مشرف عام"
-      : user.role === UserRole.GARAGE_OWNER
-      ? "صاحب شركة سياحية"
-      : user.role === UserRole.DRIVER
-      ? "سائق"
-      : user.role === UserRole.TOURISM_OWNER
-      ? "صاحب مكان سياحي"
-      : user.role === UserRole.USER
-      ? "مسافر"
-      : String(user.role);
+  const roleLabel = roleLabelAr(String(user.role));
 
   const dashboardTitle =
     user.role === UserRole.SUPER_ADMIN
@@ -149,6 +189,12 @@ export default function Dashboard_Component({ user, snapshot }: Props) {
       ? "لوحة السائق"
       : user.role === UserRole.TOURISM_OWNER
       ? "لوحة صاحب المكان السياحي"
+      : user.role === UserRole.HOTEL_OWNER
+      ? "لوحة صاحب الفندق"
+      : user.role === UserRole.RESTAURANT_OWNER
+      ? "لوحة صاحب المطعم"
+      : user.role === UserRole.FARM_OWNER
+      ? "لوحة صاحب المزرعة"
       : user.role === UserRole.USER
       ? "لوحة المسافر"
       : "لوحة التحكم";

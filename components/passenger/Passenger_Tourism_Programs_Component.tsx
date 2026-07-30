@@ -93,6 +93,23 @@ export default function Passenger_Tourism_Programs_Component({ programs }: Props
                       ))}
                     </div>
                   </div>
+                  {p.partners.length > 0 && (
+                    <div>
+                      <p className="mb-1 inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
+                        الشركاء المشمولون
+                      </p>
+                      <div className="space-y-1">
+                        {p.partners.map((x) => (
+                          <p key={x.partnershipId} className="text-xs">
+                            {x.order}. {x.partnerName}
+                            {Number(x.priceAddon) > 0
+                              ? ` (+${x.priceAddon})`
+                              : ""}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <PassengerTourismProgramBookButton programId={p.id} />
               </article>
@@ -112,6 +129,7 @@ export default function Passenger_Tourism_Programs_Component({ programs }: Props
                   <th className="p-2 font-bold border-l border-white/20">الشركة</th>
                   <th className="p-2 font-bold border-l border-white/20">المركبة / السائق</th>
                   <th className="p-2 font-bold border-l border-white/20">الأماكن</th>
+                  <th className="p-2 font-bold border-l border-white/20">الشركاء</th>
                   <th className="p-2 font-bold border-l border-white/20">الانطلاق</th>
                   <th className="p-2 font-bold border-l border-white/20">السعر</th>
                   <th className="p-2 font-bold border-l border-white/20">متاح</th>
@@ -136,6 +154,19 @@ export default function Passenger_Tourism_Programs_Component({ programs }: Props
                         ))}
                       </div>
                     </td>
+                    <td className="p-2">
+                      <div className="max-w-[200px] space-y-1">
+                        {p.partners.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : (
+                          p.partners.map((x) => (
+                            <div key={x.partnershipId} className="text-xs">
+                              {x.order}. {x.partnerName}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </td>
                     <td className="p-2 whitespace-nowrap">
                       {new Date(p.startAt).toLocaleString("en-US")}
                     </td>
@@ -148,7 +179,7 @@ export default function Passenger_Tourism_Programs_Component({ programs }: Props
                 ))}
                 {programs.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-10 text-center text-muted-foreground">
+                    <td colSpan={9} className="p-10 text-center text-muted-foreground">
                       لا توجد برامج سياحية متاحة حالياً.
                     </td>
                   </tr>

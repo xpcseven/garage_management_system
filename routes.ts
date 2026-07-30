@@ -10,6 +10,8 @@ export const publicRoutePrefixes = [
   "/System",
   "/uploads",
   "/tourism-places",
+  "/auth/verify-email",
+  "/auth/resend-verification",
 ];
 
 export function isPublicRoute(pathname: string): boolean {
@@ -25,7 +27,13 @@ export function isPublicRoute(pathname: string): boolean {
  * @type {string[]}
  */
 
-export const authRoutes = ["/auth/login", "/auth/error","/auth/register"];
+export const authRoutes = [
+  "/auth/login",
+  "/auth/error",
+  "/auth/register",
+  "/auth/verify-email",
+  "/auth/resend-verification",
+];
 
 /**
  * The prefix for API authentication routes

@@ -15,18 +15,18 @@ export default {
           const { email, password } = validateFields.data;
           const user = await getUserByEmail(email);
 
-          if (!user || !user.password || user.isDeleted || !user.isActive)
-            return null;
-          const passwordMatch = await bcrypt.compare(password, user.password);
+          if (!user || !user.password || user.isDeleted) return null;
 
-          if (passwordMatch) {
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              role: user.role as UserRole,
-            };
-          }
+          const passwordMatch = await bcrypt.compare(password, user.password);
+          if (!passwordMatch) return null;
+          if (!user.emailVerified || !user.isActive) return null;
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role as UserRole,
+          };
         }
         return null;
       },

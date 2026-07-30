@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  serverExternalPackages: ["nodemailer"],
   experimental: {
+    serverComponentsExternalPackages: ["nodemailer"],
     serverActions: {
       bodySizeLimit: "15mb",
     },

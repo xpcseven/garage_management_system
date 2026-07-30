@@ -35,14 +35,14 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
   }, [page, totalPages]);
 
   return (
-    <Card>
+    <Card className="ashur-panel border-0 shadow-none">
       <CardHeader>
-        <CardTitle className="text-lg">الحجوزات</CardTitle>
+        <CardTitle className="text-lg text-plum">الحجوزات</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm responsive-table">
           <thead>
-            <tr className="border-b text-center text-purple-700">
+            <tr className="border-b text-center text-plum">
               <th className="p-2">صاحب الحجز</th>
               <th className="p-2">النوع</th>
               <th className="p-2">المسار</th>
@@ -62,7 +62,15 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
               <tr key={b.id} className="border-b border-muted">
                 <td className="p-2 font-medium" data-label="صاحب الحجز">{b.passengerName}</td>
                 <td className="p-2" data-label="النوع">
-                  {b.bookingKind === "tourism_program" ? "برنامج سياحي" : "رحلة"}
+                  {b.bookingKind === "tourism_program"
+                    ? "برنامج سياحي"
+                    : b.bookingKind === "hotel"
+                      ? "فندق"
+                      : b.bookingKind === "restaurant"
+                        ? "مطعم"
+                        : b.bookingKind === "farm"
+                          ? "مزرعة"
+                          : "رحلة"}
                 </td>
                 <td className="p-2" data-label="المسار">
                   {b.bookingKind === "trip" && b.tripFromCity && b.tripToCity ? (
@@ -72,8 +80,15 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                       toCityName={b.tripToCity}
                       toRegion={b.tripToRegion}
                     />
-                  ) : (
+                  ) : b.bookingKind === "tourism_program" ? (
                     <span className="text-muted-foreground">{b.programTitle ?? "—"}</span>
+                  ) : (
+                    <div className="space-y-0.5">
+                      <span>{b.placeName ?? "—"}</span>
+                      {b.detailLabel && (
+                        <p className="text-xs text-muted-foreground">{b.detailLabel}</p>
+                      )}
+                    </div>
                   )}
                 </td>
                 <td className="p-2 align-top" data-label="الأمتعة">
@@ -125,14 +140,30 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                                   : "—"
                               }`,
                             ]
-                          : [
+                          : b.bookingKind === "trip"
+                          ? [
                               `المسافر: ${b.passengerName}`,
                               `البريد: ${b.passengerEmail ?? "—"}`,
                               `المسار: ${b.tripFromCity ?? "—"} → ${b.tripToCity ?? "—"}`,
                               `المقعد: ${b.seatNumber ?? "—"}`,
                               `السعر: ${b.priceAtBooking}`,
                               `الحالة: ${b.status}`,
-                            ];
+                            ]
+                          : [
+                              `المسافر: ${b.passengerName}`,
+                              `النوع: ${
+                                b.bookingKind === "hotel"
+                                  ? "فندق"
+                                  : b.bookingKind === "restaurant"
+                                    ? "مطعم"
+                                    : "مزرعة"
+                              }`,
+                              `المكان: ${b.placeName ?? "—"}`,
+                              b.detailLabel ? `التفاصيل: ${b.detailLabel}` : "",
+                              `عدد الأفراد: ${b.passengersCount}`,
+                              `السعر: ${b.priceAtBooking}`,
+                              `الحالة: ${b.status}`,
+                            ].filter(Boolean);
                       await Swal.fire({
                         icon: "info",
                         title: "تفاصيل الحجز",
@@ -148,7 +179,9 @@ export default function Booking_Table({ bookings, canCancel }: Props) {
                 </td>
                 {canCancel && (
                   <td className="p-2" data-label="إجراءات">
-                    {b.status === "PENDING" && (
+                    {b.status === "PENDING" &&
+                      (b.bookingKind === "trip" ||
+                        b.bookingKind === "tourism_program") && (
                       <Button
                         type="button"
                         variant="outline"

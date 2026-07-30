@@ -3,8 +3,13 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@/prisma/UserRole.enum";
-import { GarageRole, TransportType } from "@prisma/client";
+import { GarageRole, TransportType, VehicleCategory } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import {
+  countBookableSeats,
+  VEHICLE_CATEGORY_LABELS,
+} from "@/lib/vehicle-seat-layouts";
+import { resolveVehicleSeatLayout } from "@/lib/vehicle-models";
 
 export type VehicleRow = {
   id: string;
@@ -14,6 +19,8 @@ export type VehicleRow = {
   plateNumber: string;
   color: string | null;
   totalSeats: number;
+  category: VehicleCategory;
+  categoryLabel: string;
   transportType: TransportType;
   isActive: boolean;
   garageId: string | null;
@@ -60,6 +67,8 @@ export async function getVehiclesForUser(): Promise<VehicleRow[]> {
     plateNumber: v.plateNumber,
     color: v.color,
     totalSeats: v.totalSeats,
+    category: v.category,
+    categoryLabel: VEHICLE_CATEGORY_LABELS[v.category] ?? v.category,
     transportType: v.transportType,
     isActive: v.isActive,
     garageId: v.garageId,
@@ -101,6 +110,12 @@ export async function getGarageOptionsForVehicle(): Promise<
     .map((m) => ({ id: m.garage.id, name: m.garage.name }));
 }
 
+function parseCategory(raw: string): VehicleCategory {
+  const allowed = Object.keys(VEHICLE_CATEGORY_LABELS) as VehicleCategory[];
+  if (allowed.includes(raw as VehicleCategory)) return raw as VehicleCategory;
+  return VehicleCategory.SEDAN;
+}
+
 export async function createVehicle(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "غير مصرح" };
@@ -109,7 +124,15 @@ export async function createVehicle(formData: FormData) {
   const model = String(formData.get("model") ?? "").trim();
   const plateNumber = String(formData.get("plateNumber") ?? "").trim();
   const year = Number(formData.get("year"));
-  const totalSeats = Number(formData.get("totalSeats"));
+  const modelId = String(formData.get("modelId") ?? "").trim() || null;
+  const category = parseCategory(String(formData.get("category") ?? "SEDAN"));
+  const layout = resolveVehicleSeatLayout({
+    modelId,
+    brand,
+    model,
+    category,
+  });
+  const totalSeats = countBookableSeats(layout);
   const color = String(formData.get("color") ?? "").trim() || null;
   const transportType = String(
     formData.get("transportType") ?? "INTERNAL"
@@ -159,6 +182,8 @@ export async function createVehicle(formData: FormData) {
         plateNumber,
         color,
         totalSeats,
+        category,
+        seatLayoutJson: layout,
         transportType,
         ownerId: session.user.id,
         garageId,
@@ -204,7 +229,17 @@ export async function updateVehicle(formData: FormData) {
   const brand = String(formData.get("brand") ?? "").trim();
   const model = String(formData.get("model") ?? "").trim();
   const year = Number(formData.get("year"));
-  const totalSeats = Number(formData.get("totalSeats"));
+  const modelId = String(formData.get("modelId") ?? "").trim() || null;
+  const category = parseCategory(
+    String(formData.get("category") ?? v.category)
+  );
+  const layout = resolveVehicleSeatLayout({
+    modelId,
+    brand,
+    model,
+    category,
+  });
+  const totalSeats = countBookableSeats(layout);
   const color = String(formData.get("color") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "true";
   const transportType = String(
@@ -228,6 +263,8 @@ export async function updateVehicle(formData: FormData) {
         model,
         year,
         totalSeats,
+        category,
+        seatLayoutJson: layout,
         color,
         isActive,
         transportType,
