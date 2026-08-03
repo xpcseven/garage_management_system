@@ -13,6 +13,7 @@ import {
 } from "@/lib/tourism-place-images";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/prisma/UserRole.enum";
+import { notifyAllPassengers } from "@/lib/actions/notification.actions";
 
 export type TourismPlaceRow = {
   id: string;
@@ -205,7 +206,7 @@ export async function createTourismPlace(
     );
     const autoApprove = session.user.role === UserRole.SUPER_ADMIN;
 
-    await prisma.tourismPlace.create({
+    const place = await prisma.tourismPlace.create({
       data: {
         name,
         governorate,
@@ -230,6 +231,23 @@ export async function createTourismPlace(
       },
     });
     revalidateTourismPaths();
+
+    if (autoApprove) {
+      try {
+        await notifyAllPassengers({
+          type: "NEW_TOURISM_PLACE",
+          title: "مكان سياحي جديد",
+          body: `أُضيف المعلم «${name}» إلى دليل المعالم.`,
+          data: {
+            placeId: place.id,
+            href: `/passenger/tourism-places/${place.id}`,
+          },
+        });
+      } catch (e) {
+        console.error("notify passengers place", e);
+      }
+    }
+
     return {
       success: true,
       pendingApproval: !autoApprove,
@@ -272,7 +290,7 @@ export async function updateTourismPlace(
   try {
     const existing = await prisma.tourismPlace.findUnique({
       where: { id },
-      select: { ownerId: true, imageUrl: true },
+      select: { ownerId: true, imageUrl: true, approvalStatus: true },
     });
     if (!existing) return { error: "المكان غير موجود" };
     if (
@@ -320,6 +338,27 @@ export async function updateTourismPlace(
     }
 
     revalidateTourismPaths();
+
+    if (
+      session.user.role === UserRole.SUPER_ADMIN &&
+      isActive &&
+      existing.approvalStatus !== "APPROVED"
+    ) {
+      try {
+        await notifyAllPassengers({
+          type: "NEW_TOURISM_PLACE",
+          title: "مكان سياحي جديد",
+          body: `أُضيف المعلم «${name}» إلى دليل المعالم.`,
+          data: {
+            placeId: id,
+            href: `/passenger/tourism-places/${id}`,
+          },
+        });
+      } catch (e) {
+        console.error("notify passengers place update", e);
+      }
+    }
+
     return { success: true };
   } catch (e) {
     console.error("updateTourismPlace", e);
@@ -380,16 +419,32 @@ export async function approveTourismPlaceRequest(id: string) {
     return { error: "لا تملك صلاحية الموافقة" };
   }
   try {
-    await prisma.tourismPlace.update({
+    const place = await prisma.tourismPlace.update({
       where: { id },
       data: {
         approvalStatus: "APPROVED",
         isActive: true,
         reviewedAt: new Date(),
       },
+      select: { id: true, name: true },
     });
     revalidatePath("/tourism-requests");
     revalidateTourismPaths();
+
+    try {
+      await notifyAllPassengers({
+        type: "NEW_TOURISM_PLACE",
+        title: "مكان سياحي جديد",
+        body: `أُضيف المعلم «${place.name}» إلى دليل المعالم.`,
+        data: {
+          placeId: place.id,
+          href: `/passenger/tourism-places/${place.id}`,
+        },
+      });
+    } catch (e) {
+      console.error("notify passengers place approve", e);
+    }
+
     return { success: true };
   } catch {
     return { error: "تعذر تنفيذ الموافقة" };

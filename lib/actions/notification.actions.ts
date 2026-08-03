@@ -2,7 +2,8 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import type { NotificationType, Prisma } from "@prisma/client";
+import type { NotificationType, Prisma, Role } from "@prisma/client";
+import { UserRole } from "@/prisma/UserRole.enum";
 import { revalidatePath } from "next/cache";
 
 export async function createNotification(input: {
@@ -20,6 +21,55 @@ export async function createNotification(input: {
       body: input.body,
       data: input.data ?? undefined,
     },
+  });
+}
+
+/**
+ * إشعار كل المستخدمين النشطين لدور معيّن (مثلاً المسافرين فقط).
+ * يُستخدم لمحتوى كتالوج جديد يظهر في بوابة ذلك الدور.
+ */
+export async function notifyUsersByRole(input: {
+  role: Role | UserRole;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Prisma.InputJsonValue;
+}) {
+  const users = await prisma.user.findMany({
+    where: {
+      role: input.role as Role,
+      isActive: true,
+      isDeleted: false,
+    },
+    select: { id: true },
+  });
+  if (users.length === 0) return { count: 0 };
+
+  await prisma.notification.createMany({
+    data: users.map((u) => ({
+      userId: u.id,
+      type: input.type,
+      title: input.title,
+      body: input.body,
+      data: input.data ?? undefined,
+    })),
+  });
+
+  return { count: users.length };
+}
+
+export async function notifyAllPassengers(input: {
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Prisma.InputJsonValue;
+}) {
+  return notifyUsersByRole({
+    role: UserRole.USER,
+    type: input.type,
+    title: input.title,
+    body: input.body,
+    data: input.data,
   });
 }
 

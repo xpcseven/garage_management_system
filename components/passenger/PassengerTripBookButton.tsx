@@ -136,7 +136,12 @@ export default function PassengerTripBookButton({ tripId }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm">حجز</Button>
+        <Button
+          size="sm"
+          className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white"
+        >
+          حجز
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="w-max max-w-[min(96vw,72rem)] gap-0 overflow-hidden border-0 bg-transparent p-0 shadow-none sm:max-w-[min(96vw,72rem)]">

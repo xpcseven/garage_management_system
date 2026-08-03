@@ -20,9 +20,11 @@ export function BusinessFormDialog({
   children: ReactNode;
 }) {
   return (
-    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+    <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle className="text-lg">{title}</DialogTitle>
+        <DialogTitle className="font-display text-start text-lg text-dusk dark:text-foreground">
+          {title}
+        </DialogTitle>
       </DialogHeader>
       {children}
     </DialogContent>

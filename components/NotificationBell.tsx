@@ -20,6 +20,9 @@ import {
 function hrefForNotification(n: NotificationRow): string | null {
   const data = n.data as Record<string, unknown> | null;
   if (data && typeof data === "object") {
+    if (typeof data.href === "string" && data.href.startsWith("/")) {
+      return data.href;
+    }
     if (typeof data.partnershipId === "string") {
       if (n.type === "PARTNERSHIP_MESSAGE") {
         return `/partnership-messages/${data.partnershipId}`;
@@ -27,11 +30,35 @@ function hrefForNotification(n: NotificationRow): string | null {
       if (n.type === "PARTNERSHIP_INVITE") return "/partnership-invites";
       return "/partnerships";
     }
+    if (typeof data.garageId === "string") {
+      return `/passenger/garages/${data.garageId}`;
+    }
+    if (typeof data.placeId === "string") {
+      return `/passenger/tourism-places/${data.placeId}`;
+    }
+    if (typeof data.hotelId === "string") {
+      return `/passenger/hotels/${data.hotelId}`;
+    }
+    if (typeof data.restaurantId === "string") {
+      return `/passenger/restaurants/${data.restaurantId}`;
+    }
+    if (typeof data.farmId === "string") {
+      return `/passenger/farms/${data.farmId}`;
+    }
+    if (typeof data.programId === "string") {
+      return "/passenger/tourism-programs";
+    }
   }
   if (n.type === "PARTNERSHIP_INVITE") return "/partnership-invites";
   if (n.type === "PARTNERSHIP_MESSAGE") return "/partnership-messages";
   if (n.type.startsWith("PARTNERSHIP_")) return "/partnerships";
   if (n.type === "PACKAGE_INCLUDED") return "/bookings";
+  if (n.type === "NEW_GARAGE") return "/passenger/garages";
+  if (n.type === "NEW_TOURISM_PLACE") return "/passenger/tourism-places";
+  if (n.type === "NEW_TOURISM_PROGRAM") return "/passenger/tourism-programs";
+  if (n.type === "NEW_HOTEL") return "/passenger/hotels";
+  if (n.type === "NEW_RESTAURANT") return "/passenger/restaurants";
+  if (n.type === "NEW_FARM") return "/passenger/farms";
   return null;
 }
 

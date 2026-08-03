@@ -81,13 +81,19 @@ export default function Garage_Update({ garage }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
+        >
           تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>تعديل الشركة السياحية</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            تعديل الشركة السياحية
+          </DialogTitle>
         </DialogHeader>
         <form
           className="space-y-3"
@@ -164,11 +170,11 @@ export default function Garage_Update({ garage }: Props) {
                 aria-label="تحديث الموقع الحالي"
               >
                 {locating ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                  <Loader2 className="h-5 w-5 animate-spin text-orchid" />
                 ) : (
                   <MapPin
                     className={`h-5 w-5 ${
-                      address ? "text-purple-600" : "text-muted-foreground"
+                      address ? "text-orchid" : "text-dusk/40"
                     }`}
                   />
                 )}
@@ -205,7 +211,11 @@ export default function Garage_Update({ garage }: Props) {
               <option value="false">موقوف</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending || locating} className="w-full">
+          <Button
+            type="submit"
+            disabled={pending || locating}
+            className="w-full rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
+          >
             تحديث
           </Button>
         </form>

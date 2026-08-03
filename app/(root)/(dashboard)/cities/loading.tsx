@@ -1,12 +1,10 @@
-import React from "react";
-
-const loading = () => {
+export default function loading() {
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
-      <div className="h-20 w-20 rounded-full border-4 border-purple-500 border-t-purple-600 animate-spin" />
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-mist dark:bg-background">
+      <div className="h-14 w-14 animate-spin rounded-full border-4 border-orchid/30 border-t-plum dark:border-orchid/40 dark:border-t-orchid-light" />
+      <p className="mt-4 text-sm text-dusk/50 dark:text-muted-foreground">
+        جاري تحميل المدن…
+      </p>
     </div>
   );
-};
-
-export default loading;
-
+}

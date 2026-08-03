@@ -105,15 +105,19 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>إضافة مركبة</Button>
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إضافة مركبة
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">إضافة مركبة</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            إضافة مركبة
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {blocked && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-200">
               لا يوجد لديك شركة سياحية بعد. أنشئ شركة سياحية من قسم{" "}
               <span className="font-semibold">الشركات السياحية</span> ثم عد لإضافة
               مركبة.
@@ -346,7 +350,7 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
               <Button
                 type="submit"
                 disabled={pending || !selectedModel}
-                className="sm:col-span-2 w-full sm:w-auto"
+                className="sm:col-span-2 w-full rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light sm:w-auto"
               >
                 {isGarageOwner ? "حفظ في الشركة السياحية" : "حفظ"}
               </Button>

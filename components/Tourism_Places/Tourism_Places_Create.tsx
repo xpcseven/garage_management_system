@@ -68,11 +68,15 @@ export default function Tourism_Places_Create() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>إضافة مكان سياحي</Button>
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إضافة مكان سياحي
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">إضافة مكان سياحي</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            إضافة مكان سياحي
+          </DialogTitle>
         </DialogHeader>
 
         <form

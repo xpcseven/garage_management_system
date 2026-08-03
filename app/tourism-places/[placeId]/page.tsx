@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getPublicTourismPlaceByIdForGuest } from "@/lib/actions/tourism_places.actions";
-import Passenger_Tourism_Place_Detail_Component from "@/components/passenger/Passenger_Tourism_Place_Detail_Component";
+import LandingNav from "@/components/landing/LandingNav";
+import LandingFooter from "@/components/landing/LandingFooter";
+import PublicTourismPlaceDetail from "@/components/tourism-places-public/PublicTourismPlaceDetail";
 
 type Props = {
   params: { placeId: string };
@@ -11,10 +13,10 @@ export default async function PublicTourismPlaceDetailPage({ params }: Props) {
   if (!place) notFound();
 
   return (
-    <Passenger_Tourism_Place_Detail_Component
-      place={place}
-      backHref="/tourism-places"
-    />
+    <main className="min-h-screen bg-mist text-dusk">
+      <LandingNav />
+      <PublicTourismPlaceDetail place={place} />
+      <LandingFooter />
+    </main>
   );
 }
-

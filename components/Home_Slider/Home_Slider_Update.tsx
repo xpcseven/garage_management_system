@@ -22,7 +22,10 @@ type Props = {
   iconOnly?: boolean;
 };
 
-export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
+
+export default function Home_Slider_Update({ slide }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -53,24 +56,22 @@ export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
       <DialogTrigger asChild>
         <Button
           type="button"
-          variant={iconOnly ? "secondary" : "outline"}
-          size={iconOnly ? "icon" : "sm"}
-          className={
-            iconOnly
-              ? "h-8 w-8 rounded-full bg-black/45 text-white hover:bg-black/65"
-              : ""
-          }
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
         >
-          {iconOnly ? "✏️" : "تعديل"}
+          تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-lg">تعديل شريحة السلايدر</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            تعديل شريحة السلايدر
+          </DialogTitle>
         </DialogHeader>
 
         <form
-          className="grid gap-4"
+          className="grid gap-3 text-start"
           action={(fd) => {
             start(async () => {
               if (uploadingImage) {
@@ -99,33 +100,50 @@ export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
         >
           <input type="hidden" name="id" value={slide.id} />
 
-          <div className="space-y-1">
-            <Label htmlFor={`hs-title-${slide.id}`}>العنوان</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`hs-title-${slide.id}`}
+            >
+              العنوان
+            </Label>
             <Input
               id={`hs-title-${slide.id}`}
               name="title"
               required
               defaultValue={slide.title}
+              className={fieldClass}
             />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor={`hs-sort-${slide.id}`}>ترتيب العرض</Label>
+            <div className="space-y-1.5">
+              <Label
+                className="text-xs text-dusk/60 dark:text-muted-foreground"
+                htmlFor={`hs-sort-${slide.id}`}
+              >
+                ترتيب العرض
+              </Label>
               <Input
                 id={`hs-sort-${slide.id}`}
                 name="sortOrder"
                 type="number"
                 min={0}
                 defaultValue={slide.sortOrder}
+                className={fieldClass}
               />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor={`hs-active-${slide.id}`}>الحالة</Label>
+            <div className="space-y-1.5">
+              <Label
+                className="text-xs text-dusk/60 dark:text-muted-foreground"
+                htmlFor={`hs-active-${slide.id}`}
+              >
+                الحالة
+              </Label>
               <select
                 id={`hs-active-${slide.id}`}
                 name="isActive"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={fieldClass}
                 defaultValue={slide.isActive ? "true" : "false"}
               >
                 <option value="true">نشطة</option>
@@ -134,13 +152,19 @@ export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor={`hs-file-${slide.id}`}>تغيير الصورة (اختياري)</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`hs-file-${slide.id}`}
+            >
+              تغيير الصورة (اختياري)
+            </Label>
             <Input
               id={`hs-file-${slide.id}`}
               name="file"
               type="file"
               accept="image/*"
+              className={fieldClass}
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -168,17 +192,23 @@ export default function Home_Slider_Update({ slide, iconOnly = false }: Props) {
               <img
                 src={imageUrlValue}
                 alt={slide.title}
-                className="mt-2 h-24 w-full rounded-lg object-cover"
+                className="mt-2 h-28 w-full rounded-xl object-cover ring-1 ring-plum/10 dark:ring-orchid/20"
               />
             )}
           </div>
           <input type="hidden" name="imageUrl" value={imageUrlValue} />
 
-          <div className="flex justify-end gap-2">
-            <Button type="submit" disabled={pending || uploadingImage}>
-              {uploadingImage ? "انتظار رفع الصورة..." : "حفظ التعديلات"}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={pending || uploadingImage}
+            className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
+          >
+            {uploadingImage
+              ? "انتظار رفع الصورة…"
+              : pending
+                ? "جاري الحفظ…"
+                : "حفظ التعديلات"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

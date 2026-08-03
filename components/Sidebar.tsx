@@ -84,6 +84,8 @@ export default function Sidebar({ user, className }: Props) {
 
   if (!user) return null;
 
+  const isSuperAdmin = role === UserRole.SUPER_ADMIN;
+
   return (
     <aside
       className={cn(
@@ -104,133 +106,189 @@ export default function Sidebar({ user, className }: Props) {
         </span>
       </div>
 
-      {/* Main nav */}
-      <nav className="flex flex-col gap-0.5" dir="rtl">
+      <nav className="flex flex-col gap-0.5 overflow-y-auto" dir="rtl">
         <NavLink href="/home" label="الرئيسية" icon="🏠" />
 
-        {(canManageCities(role) || canManageGarages(role) || canManageVehicles(role)) && (
-          <SectionDivider label="الإدارة" />
-        )}
-
-        {canManageCities(role) && (
-          <NavLink href="/cities" label="المدن" icon="🏙️" />
-        )}
-
-        {canManageHomeSlider(role) && (
-          <NavLink href="/home-slider" label="سلايدر الرئيسية" icon="🖼️" />
-        )}
-
-        {canManageTourismPlaces(role) && (
+        {isSuperAdmin ? (
           <>
+            <SectionDivider label="المنصة" />
+            <NavLink href="/cities" label="المدن" icon="🏙️" />
+            <NavLink href="/home-slider" label="سلايدر الرئيسية" icon="🖼️" />
             <NavLink href="/tourism_places" label="الأماكن السياحية" icon="🧭" />
-            {role === "SUPER_ADMIN" && (
-              <NavLink href="/tourism-requests" label="طلبات اعتماد الأماكن" icon="✅" />
-            )}
-          </>
-        )}
+            <NavLink href="/tourism-requests" label="طلبات الاعتماد" icon="✅" />
 
-        {canManageGarages(role) && (
-          <NavLink href="/garages" label="الشركات السياحية" icon="🏢" />
-        )}
-
-        {canManageVehicles(role) && (
-          <NavLink href="/vehicles" label="المركبات" icon="🚐" />
-        )}
-
-        {canManageGarages(role) &&
-          (role === UserRole.GARAGE_OWNER || role === UserRole.SUPER_ADMIN) && (
-          <>
-            <NavLink href="/partnerships" label="الشراكات" icon="🤝" />
-            <NavLink href="/partnership-messages" label="مراسلات الشركاء" icon="💬" />
-          </>
-        )}
-
-        {canManageHotels(role) && (
-          <>
-            <SectionDivider label="الفندق" />
-            <NavLink href="/hotels" label="فندقي" icon="🏨" />
-            <NavLink href="/hotel-rooms" label="الغرف" icon="🛏️" />
-            <NavLink href="/hotel-bookings" label="حجوزات الفندق" icon="📋" />
-            <NavLink href="/partnership-invites" label="دعوات الشراكة" icon="✉️" />
-            <NavLink href="/partnership-messages" label="مراسلات الشركاء" icon="💬" />
-          </>
-        )}
-
-        {canManageRestaurants(role) && (
-          <>
-            <SectionDivider label="المطعم" />
-            <NavLink href="/restaurants" label="مطعمي" icon="🍽️" />
-            <NavLink
-              href="/restaurant-bookings"
-              label="حجوزات المطعم"
-              icon="📋"
-            />
-            <NavLink href="/partnership-invites" label="دعوات الشراكة" icon="✉️" />
-            <NavLink href="/partnership-messages" label="مراسلات الشركاء" icon="💬" />
-          </>
-        )}
-
-        {canManageFarms(role) && (
-          <>
-            <SectionDivider label="المزرعة" />
-            <NavLink href="/farms" label="مزرعتي" icon="🌿" />
-            <NavLink href="/farm-bookings" label="حجوزات المزرعة" icon="📋" />
-            <NavLink href="/partnership-invites" label="دعوات الشراكة" icon="✉️" />
-            <NavLink href="/partnership-messages" label="مراسلات الشركاء" icon="💬" />
-          </>
-        )}
-
-        {canManageTrips(role) && (
-          <>
-            <SectionDivider label="الرحلات" />
+            <SectionDivider label="النقل" />
+            <NavLink href="/garages" label="الشركات السياحية" icon="🏢" />
+            <NavLink href="/vehicles" label="المركبات" icon="🚐" />
             <NavLink href="/trips" label="الرحلات" icon="🗺️" />
             <NavLink href="/tourism-programs" label="البرامج السياحية" icon="🧳" />
-          </>
-        )}
-
-        {canUsePassengerPortal(role) && (
-          <>
-            <SectionDivider label="المسافر" />
-            <NavLink href="/passenger/garages" label="الشركات السياحية (مسافر)" icon="📍" />
-            <NavLink href="/passenger/trips" label="بحث رحلة" icon="🔍" />
-            <NavLink
-              href="/passenger/tourism-programs"
-              label="برامج سياحية"
-              icon="🧭"
-            />
-            <NavLink
-              href="/passenger/tourism-places"
-              label="أماكن سياحية"
-              icon="🧳"
-            />
-            <NavLink href="/passenger/hotels" label="فنادق" icon="🏨" />
-            <NavLink href="/passenger/restaurants" label="مطاعم" icon="🍽️" />
-            <NavLink href="/passenger/farms" label="مزارع" icon="🌿" />
-          </>
-        )}
-
-        {canViewBookings(role) &&
-          role !== UserRole.HOTEL_OWNER &&
-          role !== UserRole.RESTAURANT_OWNER &&
-          role !== UserRole.FARM_OWNER && (
-          <>
-            <SectionDivider label="الحجوزات" />
             <NavLink href="/bookings" label="الحجوزات" icon="🎫" />
+
+            <SectionDivider label="الشراكات" />
+            <NavLink href="/partnerships" label="الشراكات" icon="🤝" />
+            <NavLink href="/partnership-messages" label="المراسلات" icon="💬" />
+
+            <SectionDivider label="الضيافة" />
+            <NavLink href="/hotels" label="الفنادق" icon="🏨" />
+            <NavLink href="/restaurants" label="المطاعم" icon="🍽️" />
+            <NavLink href="/farms" label="المزارع" icon="🌿" />
+          </>
+        ) : (
+          <>
+            {(canManageCities(role) ||
+              canManageGarages(role) ||
+              canManageVehicles(role)) && <SectionDivider label="الإدارة" />}
+
+            {canManageCities(role) && (
+              <NavLink href="/cities" label="المدن" icon="🏙️" />
+            )}
+
+            {canManageHomeSlider(role) && (
+              <NavLink href="/home-slider" label="سلايدر الرئيسية" icon="🖼️" />
+            )}
+
+            {canManageTourismPlaces(role) && (
+              <NavLink href="/tourism_places" label="الأماكن السياحية" icon="🧭" />
+            )}
+
+            {canManageGarages(role) && (
+              <NavLink href="/garages" label="الشركات السياحية" icon="🏢" />
+            )}
+
+            {canManageVehicles(role) && (
+              <NavLink href="/vehicles" label="المركبات" icon="🚐" />
+            )}
+
+            {canManageGarages(role) && role === UserRole.GARAGE_OWNER && (
+              <>
+                <NavLink href="/partnerships" label="الشراكات" icon="🤝" />
+                <NavLink
+                  href="/partnership-messages"
+                  label="مراسلات الشركاء"
+                  icon="💬"
+                />
+              </>
+            )}
+
+            {canManageHotels(role) && (
+              <>
+                <SectionDivider label="الفندق" />
+                <NavLink href="/hotels" label="فندقي" icon="🏨" />
+                <NavLink href="/hotel-rooms" label="الغرف" icon="🛏️" />
+                <NavLink href="/hotel-bookings" label="حجوزات الفندق" icon="📋" />
+                <NavLink
+                  href="/partnership-invites"
+                  label="دعوات الشراكة"
+                  icon="✉️"
+                />
+                <NavLink
+                  href="/partnership-messages"
+                  label="مراسلات الشركاء"
+                  icon="💬"
+                />
+              </>
+            )}
+
+            {canManageRestaurants(role) && (
+              <>
+                <SectionDivider label="المطعم" />
+                <NavLink href="/restaurants" label="مطعمي" icon="🍽️" />
+                <NavLink
+                  href="/restaurant-bookings"
+                  label="حجوزات المطعم"
+                  icon="📋"
+                />
+                <NavLink
+                  href="/partnership-invites"
+                  label="دعوات الشراكة"
+                  icon="✉️"
+                />
+                <NavLink
+                  href="/partnership-messages"
+                  label="مراسلات الشركاء"
+                  icon="💬"
+                />
+              </>
+            )}
+
+            {canManageFarms(role) && (
+              <>
+                <SectionDivider label="المزرعة" />
+                <NavLink href="/farms" label="مزرعتي" icon="🌿" />
+                <NavLink href="/farm-bookings" label="حجوزات المزرعة" icon="📋" />
+                <NavLink
+                  href="/partnership-invites"
+                  label="دعوات الشراكة"
+                  icon="✉️"
+                />
+                <NavLink
+                  href="/partnership-messages"
+                  label="مراسلات الشركاء"
+                  icon="💬"
+                />
+              </>
+            )}
+
+            {canManageTrips(role) && (
+              <>
+                <SectionDivider label="الرحلات" />
+                <NavLink href="/trips" label="الرحلات" icon="🗺️" />
+                <NavLink
+                  href="/tourism-programs"
+                  label="البرامج السياحية"
+                  icon="🧳"
+                />
+              </>
+            )}
+
+            {canUsePassengerPortal(role) && (
+              <>
+                <SectionDivider label="المسافر" />
+                <NavLink
+                  href="/passenger/garages"
+                  label="الشركات السياحية (مسافر)"
+                  icon="📍"
+                />
+                <NavLink href="/passenger/trips" label="بحث رحلة" icon="🔍" />
+                <NavLink
+                  href="/passenger/tourism-programs"
+                  label="برامج سياحية"
+                  icon="🧭"
+                />
+                <NavLink
+                  href="/passenger/tourism-places"
+                  label="أماكن سياحية"
+                  icon="🧳"
+                />
+                <NavLink href="/passenger/hotels" label="فنادق" icon="🏨" />
+                <NavLink href="/passenger/restaurants" label="مطاعم" icon="🍽️" />
+                <NavLink href="/passenger/farms" label="مزارع" icon="🌿" />
+              </>
+            )}
+
+            {canViewBookings(role) &&
+              role !== UserRole.HOTEL_OWNER &&
+              role !== UserRole.RESTAURANT_OWNER &&
+              role !== UserRole.FARM_OWNER && (
+                <>
+                  <SectionDivider label="الحجوزات" />
+                  <NavLink href="/bookings" label="الحجوزات" icon="🎫" />
+                </>
+              )}
           </>
         )}
       </nav>
 
-      {/* User info at bottom */}
-      <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-2.5 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-800/60">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/50 text-sm shrink-0">
+      <div className="mt-auto border-t border-plum/10 pt-3 dark:border-orchid/15">
+        <div className="flex items-center gap-2.5 rounded-xl bg-mist/80 px-3 py-2 dark:bg-muted/60">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orchid/15 text-sm dark:bg-orchid/25">
             👤
           </div>
-          <div className="flex-1 min-w-0 text-right" dir="rtl">
-            <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+          <div className="min-w-0 flex-1 text-right" dir="rtl">
+            <p className="truncate text-xs font-semibold text-dusk dark:text-foreground">
               {user.name ?? "المستخدم"}
             </p>
-            <p className="truncate text-[10px] text-slate-400 dark:text-slate-500">
+            <p className="truncate text-[10px] text-dusk/45 dark:text-muted-foreground">
               {roleLabelAr(role ?? "")}
             </p>
           </div>

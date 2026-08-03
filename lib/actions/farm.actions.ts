@@ -17,6 +17,7 @@ import {
   syncFarmImages,
 } from "@/lib/farm-images";
 import { revalidatePath } from "next/cache";
+import { notifyAllPassengers } from "@/lib/actions/notification.actions";
 
 export type FarmRow = {
   id: string;
@@ -87,6 +88,41 @@ export async function getFarmsForOwner(): Promise<FarmRow[]> {
   }));
 }
 
+export async function getFarmForOwner(
+  farmId: string
+): Promise<FarmRow | null> {
+  const session = await auth();
+  if (!session?.user || !canManageFarms(session.user.role)) return null;
+  const where =
+    session.user.role === UserRole.SUPER_ADMIN
+      ? { id: farmId, isDeleted: false }
+      : { id: farmId, isDeleted: false, ownerId: session.user.id };
+  const f = await prisma.farm.findFirst({
+    where,
+    include: {
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, imageUrl: true, sortOrder: true },
+      },
+    },
+  });
+  if (!f) return null;
+  return {
+    id: f.id,
+    name: f.name,
+    description: f.description,
+    phone: f.phone,
+    address: f.address,
+    location: f.location,
+    imageUrl: f.imageUrl,
+    capacity: f.capacity,
+    amenities: f.amenities,
+    isActive: f.isActive,
+    approvalStatus: f.approvalStatus,
+    images: resolveFarmImages(f),
+  };
+}
+
 export async function createFarm(formData: FormData) {
   const session = await auth();
   if (!session?.user || !canManageFarms(session.user.role)) {
@@ -128,6 +164,20 @@ export async function createFarm(formData: FormData) {
 
   revalidatePath("/farms");
   revalidatePath("/passenger/farms");
+
+  if (farm.approvalStatus === TourismApprovalStatus.APPROVED) {
+    try {
+      await notifyAllPassengers({
+        type: "NEW_FARM",
+        title: "مزرعة جديدة",
+        body: `أُضيفت مزرعة «${farm.name}» ويمكنك حجز زيارة فيها.`,
+        data: { farmId: farm.id, href: `/passenger/farms/${farm.id}` },
+      });
+    } catch (e) {
+      console.error("notify passengers farm", e);
+    }
+  }
+
   return { success: true };
 }
 
@@ -185,6 +235,7 @@ export async function updateFarm(formData: FormData) {
   await syncFarmImages(id, urls);
 
   revalidatePath("/farms");
+  revalidatePath(`/farms/${id}`);
   revalidatePath("/passenger/farms");
   revalidatePath(`/passenger/farms/${id}`);
   return { success: true };

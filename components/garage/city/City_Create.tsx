@@ -14,7 +14,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
-import { FaPlus } from "react-icons/fa";
+
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
 
 export default function City_Create() {
   const router = useRouter();
@@ -22,20 +24,20 @@ export default function City_Create() {
   const [pending, start] = useTransition();
 
   return (
-
-    <div>
-
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة مدينة <FaPlus className="w-4 h-4" /></Button>
-       
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إضافة مدينة
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg">إضافة مدينة</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            إضافة مدينة
+          </DialogTitle>
         </DialogHeader>
         <form
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          className="grid gap-3 text-start"
           action={(fd) => {
             start(async () => {
               const res = await createCity(fd);
@@ -59,22 +61,38 @@ export default function City_Create() {
             });
           }}
         >
-          <div className="flex-1 space-y-1">
-            <Label htmlFor="city-name">الاسم</Label>
-            <Input id="city-name" name="name" required placeholder="بغداد" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-dusk/60 dark:text-muted-foreground" htmlFor="city-name">
+              الاسم
+            </Label>
+            <Input
+              id="city-name"
+              name="name"
+              required
+              placeholder="بغداد"
+              className={fieldClass}
+            />
           </div>
-          <div className="flex-1 space-y-1">
-            <Label htmlFor="city-region">المنطقة (اختياري)</Label>
-            <Input id="city-region" name="region" placeholder="بغداد" />
+          <div className="space-y-1.5">
+            <Label className="text-xs text-dusk/60 dark:text-muted-foreground" htmlFor="city-region">
+              المنطقة (اختياري)
+            </Label>
+            <Input
+              id="city-region"
+              name="region"
+              placeholder="بغداد"
+              className={fieldClass}
+            />
           </div>
-          <Button type="submit" disabled={pending} className="">
-            حفظ
+          <Button
+            type="submit"
+            disabled={pending}
+            className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
+          >
+            {pending ? "جاري الحفظ…" : "حفظ"}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
-
-    <h1 className="text-sm text-purple-400 mt-4">اضافة مدينة او منطقة سياحية</h1>
-    </div>
   );
 }

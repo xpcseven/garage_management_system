@@ -18,6 +18,7 @@ export default function PassengerTourismProgramBookButton({ programId }: Props) 
     <Button
       size="sm"
       disabled={pending}
+      className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white"
       onClick={async () => {
         const confirmed = await Swal.fire({
           icon: "question",

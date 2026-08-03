@@ -16,6 +16,19 @@ import {
   syncHotelImages,
 } from "@/lib/hotel-images";
 import { revalidatePath } from "next/cache";
+import { notifyAllPassengers } from "@/lib/actions/notification.actions";
+
+export type HotelRoomRow = {
+  id: string;
+  hotelId: string;
+  hotelName: string;
+  roomNumber: string;
+  roomType: HotelRoomType;
+  capacity: number;
+  pricePerNight: string;
+  amenities: string | null;
+  isActive: boolean;
+};
 
 export type HotelRow = {
   id: string;
@@ -29,18 +42,7 @@ export type HotelRow = {
   approvalStatus: TourismApprovalStatus;
   roomsCount: number;
   images: string[];
-};
-
-export type HotelRoomRow = {
-  id: string;
-  hotelId: string;
-  hotelName: string;
-  roomNumber: string;
-  roomType: HotelRoomType;
-  capacity: number;
-  pricePerNight: string;
-  amenities: string | null;
-  isActive: boolean;
+  rooms: Omit<HotelRoomRow, "hotelId" | "hotelName">[];
 };
 
 export type HotelBookingRow = {
@@ -73,6 +75,18 @@ export async function getHotelsForOwner(): Promise<HotelRow[]> {
     orderBy: { name: "asc" },
     include: {
       _count: { select: { rooms: true } },
+      rooms: {
+        orderBy: { roomNumber: "asc" },
+        select: {
+          id: true,
+          roomNumber: true,
+          roomType: true,
+          capacity: true,
+          pricePerNight: true,
+          amenities: true,
+          isActive: true,
+        },
+      },
       images: {
         orderBy: { sortOrder: "asc" },
         select: { id: true, imageUrl: true, sortOrder: true },
@@ -91,7 +105,72 @@ export async function getHotelsForOwner(): Promise<HotelRow[]> {
     approvalStatus: h.approvalStatus,
     roomsCount: h._count.rooms,
     images: resolveHotelImages(h),
+    rooms: h.rooms.map((r) => ({
+      id: r.id,
+      roomNumber: r.roomNumber,
+      roomType: r.roomType,
+      capacity: r.capacity,
+      pricePerNight: r.pricePerNight.toString(),
+      amenities: r.amenities,
+      isActive: r.isActive,
+    })),
   }));
+}
+
+export async function getHotelForOwner(
+  hotelId: string
+): Promise<HotelRow | null> {
+  const session = await auth();
+  if (!session?.user || !canManageHotels(session.user.role)) return null;
+  const where =
+    session.user.role === UserRole.SUPER_ADMIN
+      ? { id: hotelId, isDeleted: false }
+      : { id: hotelId, isDeleted: false, ownerId: session.user.id };
+  const h = await prisma.hotel.findFirst({
+    where,
+    include: {
+      _count: { select: { rooms: true } },
+      rooms: {
+        orderBy: { roomNumber: "asc" },
+        select: {
+          id: true,
+          roomNumber: true,
+          roomType: true,
+          capacity: true,
+          pricePerNight: true,
+          amenities: true,
+          isActive: true,
+        },
+      },
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, imageUrl: true, sortOrder: true },
+      },
+    },
+  });
+  if (!h) return null;
+  return {
+    id: h.id,
+    name: h.name,
+    description: h.description,
+    phone: h.phone,
+    address: h.address,
+    location: h.location,
+    imageUrl: h.imageUrl,
+    isActive: h.isActive,
+    approvalStatus: h.approvalStatus,
+    roomsCount: h._count.rooms,
+    images: resolveHotelImages(h),
+    rooms: h.rooms.map((r) => ({
+      id: r.id,
+      roomNumber: r.roomNumber,
+      roomType: r.roomType,
+      capacity: r.capacity,
+      pricePerNight: r.pricePerNight.toString(),
+      amenities: r.amenities,
+      isActive: r.isActive,
+    })),
+  };
 }
 
 export async function createHotel(formData: FormData) {
@@ -132,6 +211,20 @@ export async function createHotel(formData: FormData) {
 
   revalidatePath("/hotels");
   revalidatePath("/passenger/hotels");
+
+  if (hotel.approvalStatus === TourismApprovalStatus.APPROVED) {
+    try {
+      await notifyAllPassengers({
+        type: "NEW_HOTEL",
+        title: "فندق جديد",
+        body: `أُضيف فندق «${hotel.name}» ويمكنك تصفّح غرفه الآن.`,
+        data: { hotelId: hotel.id, href: `/passenger/hotels/${hotel.id}` },
+      });
+    } catch (e) {
+      console.error("notify passengers hotel", e);
+    }
+  }
+
   return { success: true };
 }
 
@@ -186,6 +279,7 @@ export async function updateHotel(formData: FormData) {
   await syncHotelImages(id, urls);
 
   revalidatePath("/hotels");
+  revalidatePath(`/hotels/${id}`);
   revalidatePath("/passenger/hotels");
   revalidatePath(`/passenger/hotels/${id}`);
   return { success: true };
@@ -261,6 +355,8 @@ export async function createHotelRoom(formData: FormData) {
       },
     });
     revalidatePath("/hotel-rooms");
+    revalidatePath("/hotels");
+    revalidatePath(`/hotels/${hotelId}`);
     return { success: true };
   } catch {
     return { error: "تعذر الإضافة (ربما رقم الغرفة مكرر)" };
@@ -299,6 +395,8 @@ export async function updateHotelRoom(formData: FormData) {
     },
   });
   revalidatePath("/hotel-rooms");
+  revalidatePath("/hotels");
+  revalidatePath(`/hotels/${room.hotelId}`);
   return { success: true };
 }
 

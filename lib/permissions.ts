@@ -134,7 +134,7 @@ export function dashboardSectionsForRole(
     return ["overview", "garages", "vehicles", "trips", "bookings"];
   }
   if (role === UserRole.DRIVER) {
-    return ["overview", "garages", "vehicles", "trips"];
+    return ["overview", "garages", "vehicles", "trips", "bookings"];
   }
   if (role === UserRole.USER) {
     return [

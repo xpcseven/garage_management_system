@@ -1,41 +1,42 @@
 "use client";
 
-import { useTransition } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CityRow } from "@/lib/actions/city.actions";
 import { deleteCity } from "@/lib/actions/city.actions";
 import City_Update from "./City_Update";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import Swal from "sweetalert2";
 import TablePagination from "@/components/Shared/TablePagination";
-import { FaCertificate } from "react-icons/fa";
+import { cn } from "@/lib/utils";
 
 type Props = { cities: CityRow[] };
+
+type StatusFilter = "all" | "active" | "inactive";
+
+const chipIdle =
+  "bg-mist text-dusk/70 ring-1 ring-plum/10 hover:bg-plum-soft dark:bg-muted dark:text-muted-foreground dark:ring-orchid/25 dark:hover:bg-orchid/15";
 
 export default function City_Table({ cities }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
   const PAGE_SIZE = 20;
+
   const filteredCities = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return cities;
     return cities.filter((c) => {
+      if (status === "active" && !c.isActive) return false;
+      if (status === "inactive" && c.isActive) return false;
+      if (!q) return true;
       const name = c.name.toLowerCase();
       const region = (c.region ?? "").toLowerCase();
       return name.includes(q) || region.includes(q);
     });
-  }, [cities, search]);
+  }, [cities, search, status]);
+
   const totalPages = Math.max(1, Math.ceil(filteredCities.length / PAGE_SIZE));
   const pagedCities = useMemo(
     () => filteredCities.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
@@ -48,108 +49,187 @@ export default function City_Table({ cities }: Props) {
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, status]);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <CardTitle className="text-lg">قائمة المدن</CardTitle>
-          <div className="w-full max-w-xs">
-            <Input
+    <section className="space-y-4">
+      <div className="rounded-[1.75rem] bg-white ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20">
+        <div className="border-b border-plum/10 p-5 sm:p-6 dark:border-orchid/15">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="text-start">
+              <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+                القائمة
+              </p>
+              <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
+                المدن المسجّلة
+              </h2>
+            </div>
+            <p className="font-data text-sm text-dusk/50 dark:text-muted-foreground">
+              {filteredCities.length} مدينة
+            </p>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3">
+            <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="بحث بالمدينة أو المنطقة..."
-              className="text-right"
+              placeholder="ابحث باسم المدينة أو المنطقة…"
+              className="h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground dark:focus:border-orchid-light dark:focus:ring-orchid/40"
             />
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {(
+                [
+                  ["all", "الكل"],
+                  ["active", "نشطة"],
+                  ["inactive", "موقوفة"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStatus(value)}
+                  className={cn(
+                    "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orchid",
+                    status === value
+                      ? "bg-orchid text-white shadow-orchid"
+                      : chipIdle
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm  responsive-table">
-          <thead className="text-center bg-purple-700 text-white">
-            <tr className="border-b text-center">
-              <th className="p-2 text-center">#</th>
-              <th className="p-2 text-center">الاسم</th>
-              <th className="p-2 text-center">المنطقة</th>
-              <th className="p-2 text-center">الحالة</th>
-              <th className="p-2 w-40 text-center">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody className="text-center">
-            {pagedCities.map((c, index) => (
-              <tr key={c.id} className="border-b border-muted">
-                <td className="p-2 font-semibold text-muted-foreground" data-label="#">
-                  {(page - 1) * PAGE_SIZE + index + 1}
-                </td>
-                <td className="p-2 font-medium" data-label="الاسم">{c.name}</td>
-                <td className="p-2 text-muted-foreground" data-label="المنطقة">{c.region ?? "—"}</td>
-                <td className="p-2" data-label="الحالة">
-                  {c.isActive ? (
-                    <div className="text-green-500 font-bold flex items-center justify-center">
-                      <FaCertificate className="w-5 h-5" />
-                    </div>
-                  ) : (
-                      <div className="text-red-500 font-bold flex items-center justify-center">
-                        <FaCertificate className="w-5 h-5" />
-                      </div>
-                      
-                  )}
-                </td>
-                <td className="p-2 flex flex-wrap gap-2 justify-end" data-label="إجراءات">
-                  <City_Update city={c} />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    disabled={pending}
-                    onClick={async () => {
-                      const confirmed = await Swal.fire({
-                        icon: "warning",
-                        title: "تأكيد الحذف",
-                        text: "هل تريد حذف هذه المدينة؟",
-                        showCancelButton: true,
-                        confirmButtonText: "نعم، حذف",
-                        cancelButtonText: "إلغاء",
-                      });
-                      if (!confirmed.isConfirmed) return;
-                      start(async () => {
-                        const res = await deleteCity(c.id);
-                        if (res.success) {
-                          router.refresh();
-                          await Swal.fire({
-                            icon: "success",
-                            title: "تم الحذف",
-                            text: "تم حذف المدينة بنجاح",
-                            confirmButtonText: "موافق",
-                          });
-                        } else {
-                          await Swal.fire({
-                            icon: "error",
-                            title: "تعذر الحذف",
-                            text: res.error,
-                            confirmButtonText: "حسناً",
-                          });
-                        }
-                      });
-                    }}
+
+        <div className="overflow-x-auto p-2 sm:p-4">
+          <table className="w-full text-sm responsive-table">
+            <thead>
+              <tr className="border-b border-plum/10 text-start dark:border-orchid/15">
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  #
+                </th>
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  الاسم
+                </th>
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  المنطقة
+                </th>
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  الحالة
+                </th>
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  إجراءات
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedCities.map((c, index) => (
+                <tr
+                  key={c.id}
+                  className="border-b border-plum/5 text-start last:border-0 dark:border-orchid/10"
+                >
+                  <td
+                    className="p-3 font-data tabular-nums text-dusk/45 dark:text-muted-foreground"
+                    data-label="#"
                   >
-                    حذف
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {filteredCities.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-muted-foreground">
-                  لا توجد مدن مطابقة للبحث
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </CardContent>
-      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
-    </Card>
+                    {(page - 1) * PAGE_SIZE + index + 1}
+                  </td>
+                  <td
+                    className="p-3 font-semibold text-dusk dark:text-foreground"
+                    data-label="الاسم"
+                  >
+                    {c.name}
+                  </td>
+                  <td
+                    className="p-3 text-dusk/60 dark:text-muted-foreground"
+                    data-label="المنطقة"
+                  >
+                    {c.region?.trim() || "—"}
+                  </td>
+                  <td className="p-3" data-label="الحالة">
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2.5 py-0.5 font-data text-[10px] tracking-wide",
+                        c.isActive
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                          : "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                      )}
+                    >
+                      {c.isActive ? "نشطة" : "موقوفة"}
+                    </span>
+                  </td>
+                  <td className="p-3" data-label="إجراءات">
+                    <div className="flex flex-wrap gap-2">
+                      <City_Update city={c} />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={pending}
+                        className="rounded-xl border-0 bg-dusk text-white hover:bg-dusk-muted dark:bg-muted dark:text-foreground dark:hover:bg-orchid/20"
+                        onClick={async () => {
+                          const confirmed = await Swal.fire({
+                            icon: "warning",
+                            title: "تأكيد الحذف",
+                            text: "هل تريد حذف هذه المدينة؟",
+                            showCancelButton: true,
+                            confirmButtonText: "نعم، حذف",
+                            cancelButtonText: "إلغاء",
+                          });
+                          if (!confirmed.isConfirmed) return;
+                          start(async () => {
+                            const res = await deleteCity(c.id);
+                            if (res.success) {
+                              router.refresh();
+                              await Swal.fire({
+                                icon: "success",
+                                title: "تم الحذف",
+                                text: "تم حذف المدينة بنجاح",
+                                confirmButtonText: "موافق",
+                              });
+                            } else {
+                              await Swal.fire({
+                                icon: "error",
+                                title: "تعذر الحذف",
+                                text: res.error,
+                                confirmButtonText: "حسناً",
+                              });
+                            }
+                          });
+                        }}
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {filteredCities.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="p-10 text-center text-dusk/50 dark:text-muted-foreground"
+                  >
+                    {cities.length === 0
+                      ? "لا مدن بعد — أضف أول مدينة من الأعلى."
+                      : "لا توجد مدن مطابقة للبحث"}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="border-t border-plum/10 px-2 py-3 sm:px-4 dark:border-orchid/15">
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </div>
+      </div>
+    </section>
   );
 }

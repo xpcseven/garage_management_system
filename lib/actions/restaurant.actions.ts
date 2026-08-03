@@ -12,6 +12,7 @@ import {
   syncRestaurantImages,
 } from "@/lib/restaurant-images";
 import { revalidatePath } from "next/cache";
+import { notifyAllPassengers } from "@/lib/actions/notification.actions";
 
 export type RestaurantRow = {
   id: string;
@@ -71,6 +72,41 @@ export async function getRestaurantsForOwner(): Promise<RestaurantRow[]> {
   }));
 }
 
+export async function getRestaurantForOwner(
+  restaurantId: string
+): Promise<RestaurantRow | null> {
+  const session = await auth();
+  if (!session?.user || !canManageRestaurants(session.user.role)) return null;
+  const where =
+    session.user.role === UserRole.SUPER_ADMIN
+      ? { id: restaurantId, isDeleted: false }
+      : { id: restaurantId, isDeleted: false, ownerId: session.user.id };
+  const r = await prisma.restaurant.findFirst({
+    where,
+    include: {
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, imageUrl: true, sortOrder: true },
+      },
+    },
+  });
+  if (!r) return null;
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    phone: r.phone,
+    address: r.address,
+    location: r.location,
+    imageUrl: r.imageUrl,
+    capacity: r.capacity,
+    openHours: r.openHours,
+    isActive: r.isActive,
+    approvalStatus: r.approvalStatus,
+    images: resolveRestaurantImages(r),
+  };
+}
+
 export async function createRestaurant(formData: FormData) {
   const session = await auth();
   if (!session?.user || !canManageRestaurants(session.user.role)) {
@@ -112,6 +148,23 @@ export async function createRestaurant(formData: FormData) {
 
   revalidatePath("/restaurants");
   revalidatePath("/passenger/restaurants");
+
+  if (restaurant.approvalStatus === TourismApprovalStatus.APPROVED) {
+    try {
+      await notifyAllPassengers({
+        type: "NEW_RESTAURANT",
+        title: "مطعم جديد",
+        body: `أُضيف مطعم «${restaurant.name}» ويمكنك حجز زيارة فيه.`,
+        data: {
+          restaurantId: restaurant.id,
+          href: `/passenger/restaurants/${restaurant.id}`,
+        },
+      });
+    } catch (e) {
+      console.error("notify passengers restaurant", e);
+    }
+  }
+
   return { success: true };
 }
 
@@ -167,6 +220,7 @@ export async function updateRestaurant(formData: FormData) {
   await syncRestaurantImages(id, urls);
 
   revalidatePath("/restaurants");
+  revalidatePath(`/restaurants/${id}`);
   revalidatePath("/passenger/restaurants");
   revalidatePath(`/passenger/restaurants/${id}`);
   return { success: true };
