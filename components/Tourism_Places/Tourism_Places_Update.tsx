@@ -33,10 +33,9 @@ import Swal from "sweetalert2";
 
 type Props = {
   place: TourismPlaceRow;
-  iconOnly?: boolean;
 };
 
-export default function Tourism_Places_Update({ place, iconOnly = false }: Props) {
+export default function Tourism_Places_Update({ place }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -98,16 +97,18 @@ export default function Tourism_Places_Update({ place, iconOnly = false }: Props
       <DialogTrigger asChild>
         <Button
           type="button"
-          variant={iconOnly ? "secondary" : "outline"}
-          size={iconOnly ? "icon" : "sm"}
-          className={iconOnly ? "h-8 w-8 rounded-full bg-black/45 text-white hover:bg-black/65" : ""}
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
         >
-          {iconOnly ? "✏️" : "تعديل"}
+          تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">تعديل مكان سياحي</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            تعديل مكان سياحي
+          </DialogTitle>
         </DialogHeader>
 
         <form

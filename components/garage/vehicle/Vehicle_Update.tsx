@@ -96,13 +96,19 @@ export default function Vehicle_Update({ vehicle }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
+        >
           تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>تعديل المركبة</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            تعديل المركبة
+          </DialogTitle>
         </DialogHeader>
         <form
           className="grid gap-3 sm:grid-cols-2"
@@ -287,7 +293,7 @@ export default function Vehicle_Update({ vehicle }: Props) {
           <Button
             type="submit"
             disabled={pending || !selectedModel}
-            className="sm:col-span-2 w-full"
+            className="sm:col-span-2 w-full rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
           >
             تحديث
           </Button>

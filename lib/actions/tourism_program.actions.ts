@@ -11,7 +11,7 @@ import {
   PartnershipStatus,
   Prisma,
 } from "@prisma/client";
-import { createNotification } from "@/lib/actions/notification.actions";
+import { createNotification, notifyAllPassengers } from "@/lib/actions/notification.actions";
 import { revalidatePath } from "next/cache";
 
 export type TourismProgramCreatePack = {
@@ -219,10 +219,10 @@ export async function createTourismProgram(formData: FormData) {
   const uniquePartnershipIds = Array.from(new Set(partnershipIds));
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const createdProgram = await prisma.$transaction(async (tx) => {
       const garage = await tx.garage.findFirst({
         where: { id: garageId, isDeleted: false, isActive: true },
-        select: { id: true, ownerId: true },
+        select: { id: true, ownerId: true, name: true },
       });
       if (!garage) throw new Error("garage");
       if (
@@ -313,12 +313,29 @@ export async function createTourismProgram(formData: FormData) {
           })),
         });
       }
+
+      return { id: program.id, title: program.title, garageName: garage.name };
     });
 
     revalidatePath("/trips");
     revalidatePath("/tourism-programs");
     revalidatePath("/passenger/tourism-programs");
     revalidatePath("/home");
+
+    try {
+      await notifyAllPassengers({
+        type: "NEW_TOURISM_PROGRAM",
+        title: "برنامج سياحي جديد",
+        body: `أُضيف برنامج «${createdProgram.title}» من ${createdProgram.garageName} — يمكنك الحجز الآن.`,
+        data: {
+          programId: createdProgram.id,
+          href: "/passenger/tourism-programs",
+        },
+      });
+    } catch (e) {
+      console.error("notify passengers program", e);
+    }
+
     return { success: true };
   } catch (e) {
     const msg =

@@ -6,12 +6,6 @@ import type { CityRow } from "@/lib/actions/city.actions";
 import type { GarageTripPack } from "@/lib/actions/trip.actions";
 import { createGarageTrip } from "@/lib/actions/trip.actions";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,6 +21,9 @@ type Props = {
   cities: CityRow[];
   garagePacks: GarageTripPack[];
 };
+
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
 
 export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
   const router = useRouter();
@@ -50,29 +47,31 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
 
   if (garagePacks.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">رحلة باسم الشركة السياحية</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-amber-800">
-            لا توجد شركة سياحية نشطة. أنشئ شركة سياحية ومركبات مرتبطة بها أولاً.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-[1.75rem] bg-white p-5 ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20 sm:p-6">
+        <h3 className="font-display text-lg text-dusk dark:text-foreground">
+          رحلة باسم الشركة السياحية
+        </h3>
+        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+          لا توجد شركة سياحية نشطة. أنشئ شركة سياحية ومركبات مرتبطة بها أولاً.
+        </p>
+      </div>
     );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="">إضافة رحلة للشركة السياحية</Button>
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إضافة رحلة للشركة السياحية
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">إنشاء رحلة للشركة السياحية</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            إنشاء رحلة للشركة السياحية
+          </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground font-normal pt-1">
+        <p className="pt-1 text-start text-sm font-normal text-dusk/60 dark:text-muted-foreground">
           حدّد وجهة السفر: نقطة الانطلاق (من) ونقطة الوصول (إلى) — يجب أن تكونا
           مختلفتين.
         </p>
@@ -102,12 +101,14 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             });
           }}
         >
-          <div className="space-y-1 sm:col-span-2">
-            <Label>الشركة السياحية</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className="text-xs text-dusk/60 dark:text-muted-foreground">
+              الشركة السياحية
+            </Label>
             <select
               value={garageId}
               onChange={(e) => setGarageId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
             >
               {garagePacks.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -117,18 +118,23 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             </select>
           </div>
 
-          <div className="sm:col-span-2 rounded-lg border border-purple-200 bg-purple-50/60 dark:bg-purple-950/20 p-4 space-y-3">
-            <p className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+          <div className="space-y-3 rounded-2xl bg-mist/70 p-4 ring-1 ring-plum/10 dark:bg-background dark:ring-orchid/15 sm:col-span-2">
+            <p className="text-sm font-semibold text-orchid dark:text-orchid-light">
               وجهة السفر (مطلوب)
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="tg-from">من — نقطة الانطلاق</Label>
+              <div className="space-y-1.5">
+                <Label
+                  className="text-xs text-dusk/60 dark:text-muted-foreground"
+                  htmlFor="tg-from"
+                >
+                  من — نقطة الانطلاق
+                </Label>
                 <select
                   id="tg-from"
                   name="fromCityId"
                   required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className={fieldClass}
                   defaultValue=""
                 >
                   <option value="" disabled>
@@ -142,13 +148,18 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
                   ))}
                 </select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="tg-to">إلى — نقطة الوصول</Label>
+              <div className="space-y-1.5">
+                <Label
+                  className="text-xs text-dusk/60 dark:text-muted-foreground"
+                  htmlFor="tg-to"
+                >
+                  إلى — نقطة الوصول
+                </Label>
                 <select
                   id="tg-to"
                   name="toCityId"
                   required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className={fieldClass}
                   defaultValue=""
                 >
                   <option value="" disabled>
@@ -164,22 +175,27 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
               </div>
             </div>
             {cities.length === 0 && (
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-amber-800 dark:text-amber-200">
                 لا توجد مدن في النظام. يطلب المشرف إضافة مدن من قسم «المدن» حتى
                 تستطيع تحديد من وإلى.
               </p>
             )}
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tg-veh">المركبة</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor="tg-veh"
+            >
+              المركبة
+            </Label>
             <select
               id="tg-veh"
               name="vehicleId"
               required
               value={vehicleId}
               onChange={(e) => setVehicleId(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
             >
               {(pack?.vehicles ?? []).map((v) => (
                 <option key={v.id} value={v.id}>
@@ -189,14 +205,19 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             </select>
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tg-drv">السائق</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor="tg-drv"
+            >
+              السائق
+            </Label>
             <select
               id="tg-drv"
               name="driverId"
               required
               key={`d-${garageId}`}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
               defaultValue={pack?.drivers[0]?.id ?? ""}
             >
               {(pack?.drivers ?? []).map((d) => (
@@ -207,17 +228,28 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="tg-dep">وقت المغادرة</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor="tg-dep"
+            >
+              وقت المغادرة
+            </Label>
             <Input
               id="tg-dep"
               name="departureTime"
               type="datetime-local"
               required
+              className={fieldClass}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="tg-price">السعر الأساسي</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor="tg-price"
+            >
+              السعر الأساسي
+            </Label>
             <Input
               id="tg-price"
               name="basePrice"
@@ -225,10 +257,16 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
               step="0.01"
               min={0}
               required
+              className={fieldClass}
             />
           </div>
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tg-seats">عدد المقاعد المعروضة</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor="tg-seats"
+            >
+              عدد المقاعد المعروضة
+            </Label>
             <Input
               id="tg-seats"
               name="maxSeats"
@@ -238,8 +276,9 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
               key={`${garageId}-${vehicleId}-${maxCap}`}
               defaultValue={Math.min(4, maxCap)}
               required
+              className={fieldClass}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-dusk/50 dark:text-muted-foreground">
               لا يتجاوز مقاعد المركبة ({maxCap}).
             </p>
           </div>
@@ -247,7 +286,7 @@ export default function Trip_Garage_Create({ cities, garagePacks }: Props) {
           <Button
             type="submit"
             disabled={pending || !pack?.vehicles.length}
-            className="sm:col-span-2 bg-purple-600"
+            className="sm:col-span-2 rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light"
           >
             إنشاء الرحلة والمقاعد
           </Button>

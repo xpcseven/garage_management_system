@@ -6,6 +6,7 @@ import { UserRole } from "@/prisma/UserRole.enum";
 import { GarageRole } from "@prisma/client";
 import { canCreateGarage } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
+import { notifyAllPassengers } from "@/lib/actions/notification.actions";
 
 export type GarageRow = {
   id: string;
@@ -79,7 +80,7 @@ export async function createGarage(formData: FormData) {
       : session.user.id;
 
   try {
-    await prisma.garage.create({
+    const garage = await prisma.garage.create({
       data: {
         name,
         description,
@@ -91,6 +92,19 @@ export async function createGarage(formData: FormData) {
     });
     revalidatePath("/garages");
     revalidatePath("/home");
+    revalidatePath("/passenger/garages");
+
+    try {
+      await notifyAllPassengers({
+        type: "NEW_GARAGE",
+        title: "شركة سياحية جديدة",
+        body: `أُضيفت شركة «${name}» ويمكنك تصفّح رحلاتها الآن.`,
+        data: { garageId: garage.id, href: `/passenger/garages/${garage.id}` },
+      });
+    } catch (e) {
+      console.error("notify passengers garage", e);
+    }
+
     return { success: true };
   } catch {
     return { error: "تعذر إنشاء الشركة السياحية" };

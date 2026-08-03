@@ -10,15 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-xl border border-plum border-b-4 bg-white text-plum shadow-sm hover:bg-plum hover:text-white focus-visible:ring-orchid",
+          "rounded-xl border border-plum border-b-4 bg-white text-plum shadow-sm hover:bg-plum hover:text-white focus-visible:ring-orchid dark:border-orchid/50 dark:bg-card dark:text-orchid-light dark:hover:bg-orchid dark:hover:text-white",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "rounded-xl border border-plum/20 bg-white/80 hover:bg-plum/5 hover:text-plum",
+          "rounded-xl border border-plum/20 bg-white/80 hover:bg-plum/5 hover:text-plum dark:border-orchid/30 dark:bg-card/80 dark:text-foreground dark:hover:bg-orchid/15 dark:hover:text-orchid-light",
         secondary:
-          "rounded-xl border border-orchid border-b-4 bg-white text-orchid hover:bg-orchid hover:text-white",
-        ghost: "hover:bg-plum/10 hover:text-plum",
-        link: "text-plum underline-offset-4 hover:underline",
+          "rounded-xl border border-orchid border-b-4 bg-white text-orchid hover:bg-orchid hover:text-white dark:border-orchid/60 dark:bg-card dark:text-orchid-light dark:hover:bg-orchid dark:hover:text-white",
+        ghost:
+          "hover:bg-plum/10 hover:text-plum dark:hover:bg-orchid/15 dark:hover:text-orchid-light",
+        link: "text-plum underline-offset-4 hover:underline dark:text-orchid-light",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -20,6 +20,11 @@ type Props = {
   pack: TourismProgramCreatePack;
 };
 
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
+
+const labelClass = "text-xs text-dusk/60 dark:text-muted-foreground";
+
 export default function Tourism_Program_Create({ pack }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -41,14 +46,18 @@ export default function Tourism_Program_Create({ pack }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>إنشاء برنامج سياحي</Button>
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إنشاء برنامج سياحي
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>برنامج سياحي جديد</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            برنامج سياحي جديد
+          </DialogTitle>
         </DialogHeader>
         <form
-          className="grid gap-3 sm:grid-cols-2"
+          className="grid gap-3 text-start sm:grid-cols-2"
           action={(fd) => {
             if (selectedPlaceIds.length === 0) {
               Swal.fire({
@@ -81,16 +90,22 @@ export default function Tourism_Program_Create({ pack }: Props) {
             });
           }}
         >
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tp-title">اسم البرنامج</Label>
-            <Input id="tp-title" name="title" required />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass} htmlFor="tp-title">
+              اسم البرنامج
+            </Label>
+            <Input id="tp-title" name="title" required className={fieldClass} />
           </div>
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tp-desc">الوصف</Label>
-            <Input id="tp-desc" name="description" />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass} htmlFor="tp-desc">
+              الوصف
+            </Label>
+            <Input id="tp-desc" name="description" className={fieldClass} />
           </div>
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tp-garage">الشركة السياحية</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass} htmlFor="tp-garage">
+              الشركة السياحية
+            </Label>
             <select
               id="tp-garage"
               name="garageId"
@@ -100,7 +115,7 @@ export default function Tourism_Program_Create({ pack }: Props) {
                 setSelectedPartnershipIds([]);
               }}
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
             >
               {pack.garages.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -110,13 +125,15 @@ export default function Tourism_Program_Create({ pack }: Props) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="tp-vehicle">المركبة</Label>
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-vehicle">
+              المركبة
+            </Label>
             <select
               id="tp-vehicle"
               name="vehicleId"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
               defaultValue={selectedGarage?.vehicles[0]?.id ?? ""}
               key={`vehicle-${garageId}`}
             >
@@ -127,13 +144,15 @@ export default function Tourism_Program_Create({ pack }: Props) {
               ))}
             </select>
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="tp-driver">السائق</Label>
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-driver">
+              السائق
+            </Label>
             <select
               id="tp-driver"
               name="driverId"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
               defaultValue={selectedGarage?.drivers[0]?.id ?? ""}
               key={`driver-${garageId}`}
             >
@@ -145,31 +164,67 @@ export default function Tourism_Program_Create({ pack }: Props) {
             </select>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="tp-start">تاريخ/وقت الانطلاق</Label>
-            <Input id="tp-start" name="startAt" type="datetime-local" required />
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-start">
+              تاريخ/وقت الانطلاق
+            </Label>
+            <Input
+              id="tp-start"
+              name="startAt"
+              type="datetime-local"
+              required
+              className={fieldClass}
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="tp-end">تاريخ/وقت النهاية (اختياري)</Label>
-            <Input id="tp-end" name="endAt" type="datetime-local" />
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-end">
+              تاريخ/وقت النهاية (اختياري)
+            </Label>
+            <Input
+              id="tp-end"
+              name="endAt"
+              type="datetime-local"
+              className={fieldClass}
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="tp-price">السعر</Label>
-            <Input id="tp-price" name="basePrice" type="number" min={0} step="0.01" required />
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-price">
+              السعر
+            </Label>
+            <Input
+              id="tp-price"
+              name="basePrice"
+              type="number"
+              min={0}
+              step="0.01"
+              required
+              className={fieldClass}
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="tp-seats">عدد المقاعد</Label>
-            <Input id="tp-seats" name="maxSeats" type="number" min={1} required />
+          <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-seats">
+              عدد المقاعد
+            </Label>
+            <Input
+              id="tp-seats"
+              name="maxSeats"
+              type="number"
+              min={1}
+              required
+              className={fieldClass}
+            />
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tp-place-add">الأماكن السياحية (إدخال متعدد)</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass} htmlFor="tp-place-add">
+              الأماكن السياحية (إدخال متعدد)
+            </Label>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 id="tp-place-add"
                 value={placeIdToAdd}
                 onChange={(e) => setPlaceIdToAdd(e.target.value)}
-                className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={`flex-1 ${fieldClass}`}
               >
                 {pack.places.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -181,6 +236,7 @@ export default function Tourism_Program_Create({ pack }: Props) {
               <Button
                 type="button"
                 variant="outline"
+                className="rounded-xl border-plum/20 dark:border-orchid/30 dark:text-foreground dark:hover:bg-orchid/15"
                 onClick={() => {
                   if (!placeIdToAdd) return;
                   setSelectedPlaceIds((prev) =>
@@ -191,9 +247,9 @@ export default function Tourism_Program_Create({ pack }: Props) {
                 + إضافة
               </Button>
             </div>
-            <div className="rounded-md border border-input p-2">
+            <div className="rounded-2xl border border-plum/15 p-2 dark:border-orchid/25">
               {selectedPlaceIds.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-dusk/50 dark:text-muted-foreground">
                   لم يتم إضافة أماكن بعد.
                 </p>
               ) : (
@@ -204,9 +260,9 @@ export default function Tourism_Program_Create({ pack }: Props) {
                     return (
                       <div
                         key={pid}
-                        className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1"
+                        className="flex items-center justify-between rounded-xl bg-mist px-2 py-1 dark:bg-muted"
                       >
-                        <span className="text-sm">
+                        <span className="text-sm text-dusk dark:text-foreground">
                           {idx + 1}. {place.name}
                           {place.governorate ? ` — ${place.governorate}` : ""}
                         </span>
@@ -231,25 +287,28 @@ export default function Tourism_Program_Create({ pack }: Props) {
             {selectedPlaceIds.map((pid) => (
               <input key={pid} type="hidden" name="placeIds" value={pid} />
             ))}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-dusk/50 dark:text-muted-foreground">
               يمكنك إضافة أكثر من مكان. الترتيب يعتمد على ترتيب الإضافة.
             </p>
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label>شركاء الباقة (اختياري — شركاء مقبولون فقط)</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass}>
+              شركاء الباقة (اختياري — شركاء مقبولون فقط)
+            </Label>
             {(selectedGarage?.partners ?? []).length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                لا توجد شراكات مقبولة لهذه الشركة. أضف شركاء من صفحة الشراكات أولاً.
+              <p className="text-xs text-dusk/50 dark:text-muted-foreground">
+                لا توجد شراكات مقبولة لهذه الشركة. أضف شركاء من صفحة الشراكات
+                أولاً.
               </p>
             ) : (
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border border-input p-2">
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-2xl border border-plum/15 p-2 dark:border-orchid/25">
                 {(selectedGarage?.partners ?? []).map((partner) => {
                   const checked = selectedPartnershipIds.includes(partner.id);
                   return (
                     <label
                       key={partner.id}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
+                      className="flex cursor-pointer items-center gap-2 text-sm text-dusk dark:text-foreground"
                     >
                       <input
                         type="checkbox"
@@ -264,7 +323,7 @@ export default function Tourism_Program_Create({ pack }: Props) {
                       />
                       <span>
                         {partner.partnerName}{" "}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-dusk/50 dark:text-muted-foreground">
                           ({partner.partnerType === "HOTEL"
                             ? "فندق"
                             : partner.partnerType === "RESTAURANT"
@@ -283,12 +342,18 @@ export default function Tourism_Program_Create({ pack }: Props) {
             ))}
           </div>
 
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor="tp-notes">ملاحظات</Label>
-            <Input id="tp-notes" name="notes" />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label className={labelClass} htmlFor="tp-notes">
+              ملاحظات
+            </Label>
+            <Input id="tp-notes" name="notes" className={fieldClass} />
           </div>
 
-          <Button type="submit" disabled={pending} className="sm:col-span-2">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light sm:col-span-2"
+          >
             حفظ البرنامج السياحي
           </Button>
         </form>
@@ -296,4 +361,3 @@ export default function Tourism_Program_Create({ pack }: Props) {
     </Dialog>
   );
 }
-

@@ -44,29 +44,30 @@
   }
 
   .dark {
-    --background: 244 40% 8%;
+    /* بنفسج آشور — ليلي */
+    --background: 255 35% 7%;
     --foreground: 255 60% 96%;
-    --navbar-bg: 263 55% 14%;
+    --navbar-bg: 263 45% 12%;
 
-    --card: 244 35% 12%;
+    --card: 255 28% 11%;
     --card-foreground: 255 60% 96%;
-    --popover: 244 35% 12%;
+    --popover: 255 28% 11%;
     --popover-foreground: 255 60% 96%;
 
-    --primary: 263 70% 58%;
+    --primary: 263 70% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 271 80% 62%;
+    --secondary: 271 75% 65%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 244 25% 18%;
-    --muted-foreground: 255 20% 72%;
-    --accent: 244 25% 18%;
+    --muted: 255 22% 16%;
+    --muted-foreground: 255 25% 72%;
+    --accent: 263 35% 18%;
     --accent-foreground: 255 60% 96%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62% 42%;
     --destructive-foreground: 0 0% 98%;
-    --border: 244 25% 22%;
-    --input: 244 25% 22%;
-    --ring: 263 70% 58%;
+    --border: 263 25% 22%;
+    --input: 263 25% 22%;
+    --ring: 271 80% 65%;
     --chart-1: 263 70% 55%;
     --chart-2: 291 70% 55%;
     --chart-3: 280 60% 60%;
@@ -210,10 +211,105 @@ textarea {
   }
 
   .ashur-panel {
-    @apply rounded-2xl border border-plum/10 bg-white/80 shadow-plum backdrop-blur-sm dark:border-orchid/20 dark:bg-dusk/60;
+    @apply rounded-2xl border border-plum/10 bg-white/80 shadow-plum backdrop-blur-sm dark:border-orchid/20 dark:bg-card;
+  }
+
+  .ashur-surface {
+    @apply rounded-[1.75rem] bg-white ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20;
   }
 
   .ashur-page-title {
     @apply font-display text-3xl tracking-wide text-plum dark:text-orchid-light;
   }
+
+  .ashur-input {
+    @apply h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground;
+  }
+
+  .landing-reveal {
+    animation: landing-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .landing-reveal-delay-1 {
+    animation-delay: 0.12s;
+  }
+  .landing-reveal-delay-2 {
+    animation-delay: 0.24s;
+  }
+  .landing-reveal-delay-3 {
+    animation-delay: 0.36s;
+  }
+  .landing-reveal-delay-4 {
+    animation-delay: 0.48s;
+  }
+
+  .landing-kenburns {
+    animation: landing-kenburns 18s ease-in-out infinite alternate;
+  }
+
+  .landing-float {
+    animation: landing-float 5s ease-in-out infinite;
+  }
+
+  .landing-pass-glow {
+    animation: landing-pass-glow 4s ease-in-out infinite;
+  }
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes landing-pass-glow {
+  0%,
+  100% {
+    box-shadow: 0 10px 40px rgba(91, 33, 182, 0.25);
+  }
+  50% {
+    box-shadow: 0 14px 48px rgba(139, 92, 246, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-reveal,
+  .landing-reveal-delay-1,
+  .landing-reveal-delay-2,
+  .landing-reveal-delay-3,
+  .landing-reveal-delay-4,
+  .landing-kenburns,
+  .landing-float,
+  .landing-pass-glow,
+  .places-reveal {
+    animation: none !important;
+  }
+}
+
+.places-reveal {
+  animation: landing-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

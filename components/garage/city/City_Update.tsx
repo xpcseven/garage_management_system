@@ -18,6 +18,9 @@ import Swal from "sweetalert2";
 
 type Props = { city: CityRow };
 
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
+
 export default function City_Update({ city }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -26,16 +29,22 @@ export default function City_Update({ city }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
+        >
           تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>تعديل المدينة</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            تعديل المدينة
+          </DialogTitle>
         </DialogHeader>
         <form
-          className="space-y-4"
+          className="space-y-3 text-start"
           action={(fd) => {
             fd.set("id", city.id);
             start(async () => {
@@ -61,37 +70,58 @@ export default function City_Update({ city }: Props) {
           }}
         >
           <input type="hidden" name="id" value={city.id} />
-          <div className="space-y-1">
-            <Label htmlFor={`name-${city.id}`}>الاسم</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`name-${city.id}`}
+            >
+              الاسم
+            </Label>
             <Input
               id={`name-${city.id}`}
               name="name"
               required
               defaultValue={city.name}
+              className={fieldClass}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor={`region-${city.id}`}>المنطقة</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`region-${city.id}`}
+            >
+              المنطقة
+            </Label>
             <Input
               id={`region-${city.id}`}
               name="region"
               defaultValue={city.region ?? ""}
+              className={fieldClass}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor={`active-${city.id}`}>الحالة</Label>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`active-${city.id}`}
+            >
+              الحالة
+            </Label>
             <select
               id={`active-${city.id}`}
               name="isActive"
               defaultValue={city.isActive ? "true" : "false"}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className={fieldClass}
             >
               <option value="true">نشطة</option>
               <option value="false">موقوفة</option>
             </select>
           </div>
-          <Button type="submit" disabled={pending} className="w-full bg-purple-600">
-            تحديث
+          <Button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
+          >
+            {pending ? "جاري التحديث…" : "تحديث"}
           </Button>
         </form>
       </DialogContent>

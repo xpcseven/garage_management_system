@@ -32,8 +32,8 @@ function GalleryTile({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative h-full w-full overflow-hidden rounded-xl bg-slate-200 text-right",
-        "ring-0 transition hover:ring-2 hover:ring-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+        "group relative h-full w-full overflow-hidden rounded-2xl bg-mist-deep text-right",
+        "ring-0 transition hover:ring-2 hover:ring-orchid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum",
         className
       )}
     >
@@ -41,11 +41,11 @@ function GalleryTile({
       <img
         src={src}
         alt={alt}
-        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        className="h-full w-full object-cover transition duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/15" />
-      <div className="absolute left-2 top-2 rounded-full bg-black/40 p-1.5 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
+      <div className="absolute inset-0 bg-dusk/0 transition group-hover:bg-dusk/20" />
+      <div className="absolute left-2 top-2 rounded-full bg-plum-dark/50 p-1.5 text-white opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
         <Expand className="h-4 w-4" />
       </div>
       {overlay}
@@ -83,8 +83,8 @@ export default function Tourism_Place_Detail_Gallery({ images, alt }: Props) {
 
   if (slides.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 via-slate-100 to-purple-50 sm:h-72">
-        <p className="text-sm text-slate-500">لا توجد صور لهذا المكان</p>
+      <div className="flex h-56 items-center justify-center rounded-3xl bg-mist-deep sm:h-72">
+        <p className="text-sm text-dusk/50">لا توجد صور لهذا المكان</p>
       </div>
     );
   }
@@ -183,7 +183,7 @@ export default function Tourism_Place_Detail_Gallery({ images, alt }: Props) {
                 }
               />
             ) : (
-              <div className="col-span-1 row-span-1 rounded-xl bg-slate-100" />
+              <div className="col-span-1 row-span-1 rounded-2xl bg-mist-deep" />
             )}
           </div>
         )}
@@ -195,7 +195,7 @@ export default function Tourism_Place_Detail_Gallery({ images, alt }: Props) {
                 key={`strip-${src}-${i}`}
                 type="button"
                 onClick={() => openAt(i)}
-                className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-1 ring-slate-200 transition hover:ring-purple-400"
+                className="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl ring-1 ring-plum/15 transition hover:ring-orchid"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" className="h-full w-full object-cover" />
@@ -255,7 +255,7 @@ export default function Tourism_Place_Detail_Gallery({ images, alt }: Props) {
                   className={cn(
                     "h-14 w-20 overflow-hidden rounded-md border-2 transition",
                     i === lightboxIndex
-                      ? "border-purple-400 opacity-100"
+                      ? "border-orchid opacity-100"
                       : "border-transparent opacity-50 hover:opacity-90"
                   )}
                 >

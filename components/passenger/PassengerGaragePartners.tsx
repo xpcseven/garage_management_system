@@ -4,9 +4,7 @@ import Link from "next/link";
 import type { PartnershipRow } from "@/lib/actions/partnership.actions";
 import { partnerLabel } from "@/lib/partnership-labels";
 import { Button } from "@/components/ui/button";
-import TicketStub, {
-  type TicketAccent,
-} from "@/components/Shared/TicketStub";
+import { cn } from "@/lib/utils";
 
 type Props = {
   partners: PartnershipRow[];
@@ -19,66 +17,55 @@ function partnerHref(p: PartnershipRow) {
   return `/passenger/farms/${p.partnerId}`;
 }
 
-function accentFor(type: string): TicketAccent {
-  if (type === "HOTEL") return "rafidain";
-  if (type === "RESTAURANT") return "clay";
-  return "palm";
-}
-
 export default function PassengerGaragePartners({ partners }: Props) {
   if (partners.length === 0) return null;
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="font-display text-2xl text-plum">
+      <div className="text-start">
+        <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+          الشبكة
+        </p>
+        <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
           شركاء هذه الشركة
         </h2>
-        <p className="mt-1 text-sm text-dusk/60">
+        <p className="mt-1 text-sm text-dusk/60 dark:text-muted-foreground">
           فنادق ومطاعم ومزارع معتمدة — اعرض التفاصيل واحجز مباشرة.
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {partners.map((p) => (
-          <TicketStub
+          <article
             key={p.id}
-            accent={accentFor(p.partnerType)}
-            media={
-              p.partnerImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.partnerImageUrl}
-                  alt={p.partnerName}
-                  className="h-full min-h-[7rem] w-full object-cover"
-                />
-              ) : (
-                <span className="text-4xl" aria-hidden>
-                  {p.partnerType === "HOTEL"
-                    ? "🏨"
-                    : p.partnerType === "RESTAURANT"
-                      ? "🍽️"
-                      : "🌿"}
-                </span>
-              )
-            }
-            footer={
-              <Button asChild size="sm" className="mt-1 w-full">
-                <Link href={partnerHref(p)}>اعرض التفاصيل</Link>
-              </Button>
-            }
+            className={cn(
+              "flex h-full flex-col rounded-3xl bg-white p-5 text-start ring-1 ring-plum/10",
+              "transition hover:-translate-y-0.5 hover:shadow-orchid",
+              "dark:bg-card dark:ring-orchid/20 dark:hover:ring-orchid/40",
+              "motion-reduce:hover:translate-y-0"
+            )}
           >
-            <span className="font-data text-xs text-orchid">
+            <p className="font-data text-[10px] tracking-[0.16em] text-orchid dark:text-orchid-light">
               {partnerLabel(p.partnerType)}
-            </span>
-            <h3 className="font-body font-bold text-dusk dark:text-mist">
+            </p>
+            <h3 className="mt-1 text-lg font-semibold text-dusk dark:text-foreground">
               {p.partnerName}
             </h3>
-            {p.partnerAddress && (
-              <p className="line-clamp-2 text-sm text-dusk/60 dark:text-mist/60">
+            {p.partnerAddress?.trim() && (
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-dusk/60 dark:text-muted-foreground">
                 {p.partnerAddress}
               </p>
             )}
-          </TicketStub>
+            <div className="mt-auto pt-4">
+              <Button
+                asChild
+                size="sm"
+                className="w-full rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
+              >
+                <Link href={partnerHref(p)}>اعرض التفاصيل</Link>
+              </Button>
+            </div>
+          </article>
         ))}
       </div>
     </section>

@@ -1,4 +1,5 @@
 "use client";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -15,13 +16,15 @@ import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { LoginSchema } from "@/schemas";
 import { Button } from "../ui/button";
-
 import { login, resendVerification } from "@/lib/action/auth/login";
 import FormError from "./FormError";
 import FormSuccess from "./FormSuccess";
 import Image from "next/image";
 import Link from "next/link";
 import outsideGarageImage from "@/public/System/Outside_Garage.png";
+
+const fieldClass =
+  "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
 
 const LoginForm = () => {
   const [error, setError] = useState<string | undefined>();
@@ -69,16 +72,19 @@ const LoginForm = () => {
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 lg:px-0">
-      <div className="overflow-hidden rounded-3xl border border-slate-200/70 bg-white/95 shadow-2xl backdrop-blur-sm">
+    <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5">
+      <div className="overflow-hidden rounded-[2rem] bg-white ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/25">
         <div className="grid lg:grid-cols-[1fr_1.05fr]">
-          <div className="bg-gradient-to-b from-slate-50 to-white p-5 text-right sm:p-8 lg:p-10">
+          <div className="bg-mist/40 p-5 text-start sm:p-8 lg:p-10 dark:bg-background/40">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+              <p className="font-data text-[11px] uppercase tracking-[0.22em] text-orchid dark:text-orchid-light">
+                مرحباً بعودتك
+              </p>
+              <h1 className="mt-2 font-display text-3xl text-dusk dark:text-foreground sm:text-4xl">
                 تسجيل الدخول
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
-                أهلاً بعودتك، أدخل بياناتك للوصول إلى لوحة إدارة الشركة السياحية.
+              <p className="mt-2 text-sm text-dusk/60 dark:text-muted-foreground">
+                أدخل بياناتك للوصول إلى لوحة التحكم وإدارة نشاطك.
               </p>
             </div>
 
@@ -88,18 +94,24 @@ const LoginForm = () => {
                 className="space-y-5"
                 dir="rtl"
               >
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="rounded-[1.5rem] bg-white p-4 ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20 sm:p-5">
+                  <h3 className="mb-4 font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+                    بيانات الدخول
+                  </h3>
+
                   <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                          <FormLabel className="text-dusk dark:text-foreground">
+                            البريد الإلكتروني
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              className="text-right"
-                              placeholder="name@garage.com"
+                              className={fieldClass}
+                              placeholder="name@example.com"
                               type="email"
                               disabled={isPending}
                               {...field}
@@ -115,17 +127,19 @@ const LoginForm = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                          <FormLabel className="text-dusk dark:text-foreground">
+                            كلمة المرور
+                          </FormLabel>
                           <FormControl>
                             <Input
-                              className="text-right"
+                              className={fieldClass}
                               placeholder="••••••••"
                               disabled={isPending}
                               {...field}
                               type="password"
                             />
                           </FormControl>
-                          <FormDescription className="text-xs">
+                          <FormDescription className="text-xs text-dusk/50 dark:text-muted-foreground">
                             تأكد من صحة البريد وكلمة المرور الخاصة بحسابك.
                           </FormDescription>
                           <FormMessage />
@@ -139,56 +153,74 @@ const LoginForm = () => {
                 <FormSuccess message={success} />
 
                 {needsVerify && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isPending}
-                    onClick={onResend}
-                    className="h-10 w-full"
-                  >
-                    إعادة إرسال رابط التحقق
-                  </Button>
+                  <div className="space-y-3 rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 dark:border-amber-500/40 dark:bg-amber-950/40">
+                    <p className="text-sm leading-7 text-amber-950 dark:text-amber-100">
+                      حسابك غير مفعّل بعد. افتح رابط التأكيد من بريدك، أو أعد
+                      إرسال الرسالة.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isPending}
+                      onClick={onResend}
+                      className="h-10 w-full rounded-xl border-amber-400/60 bg-white text-amber-950 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-transparent dark:text-amber-100 dark:hover:bg-amber-950/60"
+                    >
+                      إعادة إرسال رابط التحقق
+                    </Button>
+                  </div>
                 )}
 
                 <Button
                   disabled={isPending}
                   type="submit"
                   size="lg"
-                  className="h-11 w-full text-base font-semibold"
+                  className="h-11 w-full rounded-xl border-0 bg-orchid text-base font-semibold text-white hover:bg-orchid-light"
                 >
-                  دخول النظام
+                  {isPending ? "جاري الدخول…" : "دخول النظام"}
                 </Button>
               </form>
             </Form>
 
-            <div className="mt-5 border-t border-slate-200 pt-4 text-center text-sm text-slate-600">
-              ليس لديك حساب؟{" "}
-              <Link
-                href="/auth/register"
-                className="font-semibold text-purple-700 transition hover:text-purple-600"
-              >
-                إنشاء حساب جديد
-              </Link>
+            <div className="mt-5 space-y-2 border-t border-plum/10 pt-4 text-center text-sm text-dusk/60 dark:border-orchid/15 dark:text-muted-foreground">
+              <p>
+                ليس لديك حساب؟{" "}
+                <Link
+                  href="/auth/register"
+                  className="font-semibold text-plum transition hover:text-orchid dark:text-orchid-light dark:hover:text-orchid"
+                >
+                  إنشاء حساب جديد
+                </Link>
+              </p>
+              <p>
+                <Link
+                  href="/auth/resend-verification"
+                  className="text-xs font-medium text-orchid transition hover:text-plum dark:text-orchid-light"
+                >
+                  لم يصلك رابط التفعيل؟
+                </Link>
+              </p>
             </div>
           </div>
 
           <aside className="relative hidden min-h-[420px] lg:block">
             <Image
               src={outsideGarageImage}
-              alt="خدمات النقل الخارجي"
+              alt="خدمات النقل والسياحة"
               fill
               priority
               className="object-cover"
               unoptimized
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/45 to-purple-800/30" />
-            <div className="absolute inset-x-0 bottom-0 p-8 text-right text-white">
-              <h2 className="text-2xl font-bold leading-tight">
-                إدارة متقدمة لرحلات النقل
+            <div className="absolute inset-0 bg-gradient-to-t from-plum-dark/95 via-plum/50 to-orchid/30 dark:from-background/95 dark:via-plum-dark/70 dark:to-orchid/25" />
+            <div className="absolute inset-x-0 bottom-0 p-8 text-start text-white">
+              <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid-light">
+                ASHUR
+              </p>
+              <h2 className="mt-2 font-display text-2xl leading-tight sm:text-3xl">
+                إدارة رحلاتك ونشاطك من مكان واحد
               </h2>
-              <p className="mt-3 text-sm text-slate-200">
-                تابع الرحلات اليومية، راقب حالة المركبات، ونظم عمليات التشغيل
-                بسهولة من حساب واحد.
+              <p className="mt-3 text-sm leading-7 text-white/75 dark:text-muted-foreground">
+                تابع الحجوزات، المركبات، والبرامج السياحية بسهولة عبر حسابك.
               </p>
             </div>
           </aside>

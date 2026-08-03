@@ -4,193 +4,289 @@ import { useEffect, useMemo, useState } from "react";
 import type { TourismProgramPassengerRow } from "@/lib/actions/tourism_program.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TablePagination from "@/components/Shared/TablePagination";
 import PassengerTourismProgramBookButton from "./PassengerTourismProgramBookButton";
+import { cn } from "@/lib/utils";
 
 type Props = {
   programs: TourismProgramPassengerRow[];
 };
 
-export default function Passenger_Tourism_Programs_Component({ programs }: Props) {
+function formatWhen(iso: string) {
+  try {
+    return new Date(iso).toLocaleString("ar-IQ", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function shortText(raw: string | null | undefined, max = 140) {
+  if (!raw?.trim()) return null;
+  const text = raw.trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trim()}…`;
+}
+
+export default function Passenger_Tourism_Programs_Component({
+  programs,
+}: Props) {
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
-  const totalPages = Math.max(1, Math.ceil(programs.length / PAGE_SIZE));
+  const PAGE_SIZE = 8;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return programs;
+    return programs.filter((p) => {
+      const hay = [
+        p.title,
+        p.description,
+        p.garageName,
+        p.driverName,
+        p.vehicleLabel,
+        ...p.places.map((x) => x.name),
+        ...p.partners.map((x) => x.partnerName),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [programs, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = useMemo(
-    () => programs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [programs, page]
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
 
   return (
-    <div className="space-y-6 p-4 max-w-6xl mx-auto">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-purple-800">البرامج السياحية</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            استعرض البرامج السياحية المتاحة واحجز مباشرة.
+    <div className="mx-auto max-w-5xl space-y-8 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <header className="relative overflow-hidden rounded-[2rem] bg-plum-dark px-6 py-8 text-white sm:px-8 sm:py-10 dark:bg-card dark:ring-1 dark:ring-orchid/25">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -start-10 top-0 h-48 w-48 rounded-full bg-orchid/30 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -end-8 bottom-0 h-40 w-40 rounded-full bg-fuchsia-brand/20 blur-3xl dark:bg-orchid/15"
+        />
+
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-xl text-start">
+            <p className="font-data text-[11px] uppercase tracking-[0.22em] text-orchid-light">
+              باقات جاهزة
+            </p>
+            <h1 className="mt-3 font-display text-3xl leading-tight sm:text-4xl">
+              البرامج السياحية
+            </h1>
+            <p className="mt-3 text-sm leading-8 text-white/70 sm:text-base dark:text-muted-foreground">
+              برامج من الشركات المسجّلة تشمل مسار المعالم والشركاء — احجز مقعدك
+              بعدد الأفراد المناسب.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
+            >
+              <Link href="/passenger/trips">ابحث عن رحلة</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white dark:border-orchid/30 dark:bg-transparent dark:text-foreground dark:hover:bg-orchid/15 dark:hover:text-foreground"
+            >
+              <Link href="/passenger/tourism-places">الأماكن السياحية</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label className="relative block min-w-0 flex-1">
+            <span className="sr-only">بحث في البرامج</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ابحث بعنوان البرنامج أو الشركة أو المعلم…"
+              className="h-11 w-full rounded-2xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/45 outline-none ring-orchid/40 transition focus:bg-white/15 focus:ring-2 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground dark:focus:bg-background"
+            />
+          </label>
+          <p className="font-data text-xs text-white/50 sm:whitespace-nowrap dark:text-muted-foreground">
+            {filtered.length} برنامج
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/passenger/trips">العودة إلى الرحلات</Link>
-        </Button>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">البرامج المتاحة ({programs.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3 md:hidden">
-            {paged.map((p) => (
-              <article key={p.id} className="rounded-xl border border-muted p-3 space-y-3">
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-base leading-6">{p.title}</h3>
-                  <p className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                    {p.garageName}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 gap-2 text-sm">
-                  <div>
-                    <p className="mb-1 inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
-                      المركبة / السائق
-                    </p>
-                    <p>{p.vehicleLabel}</p>
-                    <p className="text-xs text-muted-foreground">{p.driverName}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 inline-flex rounded-full bg-fuchsia-100 px-2 py-0.5 text-xs font-medium text-fuchsia-700">
-                      الانطلاق
-                    </p>
-                    <p>{new Date(p.startAt).toLocaleString("en-US")}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div>
-                      <p className="mb-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        السعر
-                      </p>
-                      <p className="font-mono">{p.basePrice}</p>
-                    </div>
-                    <div>
-                      <p className="mb-1 inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        المقاعد المتاحة
-                      </p>
-                      <p>{p.availableSeats}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="mb-1 inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
-                      الأماكن
-                    </p>
-                    <div className="space-y-1">
-                      {p.places.map((x) => (
-                        <p key={x.id} className="text-xs">
-                          {x.order}. {x.name}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  {p.partners.length > 0 && (
-                    <div>
-                      <p className="mb-1 inline-flex rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">
-                        الشركاء المشمولون
-                      </p>
-                      <div className="space-y-1">
-                        {p.partners.map((x) => (
-                          <p key={x.partnershipId} className="text-xs">
-                            {x.order}. {x.partnerName}
-                            {Number(x.priceAddon) > 0
-                              ? ` (+${x.priceAddon})`
-                              : ""}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <PassengerTourismProgramBookButton programId={p.id} />
-              </article>
-            ))}
-            {programs.length === 0 && (
-              <p className="rounded-xl border border-muted p-8 text-center text-muted-foreground">
-                لا توجد برامج سياحية متاحة حالياً.
-              </p>
-            )}
+      <section className="space-y-4">
+        <div className="text-start">
+          <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+            المتاح للحجز
+          </p>
+          <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
+            برامج قادمة
+          </h2>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20">
+            <p className="font-display text-2xl text-plum dark:text-orchid-light">
+              {programs.length === 0
+                ? "لا برامج متاحة حالياً"
+                : "لا نتائج مطابقة"}
+            </p>
+            <p className="mt-2 text-sm text-dusk/60 dark:text-muted-foreground">
+              {programs.length === 0
+                ? "يمكنك البحث عن رحلة مقعد أو تصفّح المعالم في الأثناء."
+                : "جرّب كلمة أخرى أو امسح البحث."}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {query && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-xl border-plum/20 dark:border-orchid/30"
+                  onClick={() => setQuery("")}
+                >
+                  مسح البحث
+                </Button>
+              )}
+              <Button
+                asChild
+                className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
+              >
+                <Link href="/passenger/trips">ابحث عن رحلة</Link>
+              </Button>
+            </div>
           </div>
-
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="bg-gradient-to-l from-purple-700 via-violet-700 to-fuchsia-700 text-white shadow-sm">
-                <tr className="border-b text-center">
-                  <th className="p-2 font-bold border-l border-white/20">البرنامج</th>
-                  <th className="p-2 font-bold border-l border-white/20">الشركة</th>
-                  <th className="p-2 font-bold border-l border-white/20">المركبة / السائق</th>
-                  <th className="p-2 font-bold border-l border-white/20">الأماكن</th>
-                  <th className="p-2 font-bold border-l border-white/20">الشركاء</th>
-                  <th className="p-2 font-bold border-l border-white/20">الانطلاق</th>
-                  <th className="p-2 font-bold border-l border-white/20">السعر</th>
-                  <th className="p-2 font-bold border-l border-white/20">متاح</th>
-                  <th className="p-2 w-36 font-bold">حجز</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paged.map((p) => (
-                  <tr key={p.id} className="border-b border-muted align-top">
-                    <td className="p-2">{p.title}</td>
-                    <td className="p-2">{p.garageName}</td>
-                    <td className="p-2">
-                      <div>{p.vehicleLabel}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{p.driverName}</div>
-                    </td>
-                    <td className="p-2">
-                      <div className="max-w-[220px] space-y-1">
-                        {p.places.map((x) => (
-                          <div key={x.id} className="text-xs">
-                            {x.order}. {x.name}
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-2">
-                      <div className="max-w-[200px] space-y-1">
-                        {p.partners.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        ) : (
-                          p.partners.map((x) => (
-                            <div key={x.partnershipId} className="text-xs">
-                              {x.order}. {x.partnerName}
-                            </div>
-                          ))
+        ) : (
+          <>
+            <div className="grid gap-3">
+              {paged.map((p) => (
+                <article
+                  key={p.id}
+                  className={cn(
+                    "rounded-3xl bg-white p-5 ring-1 ring-plum/10",
+                    "transition hover:shadow-orchid",
+                    "dark:bg-card dark:ring-orchid/20 dark:hover:ring-orchid/40"
+                  )}
+                >
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1 space-y-4 text-start">
+                      <div>
+                        <span className="rounded-full bg-plum-soft px-2.5 py-0.5 font-data text-[10px] tracking-wide text-plum dark:bg-orchid/20 dark:text-orchid-light">
+                          {p.garageName}
+                        </span>
+                        <h3 className="mt-2 text-lg font-semibold text-dusk dark:text-foreground sm:text-xl">
+                          {p.title}
+                        </h3>
+                        {shortText(p.description) && (
+                          <p className="mt-2 text-sm leading-7 text-dusk/65 dark:text-muted-foreground">
+                            {shortText(p.description)}
+                          </p>
                         )}
                       </div>
-                    </td>
-                    <td className="p-2 whitespace-nowrap">
-                      {new Date(p.startAt).toLocaleString("en-US")}
-                    </td>
-                    <td className="p-2 font-mono whitespace-nowrap">{p.basePrice}</td>
-                    <td className="p-2">{p.availableSeats}</td>
-                    <td className="p-2">
+
+                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-dusk/60 dark:text-muted-foreground">
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            الانطلاق
+                          </span>{" "}
+                          {formatWhen(p.startAt)}
+                        </p>
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            المركبة
+                          </span>{" "}
+                          {p.vehicleLabel}
+                        </p>
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            السائق
+                          </span>{" "}
+                          {p.driverName}
+                        </p>
+                      </div>
+
+                      {p.places.length > 0 && (
+                        <div>
+                          <p className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            مسار الأماكن
+                          </p>
+                          <ol className="mt-2 flex flex-wrap gap-2">
+                            {p.places.map((x) => (
+                              <li
+                                key={x.id}
+                                className="rounded-full bg-mist px-3 py-1 text-xs text-dusk/75 ring-1 ring-plum/10 dark:bg-background dark:text-muted-foreground dark:ring-orchid/20"
+                              >
+                                <span className="font-data text-orchid dark:text-orchid-light">
+                                  {x.order}.
+                                </span>{" "}
+                                {x.name}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {p.partners.length > 0 && (
+                        <div>
+                          <p className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            الشركاء المشمولون
+                          </p>
+                          <ul className="mt-2 flex flex-wrap gap-2">
+                            {p.partners.map((x) => (
+                              <li
+                                key={x.partnershipId}
+                                className="rounded-full bg-fuchsia-soft/60 px-3 py-1 text-xs text-dusk/75 dark:bg-orchid/15 dark:text-muted-foreground"
+                              >
+                                {x.order}. {x.partnerName}
+                                {Number(x.priceAddon) > 0
+                                  ? ` (+${x.priceAddon})`
+                                  : ""}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-plum/10 pt-4 dark:border-orchid/15 lg:w-44 lg:flex-col lg:items-end lg:border-t-0 lg:border-s lg:pt-0 lg:ps-6">
+                      <div className="text-start lg:text-end">
+                        <p className="font-data text-xl font-semibold tabular-nums text-plum dark:text-orchid-light">
+                          {p.basePrice}
+                        </p>
+                        <p className="mt-0.5 text-xs text-dusk/50 dark:text-muted-foreground">
+                          {p.availableSeats} مقعد متاح
+                        </p>
+                      </div>
                       <PassengerTourismProgramBookButton programId={p.id} />
-                    </td>
-                  </tr>
-                ))}
-                {programs.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="p-10 text-center text-muted-foreground">
-                      لا توجد برامج سياحية متاحة حالياً.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-        <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
-      </Card>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </>
+        )}
+      </section>
     </div>
   );
 }
-

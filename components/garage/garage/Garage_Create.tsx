@@ -85,11 +85,15 @@ export default function Garage_Create({ role }: Props) {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="">إضافة شركة سياحية</Button>
+        <Button className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light dark:bg-orchid dark:hover:bg-orchid-light">
+          إضافة شركة سياحية
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">إضافة شركة سياحية</DialogTitle>
+          <DialogTitle className="font-display text-start text-dusk dark:text-foreground">
+            إضافة شركة سياحية
+          </DialogTitle>
         </DialogHeader>
         <form
           className="grid gap-4 sm:grid-cols-2"
@@ -152,11 +156,11 @@ export default function Garage_Create({ role }: Props) {
                 aria-label="تحديث الموقع الحالي"
               >
                 {locating ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                  <Loader2 className="h-5 w-5 animate-spin text-orchid" />
                 ) : (
                   <MapPin
                     className={`h-5 w-5 ${
-                      address ? "text-purple-600" : "text-muted-foreground"
+                      address ? "text-orchid" : "text-dusk/40"
                     }`}
                   />
                 )}
@@ -194,7 +198,7 @@ export default function Garage_Create({ role }: Props) {
           <Button
             type="submit"
             disabled={pending || locating}
-            className="sm:col-span-2 w-full sm:w-auto"
+            className="sm:col-span-2 w-full rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light sm:w-auto"
           >
             حفظ
           </Button>
