@@ -78,7 +78,9 @@ export async function uploadFile(data: FormData) {
     return { success: true, path: publicObjectUrl(key) };
   }
 
-  const uploadDir = join(process.cwd(), "public", "uploads");
+  const uploadDir =
+    process.env.UPLOAD_DIR?.trim() ||
+    join(process.cwd(), "public", "uploads");
   await mkdir(uploadDir, { recursive: true });
   await writeFile(join(uploadDir, uniqueFileName), buffer);
   return { success: true, path: `/uploads/${uniqueFileName}` };

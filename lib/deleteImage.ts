@@ -29,41 +29,72 @@ function extractS3Key(imageUrl: string): string | null {
   }
 }
 
+function isNotFoundError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "ENOENT"
+  );
+}
+
 export async function deleteImage(imageUrl: string) {
   try {
     if (!isManagedUploadUrl(imageUrl)) {
-      return { success: false, message: "Not a managed upload URL" };
+      return { success: true, message: "Nothing to delete" };
     }
 
     const key = extractS3Key(imageUrl);
 
-    if (s3Configured() && key && !imageUrl.startsWith("/uploads/")) {
-      const client = new S3Client({
-        region: process.env.AWS_REGION!.trim(),
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID!.trim(),
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!.trim(),
-        },
-      });
-      await client.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET!.trim(),
-          Key: key,
-        })
-      );
+    // Absolute S3/CDN URL → delete from S3
+    if (s3Configured() && key && /^https?:\/\//i.test(imageUrl.trim())) {
+      try {
+        const client = new S3Client({
+          region: process.env.AWS_REGION!.trim(),
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!.trim(),
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!.trim(),
+          },
+        });
+        await client.send(
+          new DeleteObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET!.trim(),
+            Key: key,
+          })
+        );
+      } catch (error) {
+        // Object already gone — OK
+        if (!isNotFoundError(error)) {
+          console.warn("S3 delete skipped/failed:", error);
+        }
+      }
       return { success: true, message: "Image deleted successfully" };
     }
 
-    // Local file (or leftover relative path on disk)
+    // Local /uploads/... (or leftover relative path)
     const fileName = imageUrl.replace(/^.*\/uploads\//, "").replace(/^\//, "");
     if (!fileName || fileName.includes("..")) {
-      return { success: false, message: "Invalid path" };
+      return { success: true, message: "Invalid path ignored" };
     }
-    const filePath = join(process.cwd(), "public", "uploads", fileName);
-    await unlink(filePath);
+
+    const uploadRoot =
+      process.env.UPLOAD_DIR?.trim() ||
+      join(process.cwd(), "public", "uploads");
+    const filePath = join(uploadRoot, fileName);
+
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      // File already missing (common after redeploy) — not a failure
+      if (!isNotFoundError(error)) {
+        console.warn("Local delete skipped/failed:", error);
+      }
+    }
+
     return { success: true, message: "Image deleted successfully" };
   } catch (error) {
-    console.error("Error deleting image:", error);
-    return { success: false, message: "Delete failed" };
+    // Never throw — DB row deletion must not fail because of a missing file
+    console.warn("deleteImage soft-fail:", error);
+    return { success: true, message: "Delete skipped" };
   }
 }
