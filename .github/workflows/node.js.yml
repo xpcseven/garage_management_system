@@ -21,7 +21,10 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
       AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
       AWS_S3_BUCKET: ${{secrets.AWS_S3_BUCKET}}
-      UPLOAD_DIR: /var/travel/uploads
+      GMAIL_USER: ${{secrets.GMAIL_USER}}
+      GMAIL_APP_PASSWORD: ${{secrets.GMAIL_APP_PASSWORD}}
+      # Writable by runner user (not /var)
+      UPLOAD_DIR: ${{ github.workspace }}/../persistent-uploads
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -31,36 +34,50 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build --if-present
-      - name: Persist uploads dir + runtime .env
+      - name: Persist uploads dir + upsert runtime env
         run: |
           set -e
-          mkdir -p /var/travel/uploads
+          UPLOAD_ROOT="${HOME}/travel-uploads"
+          mkdir -p "$UPLOAD_ROOT"
           rm -rf public/uploads
-          ln -sfn /var/travel/uploads public/uploads
+          ln -sfn "$UPLOAD_ROOT" public/uploads
 
-          # Write runtime env safely (handles special chars in secrets)
-          : > .env
-          write_env() {
+          touch .env
+          upsert_env() {
             local key="$1"
             local val="$2"
-            # escape backslashes and newlines for .env single-line values
+            [ -z "$val" ] && return 0
             val="${val//\\/\\\\}"
             val="${val//$'\n'/\\n}"
+            if grep -q "^${key}=" .env; then
+              # delete old line(s) then append (safe with special chars)
+              grep -v "^${key}=" .env > .env.tmp || true
+              mv .env.tmp .env
+            fi
             printf '%s=%s\n' "$key" "$val" >> .env
           }
-          write_env AUTH_SECRET "$AUTH_SECRET"
-          write_env AUTH_TRUST_HOST "$AUTH_TRUST_HOST"
-          write_env DATABASE_URL "$DATABASE_URL"
-          write_env NEXTAUTH_URL "$NEXTAUTH_URL"
-          write_env NEXT_WEBSITE_URL "$NEXT_WEBSITE_URL"
-          write_env AWS_REGION "$AWS_REGION"
-          write_env AWS_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
-          write_env AWS_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
-          write_env AWS_S3_BUCKET "$AWS_S3_BUCKET"
-          write_env UPLOAD_DIR "/var/travel/uploads"
+
+          upsert_env AUTH_SECRET "$AUTH_SECRET"
+          # Auth.js expects true/false, not a URL
+          if [ -n "$AUTH_TRUST_HOST" ]; then
+            case "$AUTH_TRUST_HOST" in
+              true|TRUE|1|yes|YES) upsert_env AUTH_TRUST_HOST "true" ;;
+              *) upsert_env AUTH_TRUST_HOST "true" ;;
+            esac
+          else
+            upsert_env AUTH_TRUST_HOST "true"
+          fi
+          upsert_env DATABASE_URL "$DATABASE_URL"
+          upsert_env NEXTAUTH_URL "$NEXTAUTH_URL"
+          upsert_env NEXT_WEBSITE_URL "$NEXT_WEBSITE_URL"
+          upsert_env AWS_REGION "$AWS_REGION"
+          upsert_env AWS_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
+          upsert_env AWS_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
+          upsert_env AWS_S3_BUCKET "$AWS_S3_BUCKET"
+          upsert_env GMAIL_USER "$GMAIL_USER"
+          upsert_env GMAIL_APP_PASSWORD "$GMAIL_APP_PASSWORD"
+          upsert_env UPLOAD_DIR "$UPLOAD_ROOT"
       - name: Restart PM2 with updated env
         run: |
-          cd /home/travel/actions-runner/_work/garage_management_system/garage_management_system
-          # Job env (AWS_*, DATABASE_URL, …) is injected into the process via --update-env
-          # Next also reads .env written in the previous step
+          cd "${{ github.workspace }}"
           pm2 restart 0 --update-env

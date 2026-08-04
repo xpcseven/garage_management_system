@@ -4,6 +4,7 @@ import { UserRole } from "@/prisma/UserRole.enum";
 import { getUserAuthById } from "./lib/action/user.action";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  trustHost: true,
   pages: {
     signIn: "/auth/login",
     error: "/auth/error",
