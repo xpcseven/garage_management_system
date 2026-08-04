@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ResendVerificationForm from "./ResendVerificationForm";
 
 export default function ResendVerificationPage() {
@@ -10,7 +11,9 @@ export default function ResendVerificationPage() {
         <p className="mt-2 mb-6 text-center text-sm text-slate-600">
           أدخل بريدك لإرسال رابط تأكيد جديد (صالح 24 ساعة).
         </p>
-        <ResendVerificationForm />
+        <Suspense fallback={null}>
+          <ResendVerificationForm />
+        </Suspense>
       </div>
     </main>
   );

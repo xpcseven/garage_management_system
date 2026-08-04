@@ -36,6 +36,7 @@ const fieldClass =
 const RegisterForm = () => {
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
+  const [emailForResend, setEmailForResend] = useState("");
   const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof RegisterSchema>>({
     resolver: zodResolver(RegisterSchema),
@@ -60,11 +61,24 @@ const RegisterForm = () => {
   async function onSubmit(values: z.infer<typeof RegisterSchema>) {
     setError("");
     setSuccess("");
+    setEmailForResend("");
     startTransition(() => {
-      register(values).then((data) => {
-        setSuccess(data?.success);
-        setError(data?.error);
-      });
+      register(values)
+        .then((data) => {
+          setSuccess(data?.success);
+          setError(data?.error);
+          if (
+            data &&
+            "emailForResend" in data &&
+            typeof data.emailForResend === "string"
+          ) {
+            setEmailForResend(data.emailForResend);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          setError("تعذر إنشاء الحساب. حاول مرة أخرى.");
+        });
     });
   }
 
@@ -307,6 +321,17 @@ const RegisterForm = () => {
 
                 <FormError message={error} />
                 <FormSuccess message={success} />
+
+                {emailForResend ? (
+                  <p className="text-center text-sm text-dusk/70 dark:text-muted-foreground">
+                    <Link
+                      href={`/auth/resend-verification?email=${encodeURIComponent(emailForResend)}`}
+                      className="font-semibold text-plum underline-offset-4 hover:text-orchid hover:underline dark:text-orchid-light"
+                    >
+                      إعادة إرسال رابط التحقق
+                    </Link>
+                  </p>
+                ) : null}
 
                 <Button
                   disabled={isPending}

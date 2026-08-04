@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { resendVerificationEmail } from "@/lib/action/auth/resend-verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,16 @@ import FormSuccess from "@/components/auth/FormSuccess";
 import Link from "next/link";
 
 export default function ResendVerificationForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const fromQuery = searchParams.get("email")?.trim();
+    if (fromQuery) setEmail(fromQuery);
+  }, [searchParams]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -23,11 +23,20 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
       return { error: msg };
     }
 
-    const { email, name, password, role, jobTypes } = validateFields.data;
+    const { name, password, role, jobTypes } = validateFields.data;
+    const email = validateFields.data.email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUserEmail = await getUserByEmail(email);
     if (existingUserEmail) {
+      if (!existingUserEmail.emailVerified || !existingUserEmail.isActive) {
+        return {
+          error:
+            "هذا البريد مسجّل لكن غير مفعّل. استخدم «إعادة إرسال رابط التحقق» من صفحة الدخول.",
+          code: "EMAIL_NOT_VERIFIED" as const,
+          emailForResend: existingUserEmail.email,
+        };
+      }
       return { error: "البريد مستخدم مسبقاً" };
     }
 
@@ -89,11 +98,14 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
       error: !mailed.ok ? mailed.error : undefined,
     });
 
+    // الحساب أُنشئ — لا نُرجع error حتى لا يعتقد المستخدم أن التسجيل فشل ويعيد المحاولة
     if (!mailed.ok) {
       return {
-        error:
-          "تم إنشاء الحساب، لكن تعذر إرسال رسالة التحقق. استخدم «إعادة إرسال رابط التحقق» من صفحة الدخول.",
+        success:
+          "تم إنشاء حسابك. تعذر إرسال رسالة التحقق الآن — افتح صفحة الدخول واستخدم «إعادة إرسال رابط التحقق».",
         warning: mailed.error,
+        code: "EMAIL_SEND_FAILED" as const,
+        emailForResend: user.email,
       };
     }
 
@@ -102,7 +114,13 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
         "تم إنشاء حسابك وهو معطّل مؤقتاً. أرسلنا رابط التفعيل إلى بريدك — افتح الرابط لتفعيل الحساب وتسجيل الدخول.",
     };
   } catch (error) {
-    console.error(error);
-    return { error: "تعذر إنشاء الحساب. تحقق من الاتصال بقاعدة البيانات." };
+    console.error("[register]", error);
+    const detail =
+      error instanceof Error && process.env.NODE_ENV !== "production"
+        ? ` (${error.message})`
+        : "";
+    return {
+      error: `تعذر إنشاء الحساب. تحقق من الاتصال بقاعدة البيانات.${detail}`,
+    };
   }
 }
