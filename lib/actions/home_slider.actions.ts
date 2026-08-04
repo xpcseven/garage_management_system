@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { canManageHomeSlider } from "@/lib/permissions";
 import { uploadImage } from "@/lib/uploadImage";
 import { deleteImage } from "@/lib/deleteImage";
+import { isManagedUploadUrl } from "@/lib/image-storage";
 import { revalidatePath } from "next/cache";
 
 export type HomeSliderSlideRow = {
@@ -125,7 +126,7 @@ export async function updateHomeSliderSlide(formData: FormData) {
       const uploaded = await uploadImage(imageFd);
       if (!uploaded.success) return { error: uploaded.error };
       imageUrl = uploaded.path;
-      if (existing.imageUrl.startsWith("/uploads/")) {
+      if (isManagedUploadUrl(existing.imageUrl)) {
         try {
           await deleteImage(existing.imageUrl);
         } catch {
@@ -136,7 +137,7 @@ export async function updateHomeSliderSlide(formData: FormData) {
       imageUrl &&
       existing.imageUrl &&
       imageUrl !== existing.imageUrl &&
-      existing.imageUrl.startsWith("/uploads/")
+      isManagedUploadUrl(existing.imageUrl)
     ) {
       try {
         await deleteImage(existing.imageUrl);
@@ -177,7 +178,7 @@ export async function deleteHomeSliderSlide(id: string) {
 
     await prisma.tourismSliderSlide.delete({ where: { id } });
 
-    if (existing.imageUrl.startsWith("/uploads/")) {
+    if (isManagedUploadUrl(existing.imageUrl)) {
       try {
         await deleteImage(existing.imageUrl);
       } catch {

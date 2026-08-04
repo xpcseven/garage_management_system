@@ -1,5 +1,8 @@
 import { deleteImage } from "@/lib/deleteImage";
-import { storeImagesFromFormData } from "@/lib/image-storage";
+import {
+  isManagedUploadUrl,
+  storeImagesFromFormData,
+} from "@/lib/image-storage";
 import { prisma } from "@/lib/prisma";
 
 export const MAX_FARM_IMAGES = 10;
@@ -47,9 +50,9 @@ export async function resolveFarmImageUrlsFromFormData(
 }
 
 async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!url?.startsWith("/uploads/")) return;
+  if (!isManagedUploadUrl(url)) return;
   try {
-    await deleteImage(url);
+    await deleteImage(url!);
   } catch {
     /* ignore */
   }

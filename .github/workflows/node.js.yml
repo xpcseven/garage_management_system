@@ -30,6 +30,20 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build --if-present
+      - name: Sync runtime AWS env for Next/PM2
+        run: |
+          set -e
+          touch .env
+          for KEY in AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_S3_BUCKET; do
+            VAL="${!KEY}"
+            if [ -n "$VAL" ]; then
+              if grep -q "^${KEY}=" .env; then
+                sed -i "s|^${KEY}=.*|${KEY}=${VAL}|" .env
+              else
+                echo "${KEY}=${VAL}" >> .env
+              fi
+            fi
+          done
       - name: Change Directory
         run: cd /home/travel/actions-runner/_work/garage_management_system/garage_management_system
-      - run: pm2 restart 0
+      - run: pm2 restart 0 --update-env

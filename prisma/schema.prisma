@@ -1,5 +1,5 @@
 // ============================================================
-// PRISMA SCHEMA — FINAL v4 (Production Ready)
+// PRISMA SCHEMA â€” FINAL v4 (Production Ready)
 // ============================================================
 
 generator client {
@@ -226,7 +226,7 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// تفضيلات نوع النقل عند التسجيل (صاحب كراج) — السائق يُخزَّن في DriverJob
+// ØªÙØ¶ÙŠÙ„Ø§Øª Ù†ÙˆØ¹ Ø§Ù„Ù†Ù‚Ù„ Ø¹Ù†Ø¯ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ (ØµØ§Ø­Ø¨ ÙƒØ±Ø§Ø¬) â€” Ø§Ù„Ø³Ø§Ø¦Ù‚ ÙŠÙØ®Ø²Ù‘ÙŽÙ† ÙÙŠ DriverJob
 model UserJobPreference {
   id        String   @id @default(uuid())
   userId    String
@@ -268,7 +268,7 @@ model TourismPlace {
   governorate String?
   description String?
   address     String?
-  // موقع نصي/رابط يمكن فتحه على الخريطة (مثال: "Baghdad, Iraq" أو رابط Google Maps)
+  // Ù…ÙˆÙ‚Ø¹ Ù†ØµÙŠ/Ø±Ø§Ø¨Ø· ÙŠÙ…ÙƒÙ† ÙØªØ­Ù‡ Ø¹Ù„Ù‰ Ø§Ù„Ø®Ø±ÙŠØ·Ø© (Ù…Ø«Ø§Ù„: "Baghdad, Iraq" Ø£Ùˆ Ø±Ø§Ø¨Ø· Google Maps)
   location    String?
   imageUrl    String?
 
@@ -369,11 +369,11 @@ model Vehicle {
   color         String?
   totalSeats    Int
   category      VehicleCategory @default(SEDAN)
-  /// قالب المقاعد: { rows, cols, seats: [{n,row,col,label,isDriver?}] }
+  /// Ù‚Ø§Ù„Ø¨ Ø§Ù„Ù…Ù‚Ø§Ø¹Ø¯: { rows, cols, seats: [{n,row,col,label,isDriver?}] }
   seatLayoutJson Json?
   transportType TransportType
   isActive      Boolean         @default(true)
-  // اسم السائق المعيّن للمركبة عند ربطها بكراج
+  // Ø§Ø³Ù… Ø§Ù„Ø³Ø§Ø¦Ù‚ Ø§Ù„Ù…Ø¹ÙŠÙ‘Ù† Ù„Ù„Ù…Ø±ÙƒØ¨Ø© Ø¹Ù†Ø¯ Ø±Ø¨Ø·Ù‡Ø§ Ø¨ÙƒØ±Ø§Ø¬
   driverName String?
 
   ownerId  String
@@ -728,7 +728,7 @@ model Booking {
   @@index([status])
 }
 
-// أمتعة مسافر مرتبطة بالحجز — أكثر من غرض لكل حجز
+// Ø£Ù…ØªØ¹Ø© Ù…Ø³Ø§ÙØ± Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ø§Ù„Ø­Ø¬Ø² â€” Ø£ÙƒØ«Ø± Ù…Ù† ØºØ±Ø¶ Ù„ÙƒÙ„ Ø­Ø¬Ø²
 model BookingLuggageItem {
   id          String      @id @default(uuid())
   bookingId   String
@@ -815,7 +815,7 @@ model Notification {
 }
 
 // ============================================================
-// HOME SLIDER (landing page — SUPER_ADMIN only)
+// HOME SLIDER (landing page â€” SUPER_ADMIN only)
 // ============================================================
 
 model TourismSliderSlide {
@@ -850,7 +850,7 @@ model ApiRefreshToken {
 }
 
 // ============================================================
-// AUDIT LOG (NEW — ENTERPRISE FEATURE)
+// AUDIT LOG (NEW â€” ENTERPRISE FEATURE)
 // ============================================================
 
 model AuditLog {
@@ -1096,11 +1096,11 @@ model FarmBooking {
   userId String
   farmId String
 
-  /// فترة الحجز: من
+  /// ÙØªØ±Ø© Ø§Ù„Ø­Ø¬Ø²: Ù…Ù†
   startAt DateTime
-  /// فترة الحجز: إلى
+  /// ÙØªØ±Ø© Ø§Ù„Ø­Ø¬Ø²: Ø¥Ù„Ù‰
   endAt   DateTime
-  /// نوع المناسبة: عائلة / شباب / عرس / أخرى
+  /// Ù†ÙˆØ¹ Ø§Ù„Ù…Ù†Ø§Ø³Ø¨Ø©: Ø¹Ø§Ø¦Ù„Ø© / Ø´Ø¨Ø§Ø¨ / Ø¹Ø±Ø³ / Ø£Ø®Ø±Ù‰
   occasionType  FarmOccasionType @default(FAMILY)
   occasionOther String?
 
@@ -1122,7 +1122,7 @@ model FarmBooking {
 }
 
 // ============================================================
-// BUSINESS PARTNERSHIP (Garage ↔ Hotel/Restaurant/Farm)
+// BUSINESS PARTNERSHIP (Garage â†” Hotel/Restaurant/Farm)
 // ============================================================
 
 model BusinessPartnership {
@@ -1181,4 +1181,11 @@ model PartnershipMessage {
 
   @@index([partnershipId, createdAt])
   @@index([senderUserId])
+}
+
+// Site visit counter - singleton row id = "global"
+model SiteStats {
+  id         String   @id @default("global")
+  visitCount Int      @default(0)
+  updatedAt  DateTime @updatedAt
 }
