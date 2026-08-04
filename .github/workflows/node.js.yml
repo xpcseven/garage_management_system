@@ -21,6 +21,7 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
       AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
       AWS_S3_BUCKET: ${{secrets.AWS_S3_BUCKET}}
+      UPLOAD_DIR: /var/travel/uploads
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -30,20 +31,36 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build --if-present
-      - name: Sync runtime AWS env for Next/PM2
+      - name: Persist uploads dir + runtime .env
         run: |
           set -e
-          touch .env
-          for KEY in AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_S3_BUCKET; do
-            VAL="${!KEY}"
-            if [ -n "$VAL" ]; then
-              if grep -q "^${KEY}=" .env; then
-                sed -i "s|^${KEY}=.*|${KEY}=${VAL}|" .env
-              else
-                echo "${KEY}=${VAL}" >> .env
-              fi
-            fi
-          done
-      - name: Change Directory
-        run: cd /home/travel/actions-runner/_work/garage_management_system/garage_management_system
-      - run: pm2 restart 0 --update-env
+          mkdir -p /var/travel/uploads
+          rm -rf public/uploads
+          ln -sfn /var/travel/uploads public/uploads
+
+          # Write runtime env safely (handles special chars in secrets)
+          : > .env
+          write_env() {
+            local key="$1"
+            local val="$2"
+            # escape backslashes and newlines for .env single-line values
+            val="${val//\\/\\\\}"
+            val="${val//$'\n'/\\n}"
+            printf '%s=%s\n' "$key" "$val" >> .env
+          }
+          write_env AUTH_SECRET "$AUTH_SECRET"
+          write_env AUTH_TRUST_HOST "$AUTH_TRUST_HOST"
+          write_env DATABASE_URL "$DATABASE_URL"
+          write_env NEXTAUTH_URL "$NEXTAUTH_URL"
+          write_env NEXT_WEBSITE_URL "$NEXT_WEBSITE_URL"
+          write_env AWS_REGION "$AWS_REGION"
+          write_env AWS_ACCESS_KEY_ID "$AWS_ACCESS_KEY_ID"
+          write_env AWS_SECRET_ACCESS_KEY "$AWS_SECRET_ACCESS_KEY"
+          write_env AWS_S3_BUCKET "$AWS_S3_BUCKET"
+          write_env UPLOAD_DIR "/var/travel/uploads"
+      - name: Restart PM2 with updated env
+        run: |
+          cd /home/travel/actions-runner/_work/garage_management_system/garage_management_system
+          # Job env (AWS_*, DATABASE_URL, …) is injected into the process via --update-env
+          # Next also reads .env written in the previous step
+          pm2 restart 0 --update-env

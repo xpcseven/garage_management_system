@@ -1,10 +1,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
-import {
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const ALLOWED_EXTENSIONS = new Set([
   "png",
@@ -36,7 +33,7 @@ function resolveExtension(file: File): string | null {
   return "jpg";
 }
 
-function s3Configured() {
+export function s3Configured() {
   return Boolean(
     process.env.AWS_S3_BUCKET?.trim() &&
       process.env.AWS_ACCESS_KEY_ID?.trim() &&
@@ -61,6 +58,13 @@ function publicObjectUrl(key: string): string {
   const bucket = process.env.AWS_S3_BUCKET!.trim();
   const region = process.env.AWS_REGION!.trim();
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+}
+
+function localUploadDir() {
+  return (
+    process.env.UPLOAD_DIR?.trim() ||
+    join(process.cwd(), "public", "uploads")
+  );
 }
 
 export type StoreImageResult =
@@ -105,22 +109,41 @@ export async function storeImageFile(file: File): Promise<StoreImageResult> {
         ? file.type
         : `image/${ext === "jpg" ? "jpeg" : ext}`;
 
+    // Prefer S3 whenever credentials exist (production server)
     if (s3Configured()) {
-      const client = getS3Client();
-      await client.send(
-        new PutObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET!.trim(),
-          Key: key,
-          Body: buffer,
-          ContentType: contentType,
-          CacheControl: "public, max-age=31536000, immutable",
-        })
+      try {
+        const client = getS3Client();
+        await client.send(
+          new PutObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET!.trim(),
+            Key: key,
+            Body: buffer,
+            ContentType: contentType,
+            CacheControl: "public, max-age=31536000, immutable",
+          })
+        );
+        return { success: true, path: publicObjectUrl(key) };
+      } catch (error) {
+        console.error("storeImageFile S3 error", error);
+        const detail =
+          error instanceof Error ? error.message : "فشل الرفع إلى التخزين السحابي";
+        // In production do not silently fall back to local (files vanish on deploy)
+        if (process.env.NODE_ENV === "production") {
+          return {
+            success: false,
+            error: `تعذر رفع الصورة إلى السيرفر (S3): ${detail}`,
+          };
+        }
+        // Dev: fall through to local disk
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      console.warn(
+        "storeImageFile: AWS S3 env vars missing in production — using local UPLOAD_DIR"
       );
-      return { success: true, path: publicObjectUrl(key) };
     }
 
-    // Local fallback (development)
-    const uploadDir = join(process.cwd(), "public", "uploads");
+    // Local disk (dev, or production with UPLOAD_DIR outside deploy folder)
+    const uploadDir = localUploadDir();
     await mkdir(uploadDir, { recursive: true });
     await writeFile(join(uploadDir, uniqueFileName), buffer);
     return { success: true, path: `/uploads/${uniqueFileName}` };
