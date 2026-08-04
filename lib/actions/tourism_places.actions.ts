@@ -11,6 +11,7 @@ import {
   syncTourismPlaceImages,
   tourismPlaceInclude,
 } from "@/lib/tourism-place-images";
+import { isManagedUploadUrl } from "@/lib/image-storage";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/prisma/UserRole.enum";
 import { notifyAllPassengers } from "@/lib/actions/notification.actions";
@@ -332,7 +333,7 @@ export async function updateTourismPlace(
     if (
       existing.imageUrl &&
       !imageUrls.includes(existing.imageUrl) &&
-      existing.imageUrl.startsWith("/uploads/")
+      isManagedUploadUrl(existing.imageUrl)
     ) {
       await deleteUploadedImageSafe(existing.imageUrl);
     }

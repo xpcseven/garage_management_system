@@ -1,5 +1,9 @@
 import { deleteImage } from "@/lib/deleteImage";
-import { storeImageFile, storeImagesFromFormData } from "@/lib/image-storage";
+import {
+  isManagedUploadUrl,
+  storeImageFile,
+  storeImagesFromFormData,
+} from "@/lib/image-storage";
 import { prisma } from "@/lib/prisma";
 
 export type TourismPlaceImageRecord = {
@@ -72,9 +76,9 @@ export async function resolveImageUrlsFromFormData(
 }
 
 export async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!url?.startsWith("/uploads/")) return;
+  if (!isManagedUploadUrl(url)) return;
   try {
-    await deleteImage(url);
+    await deleteImage(url!);
   } catch {
     /* ignore */
   }
