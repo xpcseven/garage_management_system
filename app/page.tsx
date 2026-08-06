@@ -10,6 +10,7 @@ import LandingJourney from "@/components/landing/LandingJourney";
 import LandingNetwork from "@/components/landing/LandingNetwork";
 import LandingCta from "@/components/landing/LandingCta";
 import LandingFooter from "@/components/landing/LandingFooter";
+import { toDisplayImageUrl } from "@/lib/media-url";
 
 export default async function LandingPage() {
   const [tourismPlaces, sliderSlides] = await Promise.all([
@@ -19,7 +20,7 @@ export default async function LandingPage() {
 
   const slides = sliderSlides.map((s) => ({
     id: s.id,
-    src: s.imageUrl,
+    src: toDisplayImageUrl(s.imageUrl) || s.imageUrl,
     title: s.title,
   }));
 

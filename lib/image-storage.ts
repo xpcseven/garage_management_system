@@ -1,7 +1,13 @@
-import { mkdir, writeFile } from "fs/promises";
-import { join } from "path";
-import { v4 as uuidv4 } from "uuid";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  isS3Configured,
+  putObjectToS3,
+  getS3Bucket,
+  getS3Region,
+} from "@/lib/aws-s3";
+import { S3_FOLDERS } from "@/lib/s3-folders";
+
+export { S3_FOLDERS } from "@/lib/s3-folders";
+export type { S3Folder } from "@/lib/s3-folders";
 
 const ALLOWED_EXTENSIONS = new Set([
   "png",
@@ -33,59 +39,43 @@ function resolveExtension(file: File): string | null {
   return "jpg";
 }
 
-export function s3Configured() {
-  return Boolean(
-    process.env.AWS_S3_BUCKET?.trim() &&
-      process.env.AWS_ACCESS_KEY_ID?.trim() &&
-      process.env.AWS_SECRET_ACCESS_KEY?.trim() &&
-      process.env.AWS_REGION?.trim()
-  );
-}
-
-function getS3Client() {
-  return new S3Client({
-    region: process.env.AWS_REGION!.trim(),
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!.trim(),
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!.trim(),
-    },
-  });
-}
-
-function publicObjectUrl(key: string): string {
-  const custom = process.env.AWS_S3_PUBLIC_URL?.trim().replace(/\/$/, "");
-  if (custom) return `${custom}/${key}`;
-  const bucket = process.env.AWS_S3_BUCKET!.trim();
-  const region = process.env.AWS_REGION!.trim();
-  return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-}
-
-function localUploadDir() {
-  return (
-    process.env.UPLOAD_DIR?.trim() ||
-    join(process.cwd(), "public", "uploads")
-  );
-}
+export { isS3Configured as s3Configured };
 
 export type StoreImageResult =
-  | { success: true; path: string }
+  | { success: true; path: string; url?: string }
   | { success: false; error: string };
 
-/** True for local /uploads paths or absolute S3/CDN URLs we manage */
+/** True for proxy /uploads / S3 URLs we manage */
 export function isManagedUploadUrl(url: string | null | undefined): boolean {
   if (!url?.trim()) return false;
   const u = url.trim();
+  if (u.startsWith("/api/media/")) return true;
   if (u.startsWith("/uploads/")) return true;
-  if (/^https?:\/\//i.test(u) && u.includes("/uploads/")) return true;
-  const custom = process.env.AWS_S3_PUBLIC_URL?.trim();
-  if (custom && u.startsWith(custom.replace(/\/$/, ""))) return true;
+  if (/^https?:\/\//i.test(u) && u.includes(".amazonaws.com/")) return true;
+  const bucket = getS3Bucket();
+  if (bucket && u.includes(`${bucket}.s3.`)) return true;
   return false;
 }
 
-export async function storeImageFile(file: File): Promise<StoreImageResult> {
+/**
+ * رفع صورة إلى AWS S3 فقط (لا يوجد حفظ محلي).
+ * يُرجع مسار `/api/media/...` للعرض عبر الوسيط.
+ */
+export async function storeImageFile(
+  file: File,
+  folder: string = S3_FOLDERS.uploads
+): Promise<StoreImageResult> {
   try {
     if (!file || file.size === 0) {
       return { success: false, error: "لم يتم اختيار ملف" };
+    }
+
+    if (!isS3Configured()) {
+      return {
+        success: false,
+        error:
+          "إعدادات AWS غير مكتملة. أضف AWS_ACCESS_KEY_ID و AWS_SECRET_ACCESS_KEY و AWS_REGION و AWS_S3_BUCKET",
+      };
     }
 
     const ext = resolveExtension(file);
@@ -96,75 +86,64 @@ export async function storeImageFile(file: File): Promise<StoreImageResult> {
       };
     }
 
+    const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, "") || "uploads";
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    const safeBase =
-      file.name.replace(/\.[^.]+$/, "").replace(/[^\w.-]+/g, "_").slice(0, 80) ||
-      "image";
-    const uniqueFileName = `${uuidv4()}-${safeBase}.${ext}`;
-    const key = `uploads/${uniqueFileName}`;
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const s3Key = `tourism/${safeFolder}/${fileName}`;
     const contentType =
       file.type && file.type.startsWith("image/")
         ? file.type
         : `image/${ext === "jpg" ? "jpeg" : ext}`;
 
-    // Prefer S3 whenever credentials exist (production server)
-    if (s3Configured()) {
-      try {
-        const client = getS3Client();
-        await client.send(
-          new PutObjectCommand({
-            Bucket: process.env.AWS_S3_BUCKET!.trim(),
-            Key: key,
-            Body: buffer,
-            ContentType: contentType,
-            CacheControl: "public, max-age=31536000, immutable",
-          })
-        );
-        return { success: true, path: publicObjectUrl(key) };
-      } catch (error) {
-        console.error("storeImageFile S3 error", error);
-        const detail =
-          error instanceof Error ? error.message : "فشل الرفع إلى التخزين السحابي";
-        // In production do not silently fall back to local (files vanish on deploy)
-        if (process.env.NODE_ENV === "production") {
-          return {
-            success: false,
-            error: `تعذر رفع الصورة إلى السيرفر (S3): ${detail}`,
-          };
-        }
-        // Dev: fall through to local disk
-      }
-    } else if (process.env.NODE_ENV === "production") {
-      console.warn(
-        "storeImageFile: AWS S3 env vars missing in production — using local UPLOAD_DIR"
-      );
-    }
+    const fileUrl = await putObjectToS3({
+      key: s3Key,
+      body: buffer,
+      contentType,
+    });
 
-    // Local disk (dev, or production with UPLOAD_DIR outside deploy folder)
-    const uploadDir = localUploadDir();
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, uniqueFileName), buffer);
-    return { success: true, path: `/uploads/${uniqueFileName}` };
+    console.info("[storeImageFile] S3 OK", {
+      bucket: getS3Bucket(),
+      region: getS3Region(),
+      key: s3Key,
+      url: fileUrl,
+    });
+
+    return { success: true, path: fileUrl, url: fileUrl };
   } catch (error) {
-    console.error("storeImageFile", error);
+    console.error("storeImageFile / Upload error:", error);
     const message =
-      error instanceof Error ? error.message : "فشل حفظ الصورة";
+      error instanceof Error ? error.message : "فشل رفع الصورة إلى AWS";
     return { success: false, error: message };
   }
 }
 
 export async function storeImagesFromFormData(
   formData: FormData,
-  fieldName = "placeImages"
+  fieldName = "placeImages",
+  folder: string = S3_FOLDERS.uploads
 ): Promise<StoreImageResult[]> {
   const files = formData
     .getAll(fieldName)
     .filter((f): f is File => f instanceof File && f.size > 0);
   const results: StoreImageResult[] = [];
   for (const file of files) {
-    results.push(await storeImageFile(file));
+    results.push(await storeImageFile(file, folder));
   }
   return results;
+}
+
+/** يجمع النتائج ويُرجع أول خطأ إن وُجد */
+export function collectUploadResults(results: StoreImageResult[]): {
+  urls: string[];
+  error?: string;
+} {
+  const urls: string[] = [];
+  for (const r of results) {
+    if (!r.success) {
+      return { urls, error: r.error };
+    }
+    if (!urls.includes(r.path)) urls.push(r.path);
+  }
+  return { urls };
 }

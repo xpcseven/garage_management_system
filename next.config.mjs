@@ -32,6 +32,11 @@ const nextConfig = {
         hostname: "**.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "tourism-management-image.s3.eu-north-1.amazonaws.com",
+        pathname: "/**",
+      },
     ],
   },
 

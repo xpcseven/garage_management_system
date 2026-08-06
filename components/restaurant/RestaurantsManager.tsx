@@ -519,7 +519,11 @@ function RestaurantEdit({ row }: { row: RestaurantRow }) {
             />
           </Field>
           <ImageThumbs urls={row.images} />
-          <ImagesField name="restaurantImages" label="إضافة صور" />
+          <ImagesField
+            name="restaurantImages"
+            label="استبدال الصور"
+            hint="اختيار صور جديدة يحذف الصور السابقة من AWS ويبقي على الجديدة فقط"
+          />
           <Button
             type="submit"
             disabled={pending}

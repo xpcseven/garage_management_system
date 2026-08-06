@@ -255,8 +255,7 @@ export async function updateHotel(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (!name || !address) return { error: "الاسم والعنوان مطلوبان" };
 
-  const keepExisting = formData.get("keepExistingImages") !== "false";
-  const existingUrls = keepExisting ? resolveHotelImages(hotel) : [];
+  const existingUrls = resolveHotelImages(hotel);
   const { urls, error: imgError } = await resolveHotelImageUrlsFromFormData(
     formData,
     existingUrls

@@ -5,13 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { canManageTourismPlaces, canUsePassengerPortal } from "@/lib/permissions";
 import {
   deleteAllTourismPlaceImages,
-  deleteUploadedImageSafe,
   resolveImageUrlsFromFormData,
   resolvePlaceImages,
   syncTourismPlaceImages,
   tourismPlaceInclude,
 } from "@/lib/tourism-place-images";
-import { isManagedUploadUrl } from "@/lib/image-storage";
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/prisma/UserRole.enum";
 import { notifyAllPassengers } from "@/lib/actions/notification.actions";
@@ -201,10 +199,12 @@ export async function createTourismPlace(
   }
 
   try {
-    const imageUrls = await resolveImageUrlsFromFormData(
+    const resolved = await resolveImageUrlsFromFormData(
       formData,
       imageUrlsFromClient
     );
+    if (resolved.error) return { error: resolved.error };
+    const imageUrls = resolved.urls;
     const autoApprove = session.user.role === UserRole.SUPER_ADMIN;
 
     const place = await prisma.tourismPlace.create({
@@ -301,10 +301,12 @@ export async function updateTourismPlace(
       return { error: "لا يمكنك تعديل هذا المكان" };
     }
 
-    const imageUrls = await resolveImageUrlsFromFormData(
+    const resolved = await resolveImageUrlsFromFormData(
       formData,
       imageUrlsFromClient
     );
+    if (resolved.error) return { error: resolved.error };
+    const imageUrls = resolved.urls;
 
     await prisma.tourismPlace.update({
       where: { id },
@@ -329,14 +331,6 @@ export async function updateTourismPlace(
     });
 
     await syncTourismPlaceImages(id, imageUrls);
-
-    if (
-      existing.imageUrl &&
-      !imageUrls.includes(existing.imageUrl) &&
-      isManagedUploadUrl(existing.imageUrl)
-    ) {
-      await deleteUploadedImageSafe(existing.imageUrl);
-    }
 
     revalidateTourismPaths();
 
@@ -390,7 +384,6 @@ export async function deleteTourismPlace(id: string) {
     }
 
     await deleteAllTourismPlaceImages(id);
-    await deleteUploadedImageSafe(existing.imageUrl);
 
     await prisma.tourismPlace.delete({ where: { id } });
     revalidateTourismPaths();

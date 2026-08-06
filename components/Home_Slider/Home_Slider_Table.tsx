@@ -7,6 +7,7 @@ import { deleteHomeSliderSlide } from "@/lib/actions/home_slider.actions";
 import Home_Slider_Update from "./Home_Slider_Update";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
+import { toDisplayImageUrl } from "@/lib/media-url";
 import TablePagination from "@/components/Shared/TablePagination";
 import { cn } from "@/lib/utils";
 
@@ -140,7 +141,7 @@ export default function Home_Slider_Table({ slides }: Props) {
                   <td className="p-3" data-label="الصورة">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={s.imageUrl}
+                      src={toDisplayImageUrl(s.imageUrl) || s.imageUrl}
                       alt={s.title}
                       className="h-14 w-24 rounded-xl object-cover ring-1 ring-plum/10 dark:ring-orchid/20"
                       loading="lazy"

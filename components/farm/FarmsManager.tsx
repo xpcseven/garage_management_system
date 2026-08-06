@@ -501,7 +501,11 @@ function FarmEdit({ row }: { row: FarmRow }) {
             />
           </Field>
           <ImageThumbs urls={row.images} />
-          <ImagesField name="farmImages" label="إضافة صور" />
+          <ImagesField
+            name="farmImages"
+            label="استبدال الصور"
+            hint="اختيار صور جديدة يحذف الصور السابقة من AWS ويبقي على الجديدة فقط"
+          />
           <Button
             type="submit"
             disabled={pending}

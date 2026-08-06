@@ -22,6 +22,14 @@ export default auth((req) => {
     return null;
   }
 
+  if (pathname.startsWith("/api/deleteImage")) {
+    return null;
+  }
+
+  if (pathname.startsWith("/api/media")) {
+    return null;
+  }
+
   if (isPublicRoute(pathname)) {
     return null;
   }
