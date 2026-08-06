@@ -207,8 +207,7 @@ export async function updateFarm(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (!name || !address) return { error: "الاسم والعنوان مطلوبان" };
 
-  const keepExisting = formData.get("keepExistingImages") !== "false";
-  const existingUrls = keepExisting ? resolveFarmImages(row) : [];
+  const existingUrls = resolveFarmImages(row);
   const { urls, error: imgError } = await resolveFarmImageUrlsFromFormData(
     formData,
     existingUrls

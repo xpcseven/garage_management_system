@@ -93,7 +93,11 @@ export default function Tourism_Place_Images_Upload({
               className="relative overflow-hidden rounded-lg border"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.preview} alt="" className="h-24 w-full object-cover" />
+              <img
+                src={item.preview}
+                alt=""
+                className="h-24 w-full object-cover"
+              />
               <Button
                 type="button"
                 size="icon"

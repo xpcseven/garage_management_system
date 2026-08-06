@@ -51,6 +51,10 @@ export default function Tourism_Img_Component({ slides: slidesProp }: Props) {
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             priority
+            unoptimized={
+              current.src.startsWith("/api/media/") ||
+              current.src.includes("amazonaws.com")
+            }
             sizes="(max-width: 1024px) 100vw, 1200px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />

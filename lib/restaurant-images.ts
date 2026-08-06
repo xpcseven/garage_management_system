@@ -1,8 +1,9 @@
-import { deleteImage } from "@/lib/deleteImage";
+import { deleteImages } from "@/lib/deleteImage";
 import {
-  isManagedUploadUrl,
+  collectUploadResults,
   storeImagesFromFormData,
 } from "@/lib/image-storage";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 import { prisma } from "@/lib/prisma";
 
 export const MAX_RESTAURANT_IMAGES = 10;
@@ -30,37 +31,33 @@ export function resolveRestaurantImages(
   return [];
 }
 
+/** رفع جديد → استبدال؛ بدون رفع → إبقاء الحالية */
 export async function resolveRestaurantImageUrlsFromFormData(
   formData: FormData,
   existingUrls: string[] = []
 ): Promise<{ urls: string[]; error?: string }> {
-  const urls = [...existingUrls.filter(Boolean)];
-
   const uploadResults = await storeImagesFromFormData(
     formData,
-    "restaurantImages"
+    "restaurantImages",
+    S3_FOLDERS.restaurants
   );
-  for (const r of uploadResults) {
-    if (r.success && !urls.includes(r.path)) urls.push(r.path);
+  const collected = collectUploadResults(uploadResults);
+  if (collected.error) {
+    return { urls: existingUrls, error: collected.error };
   }
 
-  if (urls.length > MAX_RESTAURANT_IMAGES) {
-    return {
-      urls: urls.slice(0, MAX_RESTAURANT_IMAGES),
-      error: `الحد الأقصى ${MAX_RESTAURANT_IMAGES} صور للمطعم`,
-    };
+  if (collected.urls.length > 0) {
+    const urls = collected.urls.slice(0, MAX_RESTAURANT_IMAGES);
+    if (collected.urls.length > MAX_RESTAURANT_IMAGES) {
+      return {
+        urls,
+        error: `الحد الأقصى ${MAX_RESTAURANT_IMAGES} صور للمطعم`,
+      };
+    }
+    return { urls };
   }
 
-  return { urls };
-}
-
-async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!isManagedUploadUrl(url)) return;
-  try {
-    await deleteImage(url!);
-  } catch {
-    /* ignore */
-  }
+  return { urls: existingUrls.filter(Boolean) };
 }
 
 export async function syncRestaurantImages(
@@ -74,12 +71,16 @@ export async function syncRestaurantImages(
   });
 
   const targetSet = new Set(limited);
+  const removed: string[] = [];
+
   for (const img of existing) {
     if (!targetSet.has(img.imageUrl)) {
       await prisma.restaurantImage.delete({ where: { id: img.id } });
-      await deleteUploadedImageSafe(img.imageUrl);
+      removed.push(img.imageUrl);
     }
   }
+
+  await deleteImages(removed);
 
   const refreshed = await prisma.restaurantImage.findMany({
     where: { restaurantId },
@@ -106,4 +107,21 @@ export async function syncRestaurantImages(
     where: { id: restaurantId },
     data: { imageUrl: limited[0] ?? null },
   });
+}
+
+export async function deleteAllRestaurantImages(restaurantId: string) {
+  const rows = await prisma.restaurantImage.findMany({
+    where: { restaurantId },
+    select: { imageUrl: true },
+  });
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { imageUrl: true },
+  });
+
+  await prisma.restaurantImage.deleteMany({ where: { restaurantId } });
+  await deleteImages([
+    ...rows.map((r) => r.imageUrl),
+    restaurant?.imageUrl,
+  ]);
 }

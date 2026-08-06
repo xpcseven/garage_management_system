@@ -1,9 +1,10 @@
-import { deleteImage } from "@/lib/deleteImage";
+import { deleteImage, deleteImages } from "@/lib/deleteImage";
 import {
-  isManagedUploadUrl,
+  collectUploadResults,
   storeImageFile,
   storeImagesFromFormData,
 } from "@/lib/image-storage";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 import { prisma } from "@/lib/prisma";
 
 export type TourismPlaceImageRecord = {
@@ -44,44 +45,49 @@ export function parseImageUrlsJson(raw: string): string[] {
 export async function resolveImageUrlsFromFormData(
   formData: FormData,
   imageUrlsFromClient?: string[]
-): Promise<string[]> {
-  const urls: string[] = [];
+): Promise<{ urls: string[]; error?: string }> {
+  const kept: string[] = [];
 
   if (imageUrlsFromClient?.length) {
-    urls.push(...imageUrlsFromClient.filter(Boolean));
+    kept.push(...imageUrlsFromClient.filter(Boolean));
   }
 
   const fromJson = parseImageUrlsJson(String(formData.get("imageUrls") ?? ""));
   for (const u of fromJson) {
+    if (!kept.includes(u)) kept.push(u);
+  }
+
+  const uploadResults = await storeImagesFromFormData(
+    formData,
+    "placeImages",
+    S3_FOLDERS.tourismPlaces
+  );
+  const collected = collectUploadResults(uploadResults);
+  if (collected.error) return { urls: kept, error: collected.error };
+
+  const urls = [...kept];
+  for (const u of collected.urls) {
     if (!urls.includes(u)) urls.push(u);
   }
 
-  const uploadResults = await storeImagesFromFormData(formData, "placeImages");
-  for (const r of uploadResults) {
-    if (r.success && !urls.includes(r.path)) urls.push(r.path);
-  }
-
-  if (urls.length > 0) return urls;
+  if (urls.length > 0) return { urls };
 
   const legacy = String(formData.get("imageUrl") ?? "").trim();
-  if (legacy) return [legacy];
+  if (legacy) return { urls: [legacy] };
 
   const file = formData.get("file");
   if (file instanceof File && file.size > 0) {
-    const uploaded = await storeImageFile(file);
-    if (uploaded.success) return [uploaded.path];
+    const uploaded = await storeImageFile(file, S3_FOLDERS.tourismPlaces);
+    if (!uploaded.success) return { urls: [], error: uploaded.error };
+    return { urls: [uploaded.path] };
   }
 
-  return [];
+  return { urls: [] };
 }
 
 export async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!isManagedUploadUrl(url)) return;
-  try {
-    await deleteImage(url!);
-  } catch {
-    /* ignore */
-  }
+  if (!url?.trim()) return;
+  await deleteImage(url);
 }
 
 export async function syncTourismPlaceImages(
@@ -94,13 +100,16 @@ export async function syncTourismPlaceImages(
   });
 
   const targetSet = new Set(targetUrls);
+  const removed: string[] = [];
 
   for (const img of existing) {
     if (!targetSet.has(img.imageUrl)) {
       await prisma.tourismPlaceImage.delete({ where: { id: img.id } });
-      await deleteUploadedImageSafe(img.imageUrl);
+      removed.push(img.imageUrl);
     }
   }
+
+  await deleteImages(removed);
 
   const refreshed = await prisma.tourismPlaceImage.findMany({
     where: { tourismPlaceId: placeId },
@@ -132,12 +141,17 @@ export async function syncTourismPlaceImages(
 export async function deleteAllTourismPlaceImages(placeId: string) {
   const rows = await prisma.tourismPlaceImage.findMany({
     where: { tourismPlaceId: placeId },
-    select: { id: true, imageUrl: true },
+    select: { imageUrl: true },
   });
-  for (const row of rows) {
-    await deleteUploadedImageSafe(row.imageUrl);
-  }
-  await prisma.tourismPlaceImage.deleteMany({ where: { tourismPlaceId: placeId } });
+  const place = await prisma.tourismPlace.findUnique({
+    where: { id: placeId },
+    select: { imageUrl: true },
+  });
+
+  await prisma.tourismPlaceImage.deleteMany({
+    where: { tourismPlaceId: placeId },
+  });
+  await deleteImages([...rows.map((r) => r.imageUrl), place?.imageUrl]);
 }
 
 export const tourismPlaceInclude = {

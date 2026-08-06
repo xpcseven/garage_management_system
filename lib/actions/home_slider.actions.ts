@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { canManageHomeSlider } from "@/lib/permissions";
 import { uploadImage } from "@/lib/uploadImage";
 import { deleteImage } from "@/lib/deleteImage";
-import { isManagedUploadUrl } from "@/lib/image-storage";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 import { revalidatePath } from "next/cache";
 
 export type HomeSliderSlideRow = {
@@ -80,6 +80,7 @@ export async function createHomeSliderSlide(formData: FormData) {
     if (!imageUrl && file instanceof File && file.size > 0) {
       const imageFd = new FormData();
       imageFd.set("file", file);
+      imageFd.set("folder", S3_FOLDERS.homeSlider);
       const uploaded = await uploadImage(imageFd);
       if (!uploaded.success) return { error: uploaded.error };
       imageUrl = uploaded.path;
@@ -123,27 +124,19 @@ export async function updateHomeSliderSlide(formData: FormData) {
     if (!imageUrl && file instanceof File && file.size > 0) {
       const imageFd = new FormData();
       imageFd.set("file", file);
+      imageFd.set("folder", S3_FOLDERS.homeSlider);
       const uploaded = await uploadImage(imageFd);
       if (!uploaded.success) return { error: uploaded.error };
       imageUrl = uploaded.path;
-      if (isManagedUploadUrl(existing.imageUrl)) {
-        try {
-          await deleteImage(existing.imageUrl);
-        } catch {
-          /* ignore */
-        }
+      if (existing.imageUrl && existing.imageUrl !== imageUrl) {
+        await deleteImage(existing.imageUrl);
       }
     } else if (
       imageUrl &&
       existing.imageUrl &&
-      imageUrl !== existing.imageUrl &&
-      isManagedUploadUrl(existing.imageUrl)
+      imageUrl !== existing.imageUrl
     ) {
-      try {
-        await deleteImage(existing.imageUrl);
-      } catch {
-        /* ignore */
-      }
+      await deleteImage(existing.imageUrl);
     }
 
     await prisma.tourismSliderSlide.update({
@@ -176,15 +169,9 @@ export async function deleteHomeSliderSlide(id: string) {
     });
     if (!existing) return { error: "الشريحة غير موجودة" };
 
+    // احذف من AWS أولاً ثم من قاعدة البيانات
+    await deleteImage(existing.imageUrl);
     await prisma.tourismSliderSlide.delete({ where: { id } });
-
-    if (isManagedUploadUrl(existing.imageUrl)) {
-      try {
-        await deleteImage(existing.imageUrl);
-      } catch {
-        /* ignore */
-      }
-    }
 
     revalidateSliderPaths();
     return { success: true };

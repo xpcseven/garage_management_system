@@ -1,8 +1,10 @@
-import { deleteImage } from "@/lib/deleteImage";
+import { deleteImage, deleteImages } from "@/lib/deleteImage";
 import {
+  collectUploadResults,
   isManagedUploadUrl,
   storeImagesFromFormData,
 } from "@/lib/image-storage";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 import { prisma } from "@/lib/prisma";
 
 export const MAX_HOTEL_IMAGES = 10;
@@ -28,34 +30,36 @@ export function resolveHotelImages(hotel: HotelWithImages): string[] {
   return [];
 }
 
+/**
+ * عند رفع صور جديدة → استبدال كامل (القديمة تُحذف من S3 عبر sync).
+ * بدون ملفات جديدة → الإبقاء على الحالية.
+ */
 export async function resolveHotelImageUrlsFromFormData(
   formData: FormData,
   existingUrls: string[] = []
 ): Promise<{ urls: string[]; error?: string }> {
-  const urls = [...existingUrls.filter(Boolean)];
-
-  const uploadResults = await storeImagesFromFormData(formData, "hotelImages");
-  for (const r of uploadResults) {
-    if (r.success && !urls.includes(r.path)) urls.push(r.path);
+  const uploadResults = await storeImagesFromFormData(
+    formData,
+    "hotelImages",
+    S3_FOLDERS.hotels
+  );
+  const collected = collectUploadResults(uploadResults);
+  if (collected.error) {
+    return { urls: existingUrls, error: collected.error };
   }
 
-  if (urls.length > MAX_HOTEL_IMAGES) {
-    return {
-      urls: urls.slice(0, MAX_HOTEL_IMAGES),
-      error: `الحد الأقصى ${MAX_HOTEL_IMAGES} صور للفندق`,
-    };
+  if (collected.urls.length > 0) {
+    const urls = collected.urls.slice(0, MAX_HOTEL_IMAGES);
+    if (collected.urls.length > MAX_HOTEL_IMAGES) {
+      return {
+        urls,
+        error: `الحد الأقصى ${MAX_HOTEL_IMAGES} صور للفندق`,
+      };
+    }
+    return { urls };
   }
 
-  return { urls };
-}
-
-async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!isManagedUploadUrl(url)) return;
-  try {
-    await deleteImage(url!);
-  } catch {
-    /* ignore */
-  }
+  return { urls: existingUrls.filter(Boolean) };
 }
 
 export async function syncHotelImages(hotelId: string, targetUrls: string[]) {
@@ -66,12 +70,17 @@ export async function syncHotelImages(hotelId: string, targetUrls: string[]) {
   });
 
   const targetSet = new Set(limited);
+  const removed: string[] = [];
+
   for (const img of existing) {
     if (!targetSet.has(img.imageUrl)) {
       await prisma.hotelImage.delete({ where: { id: img.id } });
-      await deleteUploadedImageSafe(img.imageUrl);
+      removed.push(img.imageUrl);
     }
   }
+
+  // احذف من AWS الصور التي لم تعد مستخدمة
+  await deleteImages(removed);
 
   const refreshed = await prisma.hotelImage.findMany({ where: { hotelId } });
   const urlToId = new Map(refreshed.map((r) => [r.imageUrl, r.id]));
@@ -96,4 +105,22 @@ export async function syncHotelImages(hotelId: string, targetUrls: string[]) {
     where: { id: hotelId },
     data: { imageUrl: limited[0] ?? null },
   });
+}
+
+/** حذف كل صور الفندق من DB + AWS */
+export async function deleteAllHotelImages(hotelId: string) {
+  const rows = await prisma.hotelImage.findMany({
+    where: { hotelId },
+    select: { imageUrl: true },
+  });
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: hotelId },
+    select: { imageUrl: true },
+  });
+
+  await prisma.hotelImage.deleteMany({ where: { hotelId } });
+  await deleteImages([
+    ...rows.map((r) => r.imageUrl),
+    hotel?.imageUrl,
+  ]);
 }

@@ -4,7 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { HomeSliderSlideRow } from "@/lib/actions/home_slider.actions";
 import { updateHomeSliderSlide } from "@/lib/actions/home_slider.actions";
-import { uploadImage } from "@/lib/uploadImage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
+import { toDisplayImageUrl } from "@/lib/media-url";
+import { uploadFileToAws } from "@/lib/client-upload";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 
 type Props = {
   slide: HomeSliderSlideRow;
@@ -168,20 +170,21 @@ export default function Home_Slider_Update({ slide }: Props) {
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const fd = new FormData();
-                fd.set("file", file);
                 setUploadingImage(true);
-                await notify("info", "جارٍ رفع الصورة...");
+                await notify("info", "جارٍ رفع الصورة إلى AWS...");
                 try {
-                  const result = await uploadImage(fd);
-                  if (result.success) {
-                    setImageUrlValue(result.path);
-                    await notify("success", "تم رفع الصورة بنجاح");
-                  } else {
-                    await notify("error", result.error);
-                  }
-                } catch {
-                  await notify("error", "فشل رفع الصورة");
+                  const { url } = await uploadFileToAws(
+                    file,
+                    S3_FOLDERS.homeSlider
+                  );
+                  setImageUrlValue(url);
+                  await notify("success", "تم رفع الصورة بنجاح");
+                } catch (err) {
+                  console.error("S3 upload error:", err);
+                  await notify(
+                    "error",
+                    err instanceof Error ? err.message : "فشل رفع الصورة إلى AWS"
+                  );
                 } finally {
                   setUploadingImage(false);
                 }
@@ -190,7 +193,7 @@ export default function Home_Slider_Update({ slide }: Props) {
             {imageUrlValue && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={imageUrlValue}
+                src={toDisplayImageUrl(imageUrlValue) || imageUrlValue}
                 alt={slide.title}
                 className="mt-2 h-28 w-full rounded-xl object-cover ring-1 ring-plum/10 dark:ring-orchid/20"
               />

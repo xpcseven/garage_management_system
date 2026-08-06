@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toDisplayImageUrl } from "@/lib/media-url";
 
 export const businessSelectClassName =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -81,7 +82,7 @@ export function ImageThumbs({ urls }: { urls: string[] }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={src}
-          src={src}
+          src={toDisplayImageUrl(src) || src}
           alt=""
           className="h-14 w-20 rounded-md object-cover ring-1 ring-slate-200"
         />

@@ -194,8 +194,7 @@ export async function updateRestaurant(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   if (!name || !address) return { error: "الاسم والعنوان مطلوبان" };
 
-  const keepExisting = formData.get("keepExistingImages") !== "false";
-  const existingUrls = keepExisting ? resolveRestaurantImages(row) : [];
+  const existingUrls = resolveRestaurantImages(row);
   const { urls, error: imgError } =
     await resolveRestaurantImageUrlsFromFormData(formData, existingUrls);
   if (imgError) {

@@ -1,8 +1,9 @@
-import { deleteImage } from "@/lib/deleteImage";
+import { deleteImages } from "@/lib/deleteImage";
 import {
-  isManagedUploadUrl,
+  collectUploadResults,
   storeImagesFromFormData,
 } from "@/lib/image-storage";
+import { S3_FOLDERS } from "@/lib/s3-folders";
 import { prisma } from "@/lib/prisma";
 
 export const MAX_FARM_IMAGES = 10;
@@ -28,34 +29,33 @@ export function resolveFarmImages(farm: FarmWithImages): string[] {
   return [];
 }
 
+/** رفع جديد → استبدال؛ بدون رفع → إبقاء الحالية */
 export async function resolveFarmImageUrlsFromFormData(
   formData: FormData,
   existingUrls: string[] = []
 ): Promise<{ urls: string[]; error?: string }> {
-  const urls = [...existingUrls.filter(Boolean)];
-
-  const uploadResults = await storeImagesFromFormData(formData, "farmImages");
-  for (const r of uploadResults) {
-    if (r.success && !urls.includes(r.path)) urls.push(r.path);
+  const uploadResults = await storeImagesFromFormData(
+    formData,
+    "farmImages",
+    S3_FOLDERS.farms
+  );
+  const collected = collectUploadResults(uploadResults);
+  if (collected.error) {
+    return { urls: existingUrls, error: collected.error };
   }
 
-  if (urls.length > MAX_FARM_IMAGES) {
-    return {
-      urls: urls.slice(0, MAX_FARM_IMAGES),
-      error: `الحد الأقصى ${MAX_FARM_IMAGES} صور للمزرعة`,
-    };
+  if (collected.urls.length > 0) {
+    const urls = collected.urls.slice(0, MAX_FARM_IMAGES);
+    if (collected.urls.length > MAX_FARM_IMAGES) {
+      return {
+        urls,
+        error: `الحد الأقصى ${MAX_FARM_IMAGES} صور للمزرعة`,
+      };
+    }
+    return { urls };
   }
 
-  return { urls };
-}
-
-async function deleteUploadedImageSafe(url: string | null | undefined) {
-  if (!isManagedUploadUrl(url)) return;
-  try {
-    await deleteImage(url!);
-  } catch {
-    /* ignore */
-  }
+  return { urls: existingUrls.filter(Boolean) };
 }
 
 export async function syncFarmImages(farmId: string, targetUrls: string[]) {
@@ -66,12 +66,16 @@ export async function syncFarmImages(farmId: string, targetUrls: string[]) {
   });
 
   const targetSet = new Set(limited);
+  const removed: string[] = [];
+
   for (const img of existing) {
     if (!targetSet.has(img.imageUrl)) {
       await prisma.farmImage.delete({ where: { id: img.id } });
-      await deleteUploadedImageSafe(img.imageUrl);
+      removed.push(img.imageUrl);
     }
   }
+
+  await deleteImages(removed);
 
   const refreshed = await prisma.farmImage.findMany({ where: { farmId } });
   const urlToId = new Map(refreshed.map((r) => [r.imageUrl, r.id]));
@@ -96,4 +100,18 @@ export async function syncFarmImages(farmId: string, targetUrls: string[]) {
     where: { id: farmId },
     data: { imageUrl: limited[0] ?? null },
   });
+}
+
+export async function deleteAllFarmImages(farmId: string) {
+  const rows = await prisma.farmImage.findMany({
+    where: { farmId },
+    select: { imageUrl: true },
+  });
+  const farm = await prisma.farm.findUnique({
+    where: { id: farmId },
+    select: { imageUrl: true },
+  });
+
+  await prisma.farmImage.deleteMany({ where: { farmId } });
+  await deleteImages([...rows.map((r) => r.imageUrl), farm?.imageUrl]);
 }

@@ -53,12 +53,16 @@ export default function LandingHero({ slides }: Props) {
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-plum-dark text-white">
       <div className="absolute inset-0">
-        <Image
+          <Image
           key={current.id}
           src={current.src}
           alt={current.title}
           fill
           priority
+          unoptimized={
+            current.src.startsWith("/api/media/") ||
+            current.src.includes("amazonaws.com")
+          }
           className="object-cover landing-kenburns motion-reduce:animate-none"
           sizes="100vw"
         />

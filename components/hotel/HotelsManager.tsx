@@ -221,8 +221,8 @@ function HotelEdit({ hotel }: { hotel: HotelRow }) {
           <ImageThumbs urls={hotel.images} />
           <ImagesField
             name="hotelImages"
-            label="إضافة صور"
-            hint="تُضاف إلى الصور الحالية — الإجمالي حد أقصى 10"
+            label="استبدال الصور"
+            hint="اختيار صور جديدة يحذف الصور السابقة من AWS ويبقي على الجديدة فقط"
           />
 
           <Button

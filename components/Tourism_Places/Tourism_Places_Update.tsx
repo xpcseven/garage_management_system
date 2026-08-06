@@ -9,6 +9,7 @@ import Tourism_Place_Images_Upload, {
   appendPlaceImagesToFormData,
   type PlaceImageItem,
 } from "./Tourism_Place_Images_Upload";
+import { toDisplayImageUrl } from "@/lib/media-url";
 
 function placeToImageItems(place: TourismPlaceRow): PlaceImageItem[] {
   const urls =
@@ -17,7 +18,10 @@ function placeToImageItems(place: TourismPlaceRow): PlaceImageItem[] {
       : place.imageUrl
         ? [place.imageUrl]
         : [];
-  return urls.map((url) => ({ preview: url, url }));
+  return urls.map((url) => ({
+    preview: toDisplayImageUrl(url) || url,
+    url,
+  }));
 }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
