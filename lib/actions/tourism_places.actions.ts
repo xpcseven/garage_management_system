@@ -2,9 +2,9 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { canManageTourismPlaces, canUsePassengerPortal } from "@/lib/permissions";
 import {
   deleteAllTourismPlaceImages,
+  MAX_TOURISM_PLACE_IMAGES,
   resolveImageUrlsFromFormData,
   resolvePlaceImages,
   syncTourismPlaceImages,
@@ -13,6 +13,11 @@ import {
 import { revalidatePath } from "next/cache";
 import { UserRole } from "@/prisma/UserRole.enum";
 import { notifyAllPassengers } from "@/lib/actions/notification.actions";
+import {
+  canManageTourismPlaces,
+  canSuggestTourismPlaces,
+  canUsePassengerPortal,
+} from "@/lib/permissions";
 
 export type TourismPlaceRow = {
   id: string;
@@ -198,7 +203,7 @@ export async function createTourismPlace(
       imageUrlsFromClient
     );
     if (resolved.error) return { error: resolved.error };
-    const imageUrls = resolved.urls;
+    const imageUrls = resolved.urls.slice(0, MAX_TOURISM_PLACE_IMAGES);
     const autoApprove = session.user.role === UserRole.SUPER_ADMIN;
 
     const place = await prisma.tourismPlace.create({
@@ -252,6 +257,75 @@ export async function createTourismPlace(
     return {
       error:
         e instanceof Error ? e.message : "تعذر الإنشاء",
+    };
+  }
+}
+
+/** مسافر (USER): اقتراح مكان زاره — يظهر للعامة فقط بعد موافقة السوبر أدمن */
+export async function suggestTourismPlaceByPassenger(
+  formData: FormData,
+  imageUrlsFromClient?: string[]
+) {
+  const session = await auth();
+  if (!session?.user || !canSuggestTourismPlaces(session.user.role)) {
+    return { error: "يجب تسجيل الدخول كمسافر لاقتراح مكان سياحي" };
+  }
+
+  const name = String(formData.get("name") ?? "").trim();
+  const governorate = String(formData.get("governorate") ?? "").trim() || null;
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
+  const location = String(formData.get("location") ?? "").trim() || null;
+
+  if (!name) return { error: "اسم المكان مطلوب" };
+  if (!description) return { error: "أضف وصفاً قصيراً عن المكان الذي زرته" };
+
+  try {
+    const resolved = await resolveImageUrlsFromFormData(
+      formData,
+      imageUrlsFromClient
+    );
+    if (resolved.error) return { error: resolved.error };
+    const imageUrls = resolved.urls.slice(0, MAX_TOURISM_PLACE_IMAGES);
+    if (imageUrls.length === 0) {
+      return { error: "أضف صورة واحدة على الأقل (حتى 5 صور)" };
+    }
+    if (resolved.urls.length > MAX_TOURISM_PLACE_IMAGES) {
+      return { error: `الحد الأقصى ${MAX_TOURISM_PLACE_IMAGES} صور للمكان` };
+    }
+
+    await prisma.tourismPlace.create({
+      data: {
+        name,
+        governorate,
+        description,
+        address,
+        location,
+        imageUrl: imageUrls[0] ?? null,
+        ownerId: session.user.id,
+        isActive: true,
+        approvalStatus: "PENDING",
+        reviewedAt: null,
+        images: {
+          create: imageUrls.map((url, i) => ({
+            imageUrl: url,
+            sortOrder: i,
+          })),
+        },
+      },
+    });
+
+    revalidatePath("/tourism-requests");
+    revalidateTourismPaths();
+
+    return {
+      success: true,
+      pendingApproval: true as const,
+    };
+  } catch (e) {
+    console.error("suggestTourismPlaceByPassenger", e);
+    return {
+      error: e instanceof Error ? e.message : "تعذر إرسال الاقتراح",
     };
   }
 }

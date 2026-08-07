@@ -121,6 +121,11 @@ export default function Sidebar({ user, className }: Props) {
           <NavLink href="/auth/login" label="تسجيل الدخول" icon="🔑" />
           <NavLink href="/auth/register" label="إنشاء حساب" icon="✨" />
           <NavLink href="/bookings" label="حجوزاتي" icon="📋" />
+          <NavLink
+            href="/tourism-places"
+            label="أضف مكاناً زرته"
+            icon="📍"
+          />
         </nav>
 
         <div className="mt-auto border-t border-plum/10 pt-3 dark:border-orchid/15">
@@ -307,6 +312,11 @@ export default function Sidebar({ user, className }: Props) {
                   href="/passenger/tourism-places"
                   label="أماكن سياحية"
                   icon="🧳"
+                />
+                <NavLink
+                  href="/passenger/tourism-places"
+                  label="أضف مكاناً زرته"
+                  icon="📍"
                 />
                 <NavLink href="/passenger/hotels" label="فنادق" icon="🏨" />
                 <NavLink href="/passenger/restaurants" label="مطاعم" icon="🍽️" />

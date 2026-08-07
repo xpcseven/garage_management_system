@@ -154,6 +154,8 @@ export async function deleteAllTourismPlaceImages(placeId: string) {
   await deleteImages([...rows.map((r) => r.imageUrl), place?.imageUrl]);
 }
 
+export const MAX_TOURISM_PLACE_IMAGES = 5;
+
 export const tourismPlaceInclude = {
   city: { select: { id: true, name: true, region: true } },
   images: {

@@ -52,6 +52,11 @@ export function canViewBookings(role: UserRole | string | undefined) {
   return !!role;
 }
 
+/** اقتراح مكان سياحي من المسافر (USER) */
+export function canSuggestTourismPlaces(role: UserRole | string | undefined) {
+  return role === UserRole.USER;
+}
+
 /** إدارة الأماكن السياحية */
 export function canManageTourismPlaces(role: UserRole | string | undefined) {
   return (

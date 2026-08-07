@@ -79,8 +79,9 @@ export default function LandingHero({ slides }: Props) {
             رحلتك العراقية من مقعد واحد إلى باقة كاملة
           </h1>
           <p className="landing-reveal landing-reveal-delay-2 max-w-xl text-sm leading-7 text-white/85 sm:text-base sm:leading-8">
-            احجز رحلات وبرامج سياحية، واكتشف فنادق ومطاعم ومزارع وشركاء معتمدين —
-            في منصة واحدة للسفر داخل العراق.
+            احجز رحلات وبرامج سياحية، واكتشف فنادق ومطاعم ومزارع وشركاء معتمدين.
+            ويمكنك أيضاً مشاركة الأماكن التي زرتها بصورك ووصفك — تظهر للعامة بعد
+            موافقة إدارة المنصة.
           </p>
           <div className="landing-reveal landing-reveal-delay-3 flex flex-wrap gap-3">
             <Button
@@ -96,7 +97,7 @@ export default function LandingHero({ slides }: Props) {
               variant="outline"
               className="rounded-xl border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
             >
-              <Link href="/tourism-places">استكشف المعالم</Link>
+              <Link href="/tourism-places">استكشف المعالم وشارك مكاناً</Link>
             </Button>
           </div>
         </div>
