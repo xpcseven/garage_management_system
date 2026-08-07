@@ -7,7 +7,6 @@ import {
 import { listAcceptedPartnersForGarage } from "@/lib/actions/partnership.actions";
 import { canUsePassengerPortal } from "@/lib/permissions";
 import Passenger_Garage_Detail_Component from "@/components/passenger/Passenger_Garage_Detail_Component";
-import UnAuthorized from "@/components/UnAuthorized";
 
 type Props = {
   params: { garageId: string };
@@ -15,9 +14,7 @@ type Props = {
 
 export default async function PassengerGarageDetailPage({ params }: Props) {
   const user = await currentUser();
-  if (!user || !canUsePassengerPortal(user.role)) {
-    return <UnAuthorized />;
-  }
+  const isLoggedIn = Boolean(user && canUsePassengerPortal(user.role));
 
   const garage = await getPublicGarageByIdForPassenger(params.garageId);
   if (!garage) {
@@ -34,6 +31,7 @@ export default async function PassengerGarageDetailPage({ params }: Props) {
       garage={garage}
       trips={trips}
       partners={partners}
+      isLoggedIn={isLoggedIn}
     />
   );
 }

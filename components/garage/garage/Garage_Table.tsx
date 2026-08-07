@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GarageRow } from "@/lib/actions/garage.actions";
 import Garage_Update from "./Garage_Update";
+import Garage_Drivers from "./Garage_Drivers";
 import TablePagination from "@/components/Shared/TablePagination";
 import { cn } from "@/lib/utils";
 
@@ -162,7 +163,10 @@ export default function Garage_Table({ garages }: Props) {
                     </span>
                   </td>
                   <td className="p-3" data-label="إجراءات">
-                    <Garage_Update garage={g} />
+                    <div className="flex flex-wrap gap-2">
+                      <Garage_Update garage={g} />
+                      <Garage_Drivers garageId={g.id} garageName={g.name} />
+                    </div>
                   </td>
                 </tr>
               ))}

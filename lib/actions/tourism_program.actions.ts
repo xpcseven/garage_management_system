@@ -487,9 +487,6 @@ export async function getManagedTourismPrograms(): Promise<TourismProgramManageR
 export async function getTourismProgramsForPassenger(): Promise<
   TourismProgramPassengerRow[]
 > {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
-
   const rows = await prisma.tourismProgram.findMany({
     where: {
       isActive: true,

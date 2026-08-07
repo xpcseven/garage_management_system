@@ -12,10 +12,8 @@ export type CityRow = {
   isActive: boolean;
 };
 
-/** مدن نشطة للنماذج والبحث (أي مستخدم مسجّل) */
+/** مدن نشطة للنماذج والبحث (عام بدون تسجيل) */
 export async function getActiveCitiesPublic(): Promise<CityRow[]> {
-  const session = await auth();
-  if (!session?.user) return [];
   const rows = await prisma.city.findMany({
     where: { isActive: true },
     orderBy: { name: "asc" },

@@ -7,6 +7,7 @@ import {
   apiAuthPrefix,
   isPublicRoute,
 } from "@/routes";
+import { NextResponse } from "next/server";
 
 // @ts-expect-error @ts-ignore
 export default auth((req) => {
@@ -42,7 +43,12 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn) {
-    return Response.redirect(new URL("/auth/login", nextUrl));
+    const loginUrl = new URL("/auth/login", nextUrl);
+    const callback = `${pathname}${nextUrl.search}`;
+    if (callback && callback !== "/") {
+      loginUrl.searchParams.set("callbackUrl", callback);
+    }
+    return NextResponse.redirect(loginUrl);
   }
 
   return null;

@@ -56,7 +56,7 @@ const QUICK = [
     hint: "خيارات إضافية",
     icon: "🚐",
   },
-  { href: "/bookings", label: "حجوزاتي", hint: "متابعة موحّدة", icon: "📋" },
+  { href: "/bookings", label: "حجوزاتي", hint: "تتطلب تسجيل الدخول", icon: "📋" },
 ] as const;
 
 function useInView<T extends HTMLElement>() {

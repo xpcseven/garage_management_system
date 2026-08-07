@@ -25,7 +25,14 @@ export type VehicleRow = {
   isActive: boolean;
   garageId: string | null;
   garageName: string | null;
+  driverId: string | null;
   driverName: string | null;
+};
+
+export type GarageDriverOption = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 async function vehicleWhereForUser(userId: string, role: string) {
@@ -57,6 +64,7 @@ export async function getVehiclesForUser(): Promise<VehicleRow[]> {
     orderBy: { plateNumber: "asc" },
     include: {
       garage: { select: { name: true } },
+      driver: { select: { id: true, name: true } },
     },
   });
   return list.map((v) => ({
@@ -73,7 +81,8 @@ export async function getVehiclesForUser(): Promise<VehicleRow[]> {
     isActive: v.isActive,
     garageId: v.garageId,
     garageName: v.garage?.name ?? null,
-    driverName: v.driverName ?? null,
+    driverId: v.driverId ?? null,
+    driverName: v.driver?.name ?? v.driverName ?? null,
   }));
 }
 
@@ -110,6 +119,105 @@ export async function getGarageOptionsForVehicle(): Promise<
     .map((m) => ({ id: m.garage.id, name: m.garage.name }));
 }
 
+/** سائقو الشركة المرتبطون (GarageMember DRIVER) — لاختيارهم عند إضافة مركبة */
+export async function getLinkedDriversForGarages(
+  garageIds: string[]
+): Promise<Record<string, GarageDriverOption[]>> {
+  const session = await auth();
+  if (!session?.user || garageIds.length === 0) return {};
+
+  const uniqueIds = [...new Set(garageIds.filter(Boolean))];
+  const result: Record<string, GarageDriverOption[]> = {};
+  for (const id of uniqueIds) result[id] = [];
+
+  const ownedOrAdmin = await prisma.garage.findMany({
+    where: {
+      id: { in: uniqueIds },
+      isDeleted: false,
+      ...(session.user.role === UserRole.SUPER_ADMIN
+        ? {}
+        : {
+            OR: [
+              { ownerId: session.user.id },
+              {
+                members: {
+                  some: {
+                    userId: session.user.id,
+                    role: GarageRole.GARAGE_ADMIN,
+                  },
+                },
+              },
+            ],
+          }),
+    },
+    select: { id: true },
+  });
+  const allowed = new Set(ownedOrAdmin.map((g) => g.id));
+  if (allowed.size === 0) return result;
+
+  const members = await prisma.garageMember.findMany({
+    where: {
+      garageId: { in: Array.from(allowed) },
+      role: GarageRole.DRIVER,
+      user: {
+        role: UserRole.DRIVER,
+        isDeleted: false,
+        isActive: true,
+      },
+    },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { joinedAt: "asc" },
+  });
+
+  for (const m of members) {
+    const list = result[m.garageId] ?? (result[m.garageId] = []);
+    list.push({
+      id: m.user.id,
+      name: m.user.name,
+      email: m.user.email,
+    });
+  }
+  return result;
+}
+
+async function resolveAssignedDriver(
+  garageId: string | null,
+  driverIdRaw: string
+): Promise<
+  | { error: string }
+  | { driverId: string | null; driverName: string | null }
+> {
+  const driverId = driverIdRaw.trim() || null;
+  if (!garageId) {
+    return { driverId: null, driverName: null };
+  }
+  if (!driverId) {
+    return { error: "اختر سائقاً مرتبطاً بهذه الشركة السياحية" };
+  }
+
+  const membership = await prisma.garageMember.findFirst({
+    where: {
+      garageId,
+      userId: driverId,
+      role: GarageRole.DRIVER,
+      user: {
+        role: UserRole.DRIVER,
+        isDeleted: false,
+        isActive: true,
+      },
+    },
+    include: { user: { select: { name: true } } },
+  });
+  if (!membership) {
+    return {
+      error: "السائق غير مرتبط بهذه الشركة. اربط السائق أولاً من صفحة الشركات.",
+    };
+  }
+  return { driverId, driverName: membership.user.name };
+}
+
 function parseCategory(raw: string): VehicleCategory {
   const allowed = Object.keys(VEHICLE_CATEGORY_LABELS) as VehicleCategory[];
   if (allowed.includes(raw as VehicleCategory)) return raw as VehicleCategory;
@@ -139,7 +247,7 @@ export async function createVehicle(formData: FormData) {
   ) as TransportType;
   const garageIdRaw = String(formData.get("garageId") ?? "").trim();
   const garageId = garageIdRaw || null;
-  const driverName = String(formData.get("driverName") ?? "").trim() || null;
+  const driverIdRaw = String(formData.get("driverId") ?? "").trim();
 
   if (!brand || !model || !plateNumber || !year || !totalSeats) {
     return { error: "أكمل الحقول المطلوبة" };
@@ -149,10 +257,6 @@ export async function createVehicle(formData: FormData) {
     if (!garageId) {
       return { error: "يجب اختيار الشركة السياحية لإضافة المركبة إلى أسطولك" };
     }
-  }
-
-  if (garageId && !driverName) {
-    return { error: "أدخل اسم السائق المعيّن لهذه المركبة في الشركة السياحية" };
   }
 
   if (garageId) {
@@ -173,6 +277,9 @@ export async function createVehicle(formData: FormData) {
     if (!allowed) return { error: "لا يمكنك ربط المركبة بهذه الشركة السياحية" };
   }
 
+  const assigned = await resolveAssignedDriver(garageId, driverIdRaw);
+  if ("error" in assigned) return { error: assigned.error };
+
   try {
     await prisma.vehicle.create({
       data: {
@@ -187,7 +294,8 @@ export async function createVehicle(formData: FormData) {
         transportType,
         ownerId: session.user.id,
         garageId,
-        driverName,
+        driverId: assigned.driverId,
+        driverName: assigned.driverName,
         isActive: true,
       },
     });
@@ -245,15 +353,14 @@ export async function updateVehicle(formData: FormData) {
   const transportType = String(
     formData.get("transportType") ?? v.transportType
   ) as TransportType;
-  const driverName = String(formData.get("driverName") ?? "").trim() || null;
+  const driverIdRaw = String(formData.get("driverId") ?? "").trim();
 
   if (!brand || !model || !year || !totalSeats) {
     return { error: "أكمل الحقول المطلوبة" };
   }
 
-  if (v.garageId && !driverName) {
-    return { error: "اسم السائق مطلوب للمركبات المرتبطة بشركة سياحية" };
-  }
+  const assigned = await resolveAssignedDriver(v.garageId, driverIdRaw);
+  if ("error" in assigned) return { error: assigned.error };
 
   try {
     await prisma.vehicle.update({
@@ -268,7 +375,8 @@ export async function updateVehicle(formData: FormData) {
         color,
         isActive,
         transportType,
-        driverName: v.garageId ? driverName : null,
+        driverId: v.garageId ? assigned.driverId : null,
+        driverName: v.garageId ? assigned.driverName : null,
       },
     });
     revalidatePath("/vehicles");

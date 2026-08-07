@@ -28,6 +28,8 @@ import Link from "next/link";
 import Swal from "sweetalert2";
 import { cn } from "@/lib/utils";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
+import RestaurantMenuManager from "@/components/restaurant/RestaurantMenuManager";
+import { toDisplayImageUrl } from "@/lib/media-url";
 
 function approvalLabel(s: RestaurantRow["approvalStatus"]) {
   if (s === "APPROVED") return "معتمد";
@@ -256,7 +258,10 @@ export function RestaurantDetailManager({
 }: {
   restaurant: RestaurantRow;
 }) {
-  const cover = restaurant.images[0] ?? restaurant.imageUrl;
+  const cover =
+    toDisplayImageUrl(restaurant.images[0] ?? restaurant.imageUrl) ||
+    restaurant.images[0] ||
+    restaurant.imageUrl;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -336,7 +341,7 @@ export function RestaurantDetailManager({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={url}
-                  src={url}
+                  src={toDisplayImageUrl(url) || url}
                   alt=""
                   className="h-20 w-28 shrink-0 rounded-xl object-cover ring-1 ring-plum/10 dark:ring-orchid/20"
                   loading="lazy"
@@ -357,6 +362,11 @@ export function RestaurantDetailManager({
           </div>
         </div>
       </article>
+
+      <RestaurantMenuManager
+        restaurantId={restaurant.id}
+        items={restaurant.menuItems ?? []}
+      />
     </div>
   );
 }

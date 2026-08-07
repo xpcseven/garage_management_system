@@ -1,12 +1,11 @@
 import { currentUser } from "@/lib/auth";
+import { canUsePassengerPortal } from "@/lib/permissions";
 import { getActiveCitiesPublic } from "@/lib/actions/city.actions";
 import {
   searchTripsForPassenger,
   type PassengerTripScope,
 } from "@/lib/actions/passenger.actions";
-import { canUsePassengerPortal } from "@/lib/permissions";
 import Passenger_Trips_Component from "@/components/passenger/Passenger_Trips_Component";
-import UnAuthorized from "@/components/UnAuthorized";
 
 type SearchParams = {
   from?: string;
@@ -21,9 +20,7 @@ export default async function PassengerTripsPage({
   searchParams: SearchParams;
 }) {
   const user = await currentUser();
-  if (!user || !canUsePassengerPortal(user.role)) {
-    return <UnAuthorized />;
-  }
+  const isLoggedIn = Boolean(user && canUsePassengerPortal(user.role));
 
   const scopeRaw = searchParams.scope ?? "all";
   const scope: PassengerTripScope =
@@ -45,6 +42,7 @@ export default async function PassengerTripsPage({
     <Passenger_Trips_Component
       cities={cities}
       trips={trips}
+      isLoggedIn={isLoggedIn}
       initialParams={{
         from: searchParams.from ?? "",
         to: searchParams.to ?? "",

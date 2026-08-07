@@ -3,14 +3,13 @@ import { currentUser } from "@/lib/auth";
 import { canUsePassengerPortal } from "@/lib/permissions";
 import { getHotelDetailForPassenger } from "@/lib/actions/hotel.actions";
 import PassengerHotelDetail from "@/components/passenger/PassengerHotelDetail";
-import UnAuthorized from "@/components/UnAuthorized";
 import { Button } from "@/components/ui/button";
 
 type Props = { params: { hotelId: string } };
 
 export default async function PassengerHotelDetailPage({ params }: Props) {
   const user = await currentUser();
-  if (!user || !canUsePassengerPortal(user.role)) return <UnAuthorized />;
+  const isLoggedIn = Boolean(user && canUsePassengerPortal(user.role));
 
   const hotel = await getHotelDetailForPassenger(params.hotelId);
   if (!hotel) {
@@ -30,5 +29,5 @@ export default async function PassengerHotelDetailPage({ params }: Props) {
     );
   }
 
-  return <PassengerHotelDetail hotel={hotel} />;
+  return <PassengerHotelDetail hotel={hotel} isLoggedIn={isLoggedIn} />;
 }

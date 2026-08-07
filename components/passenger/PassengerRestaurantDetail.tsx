@@ -8,7 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
+import LoginToBookPrompt from "@/components/Shared/LoginToBookPrompt";
+import { toDisplayImageUrl } from "@/lib/media-url";
 import Swal from "sweetalert2";
+import { usePathname } from "next/navigation";
+
+export type PassengerMenuItem = {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+};
 
 export type PassengerRestaurantDetailData = {
   id: string;
@@ -21,6 +31,7 @@ export type PassengerRestaurantDetailData = {
   openHours: string | null;
   city: { name: string } | null;
   images: string[];
+  menuItems: PassengerMenuItem[];
 };
 
 const fieldClass =
@@ -28,10 +39,13 @@ const fieldClass =
 
 export default function PassengerRestaurantDetail({
   restaurant,
+  isLoggedIn = false,
 }: {
   restaurant: PassengerRestaurantDetailData;
+  isLoggedIn?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, start] = useTransition();
   const city = restaurant.city?.name?.trim() || "العراق";
 
@@ -131,6 +145,7 @@ export default function PassengerRestaurantDetail({
           </p>
         </div>
 
+        {isLoggedIn ? (
         <form
           className="mt-6 grid gap-3 sm:grid-cols-2"
           action={(fd) => {
@@ -195,7 +210,65 @@ export default function PassengerRestaurantDetail({
             </Button>
           </div>
         </form>
+        ) : (
+          <div className="mt-6">
+            <LoginToBookPrompt callbackPath={pathname} />
+          </div>
+        )}
       </section>
+
+      {restaurant.menuItems.length > 0 && (
+        <section className="space-y-4 rounded-[1.75rem] bg-white p-5 ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20 sm:p-6">
+          <div className="text-start">
+            <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+              المنيو
+            </p>
+            <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
+              قائمة الطعام
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {restaurant.menuItems.map((item) => {
+              const src =
+                toDisplayImageUrl(item.imageUrl) || item.imageUrl || "";
+              return (
+                <article
+                  key={item.id}
+                  className="overflow-hidden rounded-2xl bg-mist/50 ring-1 ring-plum/10 dark:bg-background dark:ring-orchid/15"
+                >
+                  {src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={src}
+                      alt={item.name}
+                      className="h-36 w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-36 items-center justify-center bg-mist text-xs text-dusk/40 dark:bg-muted dark:text-muted-foreground">
+                      بلا صورة
+                    </div>
+                  )}
+                  <div className="space-y-1 p-4 text-start">
+                    <h3 className="font-semibold text-dusk dark:text-foreground">
+                      {item.name}
+                    </h3>
+                    <p className="font-data text-sm tabular-nums text-orchid dark:text-orchid-light">
+                      {formatPrice(item.price)} د.ع
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
+}
+
+function formatPrice(raw: string) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return n.toLocaleString("en-US");
 }

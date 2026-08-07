@@ -3,14 +3,13 @@ import { currentUser } from "@/lib/auth";
 import { canUsePassengerPortal } from "@/lib/permissions";
 import { getFarmDetailForPassenger } from "@/lib/actions/farm.actions";
 import PassengerFarmDetail from "@/components/passenger/PassengerFarmDetail";
-import UnAuthorized from "@/components/UnAuthorized";
 import { Button } from "@/components/ui/button";
 
 type Props = { params: { farmId: string } };
 
 export default async function PassengerFarmDetailPage({ params }: Props) {
   const user = await currentUser();
-  if (!user || !canUsePassengerPortal(user.role)) return <UnAuthorized />;
+  const isLoggedIn = Boolean(user && canUsePassengerPortal(user.role));
 
   const farm = await getFarmDetailForPassenger(params.farmId);
   if (!farm) {
@@ -32,6 +31,7 @@ export default async function PassengerFarmDetailPage({ params }: Props) {
 
   return (
     <PassengerFarmDetail
+      isLoggedIn={isLoggedIn}
       farm={{
         id: farm.id,
         name: farm.name,

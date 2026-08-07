@@ -3,12 +3,15 @@ import { LoginSchema } from "@/schemas";
 import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/auth";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
+import { safeCallbackUrl } from "@/routes";
 import { AuthError } from "next-auth";
 import { getUserByEmail } from "@/lib/action/user.action";
 import { resendVerificationEmail } from "@/lib/action/auth/resend-verification";
 
-export const login = async (values: z.infer<typeof LoginSchema>) => {
+export const login = async (
+  values: z.infer<typeof LoginSchema>,
+  callbackUrl?: string | null
+) => {
   const validateFields = LoginSchema.safeParse(values);
 
   if (!validateFields.success) {
@@ -36,11 +39,13 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     };
   }
 
+  const redirectTo = safeCallbackUrl(callbackUrl);
+
   try {
     await signIn("credentials", {
       email,
       password,
-      redirectTo: DEFAULT_LOGIN_REDIRECT,
+      redirectTo,
     });
     return { success: "تم تسجيل الدخول بنجاح" };
   } catch (error) {

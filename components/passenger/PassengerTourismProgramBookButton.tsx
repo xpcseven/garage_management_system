@@ -1,18 +1,37 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { bookTourismProgram } from "@/lib/actions/tourism_program.actions";
+import { loginWithCallback } from "@/routes";
 import Swal from "sweetalert2";
 
 type Props = {
   programId: string;
+  isLoggedIn?: boolean;
 };
 
-export default function PassengerTourismProgramBookButton({ programId }: Props) {
+export default function PassengerTourismProgramBookButton({
+  programId,
+  isLoggedIn = false,
+}: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, start] = useTransition();
+
+  if (!isLoggedIn) {
+    return (
+      <Button
+        asChild
+        size="sm"
+        className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white"
+      >
+        <Link href={loginWithCallback(pathname)}>سجّل الدخول للحجز</Link>
+      </Button>
+    );
+  }
 
   return (
     <Button

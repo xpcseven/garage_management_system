@@ -28,8 +28,11 @@ import {
 } from "@/components/ui/select";
 import SeatMap, { type SeatMapSeat } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { loginWithCallback } from "@/routes";
 
-type Props = { tripId: string };
+type Props = { tripId: string; isLoggedIn?: boolean };
 
 type LuggageFormRow = {
   key: string;
@@ -58,14 +61,30 @@ function rowsToPayload(rows: LuggageFormRow[]): BookTripLuggagePayload[] {
   }));
 }
 
-export default function PassengerTripBookButton({ tripId }: Props) {
+export default function PassengerTripBookButton({
+  tripId,
+  isLoggedIn = false,
+}: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [seats, setSeats] = useState<SeatMapSeat[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [luggageRows, setLuggageRows] = useState<LuggageFormRow[]>([]);
   const [showLuggage, setShowLuggage] = useState(false);
   const [pending, start] = useTransition();
+
+  if (!isLoggedIn) {
+    return (
+      <Button
+        asChild
+        size="sm"
+        className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white"
+      >
+        <Link href={loginWithCallback(pathname)}>سجّل الدخول للحجز</Link>
+      </Button>
+    );
+  }
 
   function loadSeats() {
     start(async () => {

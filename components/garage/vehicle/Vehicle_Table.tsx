@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { VehicleRow } from "@/lib/actions/vehicle.actions";
+import type {
+  GarageDriverOption,
+  VehicleRow,
+} from "@/lib/actions/vehicle.actions";
 import Vehicle_Update from "./Vehicle_Update";
 import TablePagination from "@/components/Shared/TablePagination";
 import { cn } from "@/lib/utils";
 
-type Props = { vehicles: VehicleRow[] };
+type Props = {
+  vehicles: VehicleRow[];
+  driversByGarage: Record<string, GarageDriverOption[]>;
+};
 
 type StatusFilter = "all" | "active" | "inactive";
 type TransportFilter = "all" | "INTERNAL" | "EXTERNAL";
@@ -14,7 +20,10 @@ type TransportFilter = "all" | "INTERNAL" | "EXTERNAL";
 const chipIdle =
   "bg-mist text-dusk/70 ring-1 ring-plum/10 hover:bg-plum-soft dark:bg-muted dark:text-muted-foreground dark:ring-orchid/25 dark:hover:bg-orchid/15";
 
-export default function Vehicle_Table({ vehicles }: Props) {
+export default function Vehicle_Table({
+  vehicles,
+  driversByGarage,
+}: Props) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -225,7 +234,12 @@ export default function Vehicle_Table({ vehicles }: Props) {
                     </span>
                   </td>
                   <td className="p-3" data-label="إجراءات">
-                    <Vehicle_Update vehicle={v} />
+                    <Vehicle_Update
+                      vehicle={v}
+                      driverOptions={
+                        v.garageId ? driversByGarage[v.garageId] ?? [] : []
+                      }
+                    />
                   </td>
                 </tr>
               ))}

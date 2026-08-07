@@ -399,6 +399,191 @@ export async function updateHotelRoom(formData: FormData) {
   return { success: true };
 }
 
+export type HotelRoomBulkUpdateItem = {
+  id: string;
+  hotelId: string;
+  roomNumber: string;
+  roomType: HotelRoomType;
+  capacity: number;
+  pricePerNight: string;
+};
+
+const ROOM_TYPE_SET = new Set<string>(Object.values(HotelRoomType));
+
+export async function bulkUpdateHotelRooms(items: HotelRoomBulkUpdateItem[]) {
+  const session = await auth();
+  if (!session?.user || !canManageHotels(session.user.role)) {
+    return { error: "غير مصرح" };
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return { error: "لا توجد غرف للتحديث" };
+  }
+
+  const hotelWhere =
+    session.user.role === UserRole.SUPER_ADMIN
+      ? { isDeleted: false }
+      : { isDeleted: false, ownerId: session.user.id };
+
+  const ownedHotels = await prisma.hotel.findMany({
+    where: hotelWhere,
+    select: { id: true },
+  });
+  const ownedHotelIds = new Set(ownedHotels.map((h) => h.id));
+
+  const roomIds = items.map((i) => i.id);
+  const existingRooms = await prisma.hotelRoom.findMany({
+    where: { id: { in: roomIds }, hotel: hotelWhere },
+    select: { id: true, hotelId: true },
+  });
+  if (existingRooms.length !== roomIds.length) {
+    return { error: "بعض الغرف غير موجودة أو غير مصرح بتعديلها" };
+  }
+
+  const seenKeys = new Set<string>();
+  const prepared: {
+    id: string;
+    hotelId: string;
+    roomNumber: string;
+    roomType: HotelRoomType;
+    capacity: number;
+    pricePerNight: Prisma.Decimal;
+  }[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const hotelId = String(item.hotelId ?? "").trim();
+    const roomNumber = String(item.roomNumber ?? "").trim();
+    const roomType = String(item.roomType ?? "");
+    const capacity = Number(item.capacity);
+    const price = parseMoney(String(item.pricePerNight ?? ""));
+
+    if (!hotelId || !ownedHotelIds.has(hotelId)) {
+      return { error: `صف ${i + 1}: فندق غير صالح` };
+    }
+    if (!roomNumber) {
+      return { error: `صف ${i + 1}: رقم الغرفة مطلوب` };
+    }
+    if (!ROOM_TYPE_SET.has(roomType)) {
+      return { error: `صف ${i + 1}: نوع الغرفة غير صالح` };
+    }
+    if (!Number.isFinite(capacity) || capacity < 1) {
+      return { error: `صف ${i + 1}: السعة غير صالحة` };
+    }
+    if (!price) {
+      return { error: `صف ${i + 1}: السعر غير صالح` };
+    }
+
+    const key = `${hotelId}::${roomNumber}`;
+    if (seenKeys.has(key)) {
+      return {
+        error: `رقم الغرفة «${roomNumber}» مكرر لنفس الفندق في التعديل الجماعي`,
+      };
+    }
+    seenKeys.add(key);
+
+    prepared.push({
+      id: item.id,
+      hotelId,
+      roomNumber,
+      roomType: roomType as HotelRoomType,
+      capacity: Math.floor(capacity),
+      pricePerNight: price,
+    });
+  }
+
+  const hotelIdsToRevalidate = new Set<string>();
+  for (const r of existingRooms) hotelIdsToRevalidate.add(r.hotelId);
+  for (const p of prepared) hotelIdsToRevalidate.add(p.hotelId);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // مرحلتان لتفادي تعارض @@unique([hotelId, roomNumber]) عند التبديل
+      for (const p of prepared) {
+        await tx.hotelRoom.update({
+          where: { id: p.id },
+          data: { roomNumber: `__tmp_${p.id.replace(/-/g, "").slice(0, 20)}` },
+        });
+      }
+      for (const p of prepared) {
+        await tx.hotelRoom.update({
+          where: { id: p.id },
+          data: {
+            hotelId: p.hotelId,
+            roomNumber: p.roomNumber,
+            roomType: p.roomType,
+            capacity: p.capacity,
+            pricePerNight: p.pricePerNight,
+          },
+        });
+      }
+    });
+  } catch {
+    return {
+      error: "تعذر الحفظ — تحقق من عدم تكرار رقم الغرفة داخل نفس الفندق",
+    };
+  }
+
+  revalidatePath("/hotel-rooms");
+  revalidatePath("/hotels");
+  for (const hotelId of hotelIdsToRevalidate) {
+    revalidatePath(`/hotels/${hotelId}`);
+  }
+  return { success: true };
+}
+
+export async function bulkDeleteHotelRooms(ids: string[]) {
+  const session = await auth();
+  if (!session?.user || !canManageHotels(session.user.role)) {
+    return { error: "غير مصرح" };
+  }
+  const roomIds = Array.from(
+    new Set(
+      (Array.isArray(ids) ? ids : [])
+        .map((id) => String(id ?? "").trim())
+        .filter(Boolean)
+    )
+  );
+  if (roomIds.length === 0) {
+    return { error: "اختر غرفة واحدة على الأقل" };
+  }
+
+  const hotelWhere =
+    session.user.role === UserRole.SUPER_ADMIN
+      ? { isDeleted: false }
+      : { isDeleted: false, ownerId: session.user.id };
+
+  const existingRooms = await prisma.hotelRoom.findMany({
+    where: { id: { in: roomIds }, hotel: hotelWhere },
+    select: { id: true, hotelId: true },
+  });
+  if (existingRooms.length !== roomIds.length) {
+    return { error: "بعض الغرف غير موجودة أو غير مصرح بحذفها" };
+  }
+
+  const hotelIds = Array.from(new Set(existingRooms.map((r) => r.hotelId)));
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.hotelBooking.deleteMany({
+        where: { roomId: { in: roomIds } },
+      });
+      await tx.hotelRoom.deleteMany({
+        where: { id: { in: roomIds } },
+      });
+    });
+  } catch {
+    return { error: "تعذر حذف الغرف المحددة" };
+  }
+
+  revalidatePath("/hotel-rooms");
+  revalidatePath("/hotels");
+  revalidatePath("/hotel-bookings");
+  for (const hotelId of hotelIds) {
+    revalidatePath(`/hotels/${hotelId}`);
+  }
+  return { success: true, deleted: roomIds.length };
+}
+
 export async function getHotelBookingsForOwner(): Promise<HotelBookingRow[]> {
   const session = await auth();
   if (!session?.user || !canManageHotels(session.user.role)) return [];
@@ -458,10 +643,8 @@ export async function updateHotelBookingStatus(
   return { success: true };
 }
 
-/** للمسافر — قائمة كروت الفنادق */
+/** للمسافر والزائر — قائمة كروت الفنادق */
 export async function getApprovedHotelsForPassenger() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
   const list = await prisma.hotel.findMany({
     where: {
       isDeleted: false,
@@ -489,11 +672,8 @@ export async function getApprovedHotelsForPassenger() {
   }));
 }
 
-/** للمسافر — تفاصيل فندق + غرفه */
+/** للمسافر والزائر — تفاصيل فندق + غرفه */
 export async function getHotelDetailForPassenger(hotelId: string) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return null;
-
   return prisma.hotel.findFirst({
     where: {
       id: hotelId,

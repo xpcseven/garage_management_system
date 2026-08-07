@@ -19,6 +19,7 @@ type Props = {
   garage: PublicGarageRow;
   trips: PassengerTripRow[];
   partners?: PartnershipRow[];
+  isLoggedIn?: boolean;
 };
 
 function formatDeparture(iso: string) {
@@ -36,6 +37,7 @@ export default function Passenger_Garage_Detail_Component({
   garage,
   trips,
   partners = [],
+  isLoggedIn = false,
 }: Props) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 8;
@@ -214,7 +216,10 @@ export default function Passenger_Garage_Detail_Component({
                           {t.availableSeats} مقعد متاح
                         </p>
                       </div>
-                      <PassengerTripBookButton tripId={t.id} />
+                      <PassengerTripBookButton
+                        tripId={t.id}
+                        isLoggedIn={isLoggedIn}
+                      />
                     </div>
                   </div>
                 </article>

@@ -101,13 +101,10 @@ export async function getTourismPlaces(): Promise<TourismPlaceRow[]> {
   return rows.map(mapTourismPlaceRow);
 }
 
-/** عرض الأماكن النشطة للمسافر (قراءة فقط) */
+/** عرض الأماكن النشطة للمسافر والزائر (قراءة فقط) */
 export async function getPublicTourismPlacesForPassenger(): Promise<
   TourismPlaceRow[]
 > {
-  const session = await auth();
-  if (!session?.user || !canUsePassengerPortal(session.user.role)) return [];
-
   const rows = await prisma.tourismPlace.findMany({
     where: { isActive: true, approvalStatus: "APPROVED" },
     orderBy: [{ createdAt: "desc" }],
@@ -149,9 +146,6 @@ export async function getPublicTourismPlacesForGuest(): Promise<
 export async function getPublicTourismPlaceByIdForPassenger(
   placeId: string
 ): Promise<TourismPlaceRow | null> {
-  const session = await auth();
-  if (!session?.user || !canUsePassengerPortal(session.user.role)) return null;
-
   const p = await prisma.tourismPlace.findFirst({
     where: { id: placeId, isActive: true, approvalStatus: "APPROVED" },
     include: tourismPlaceInclude,
