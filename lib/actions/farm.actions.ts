@@ -304,8 +304,6 @@ export async function updateFarmBookingStatus(
 }
 
 export async function getApprovedFarmsForPassenger() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
   const list = await prisma.farm.findMany({
     where: {
       isDeleted: false,
@@ -328,9 +326,6 @@ export async function getApprovedFarmsForPassenger() {
 }
 
 export async function getFarmDetailForPassenger(farmId: string) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return null;
-
   const farm = await prisma.farm.findFirst({
     where: {
       id: farmId,

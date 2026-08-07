@@ -12,6 +12,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
 import { LoginSchema } from "@/schemas";
@@ -27,6 +28,8 @@ const fieldClass =
   "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
 
 const LoginForm = () => {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const [needsVerify, setNeedsVerify] = useState(false);
@@ -46,7 +49,7 @@ const LoginForm = () => {
     setNeedsVerify(false);
     setEmailForResend("");
     startTransition(() => {
-      login(values).then((data) => {
+      login(values, callbackUrl).then((data) => {
         setSuccess(data?.success);
         setError(data?.error);
         if (data && "code" in data && data.code === "EMAIL_NOT_VERIFIED") {

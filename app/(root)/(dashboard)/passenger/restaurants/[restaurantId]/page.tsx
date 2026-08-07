@@ -3,14 +3,13 @@ import { currentUser } from "@/lib/auth";
 import { canUsePassengerPortal } from "@/lib/permissions";
 import { getRestaurantDetailForPassenger } from "@/lib/actions/restaurant.actions";
 import PassengerRestaurantDetail from "@/components/passenger/PassengerRestaurantDetail";
-import UnAuthorized from "@/components/UnAuthorized";
 import { Button } from "@/components/ui/button";
 
 type Props = { params: { restaurantId: string } };
 
 export default async function PassengerRestaurantDetailPage({ params }: Props) {
   const user = await currentUser();
-  if (!user || !canUsePassengerPortal(user.role)) return <UnAuthorized />;
+  const isLoggedIn = Boolean(user && canUsePassengerPortal(user.role));
 
   const restaurant = await getRestaurantDetailForPassenger(params.restaurantId);
   if (!restaurant) {
@@ -32,6 +31,7 @@ export default async function PassengerRestaurantDetailPage({ params }: Props) {
 
   return (
     <PassengerRestaurantDetail
+      isLoggedIn={isLoggedIn}
       restaurant={{
         id: restaurant.id,
         name: restaurant.name,
@@ -43,6 +43,7 @@ export default async function PassengerRestaurantDetailPage({ params }: Props) {
         openHours: restaurant.openHours,
         city: restaurant.city,
         images: restaurant.images,
+        menuItems: restaurant.menuItems ?? [],
       }}
     />
   );

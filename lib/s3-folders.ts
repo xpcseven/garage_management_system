@@ -5,6 +5,7 @@ export const S3_FOLDERS = {
   tourismPlaces: "tourism-places",
   hotels: "hotels",
   restaurants: "restaurants",
+  menu: "menu",
   farms: "farms",
   documents: "documents",
 } as const;

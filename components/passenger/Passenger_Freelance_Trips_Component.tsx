@@ -14,9 +14,12 @@ import PassengerTripBookButton from "./PassengerTripBookButton";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
 import TablePagination from "@/components/Shared/TablePagination";
 
-type Props = { trips: PassengerTripRow[] };
+type Props = { trips: PassengerTripRow[]; isLoggedIn?: boolean };
 
-export default function Passenger_Freelance_Trips_Component({ trips }: Props) {
+export default function Passenger_Freelance_Trips_Component({
+  trips,
+  isLoggedIn = false,
+}: Props) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const totalPages = Math.max(1, Math.ceil(trips.length / PAGE_SIZE));
@@ -85,7 +88,10 @@ export default function Passenger_Freelance_Trips_Component({ trips }: Props) {
                   <td className="p-2 font-mono" data-label="السعر">{t.basePrice}</td>
                   <td className="p-2" data-label="متبقي">{t.availableSeats}</td>
                   <td className="p-2" data-label="حجز">
-                    <PassengerTripBookButton tripId={t.id} />
+                    <PassengerTripBookButton
+                      tripId={t.id}
+                      isLoggedIn={isLoggedIn}
+                    />
                   </td>
                 </tr>
               ))}

@@ -19,9 +19,6 @@ export type PublicGarageRow = {
 };
 
 export async function getPublicGaragesForPassenger(): Promise<PublicGarageRow[]> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
-
   return prisma.garage.findMany({
     where: { isDeleted: false, isActive: true },
     orderBy: { name: "asc" },
@@ -38,8 +35,6 @@ export async function getPublicGaragesForPassenger(): Promise<PublicGarageRow[]>
 export async function getPublicGarageByIdForPassenger(
   garageId: string
 ): Promise<PublicGarageRow | null> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return null;
   const id = garageId.trim();
   if (!id) return null;
 
@@ -89,8 +84,6 @@ function mapTripToPassengerRow(t: {
 export async function getTripsForGaragePassenger(
   garageId: string
 ): Promise<PassengerTripRow[]> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
   const id = garageId.trim();
   if (!id) return [];
 
@@ -149,9 +142,6 @@ export async function searchTripsForPassenger(params: {
   q?: string;
   scope?: PassengerTripScope;
 }): Promise<PassengerTripRow[]> {
-  const session = await auth();
-  if (!session?.user || session.user.role !== UserRole.USER) return [];
-
   const scope = params.scope ?? "all";
   const q = (params.q ?? "").trim();
 
@@ -216,9 +206,8 @@ export async function getTripSeatsForMap(
   tripId: string
 ): Promise<TripSeatOption[]> {
   const session = await auth();
-  if (!session?.user) return [];
+  const role = session?.user?.role;
 
-  const role = session.user.role;
   const trip = await prisma.trip.findFirst({
     where: { id: tripId, status: TripStatus.SCHEDULED },
     select: {
@@ -229,9 +218,8 @@ export async function getTripSeatsForMap(
   });
   if (!trip) return [];
 
-  if (role === UserRole.USER) {
-    // passengers can view any scheduled trip seats
-  } else if (role === UserRole.SUPER_ADMIN) {
+  // الزائر والمسافر يمكنهم رؤية خريطة المقاعد؛ الحجز محمي في bookSeatsOnTrip
+  if (!session?.user || role === UserRole.USER || role === UserRole.SUPER_ADMIN) {
     // ok
   } else if (role === UserRole.GARAGE_OWNER) {
     if (!trip.garageId || trip.garage?.ownerId !== session.user.id) return [];

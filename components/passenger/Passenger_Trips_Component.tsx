@@ -25,6 +25,7 @@ type Props = {
   cities: CityRow[];
   trips: PassengerTripRow[];
   initialParams: Initial;
+  isLoggedIn?: boolean;
 };
 
 const fieldClass =
@@ -45,6 +46,7 @@ export default function Passenger_Trips_Component({
   cities,
   trips,
   initialParams,
+  isLoggedIn = false,
 }: Props) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
@@ -315,7 +317,10 @@ export default function Passenger_Trips_Component({
                           {t.availableSeats} مقعد متاح
                         </p>
                       </div>
-                      <PassengerTripBookButton tripId={t.id} />
+                      <PassengerTripBookButton
+                        tripId={t.id}
+                        isLoggedIn={isLoggedIn}
+                      />
                     </div>
                   </div>
                 </article>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { VehicleRow } from "@/lib/actions/vehicle.actions";
+import type { GarageDriverOption } from "@/lib/actions/vehicle.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Vehicle_Create from "./Vehicle_Create";
@@ -11,12 +12,14 @@ type Opt = { id: string; name: string };
 type Props = {
   vehicles: VehicleRow[];
   garageOptions: Opt[];
+  driversByGarage: Record<string, GarageDriverOption[]>;
   userRole: string;
 };
 
 export default function Vehicle_Component({
   vehicles,
   garageOptions,
+  driversByGarage,
   userRole,
 }: Props) {
   const active = vehicles.filter((v) => v.isActive).length;
@@ -49,7 +52,18 @@ export default function Vehicle_Component({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Vehicle_Create garageOptions={garageOptions} userRole={userRole} />
+            <Vehicle_Create
+              garageOptions={garageOptions}
+              driversByGarage={driversByGarage}
+              userRole={userRole}
+            />
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-xl border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white dark:border-orchid/30 dark:text-foreground dark:hover:bg-orchid/15 dark:hover:text-foreground"
+            >
+              <Link href="/garages">إدارة سائقي الشركات</Link>
+            </Button>
             <Button
               asChild
               variant="outline"
@@ -68,7 +82,7 @@ export default function Vehicle_Component({
         </div>
       </header>
 
-      <Vehicle_Table vehicles={vehicles} />
+      <Vehicle_Table vehicles={vehicles} driversByGarage={driversByGarage} />
     </div>
   );
 }

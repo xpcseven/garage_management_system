@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createVehicle } from "@/lib/actions/vehicle.actions";
+import type { GarageDriverOption } from "@/lib/actions/vehicle.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,15 +26,24 @@ import {
 import type { VehicleCategory } from "@prisma/client";
 import { SeatLayoutPreview } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
+import Link from "next/link";
 
 type Opt = { id: string; name: string };
-type Props = { garageOptions: Opt[]; userRole: string };
+type Props = {
+  garageOptions: Opt[];
+  driversByGarage: Record<string, GarageDriverOption[]>;
+  userRole: string;
+};
 
 const CATEGORIES = Object.keys(VEHICLE_CATEGORY_LABELS) as VehicleCategory[];
 const selectClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 
-export default function Vehicle_Create({ garageOptions, userRole }: Props) {
+export default function Vehicle_Create({
+  garageOptions,
+  driversByGarage,
+  userRole,
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -44,9 +54,33 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   const [garageId, setGarageId] = useState(
     isGarageOwner ? defaultGarageId : ""
   );
+  const [driverId, setDriverId] = useState("");
   const [category, setCategory] = useState<VehicleCategory | "">("");
   const [brand, setBrand] = useState("");
   const [modelId, setModelId] = useState("");
+
+  const linkedDrivers = garageId ? driversByGarage[garageId] ?? [] : [];
+  const showDriverField = isGarageOwner || garageId !== "";
+  const driverRequired = showDriverField;
+
+  useEffect(() => {
+    if (isGarageOwner && defaultGarageId) {
+      setGarageId(defaultGarageId);
+    }
+  }, [isGarageOwner, defaultGarageId]);
+
+  useEffect(() => {
+    setDriverId("");
+  }, [garageId]);
+
+  useEffect(() => {
+    if (!open) {
+      setCategory("");
+      setBrand("");
+      setModelId("");
+      setDriverId("");
+    }
+  }, [open]);
 
   const selectedModel = useMemo(
     () => (modelId ? getVehicleModelById(modelId) : null),
@@ -84,23 +118,6 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
   );
 
   const seatsCount = selectedModel?.passengerSeats ?? 0;
-
-  useEffect(() => {
-    if (isGarageOwner && defaultGarageId) {
-      setGarageId(defaultGarageId);
-    }
-  }, [isGarageOwner, defaultGarageId]);
-
-  useEffect(() => {
-    if (!open) {
-      setCategory("");
-      setBrand("");
-      setModelId("");
-    }
-  }, [open]);
-
-  const showDriverField = isGarageOwner || garageId !== "";
-  const driverRequired = showDriverField;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -334,16 +351,41 @@ export default function Vehicle_Create({ garageOptions, userRole }: Props) {
               {showDriverField && (
                 <div className="space-y-1 sm:col-span-2">
                   <Label htmlFor="v-driver">
-                    اسم السائق المعيّن للمركبة
+                    السائق المعيّن للمركبة
                     {driverRequired ? " (مطلوب)" : ""}
                   </Label>
-                  <Input
+                  <select
                     id="v-driver"
-                    name="driverName"
-                    placeholder="مثال: أحمد علي"
+                    name="driverId"
+                    value={driverId}
+                    onChange={(e) => setDriverId(e.target.value)}
                     required={driverRequired}
-                    className="text-right"
-                  />
+                    className={selectClass}
+                    disabled={!garageId || linkedDrivers.length === 0}
+                  >
+                    <option value="">
+                      {linkedDrivers.length === 0
+                        ? "— لا يوجد سائقون مرتبطون بهذه الشركة —"
+                        : "— اختر السائق —"}
+                    </option>
+                    {linkedDrivers.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.email})
+                      </option>
+                    ))}
+                  </select>
+                  {garageId && linkedDrivers.length === 0 && (
+                    <p className="text-xs text-amber-800 dark:text-amber-200">
+                      اربط سائقاً بالشركة أولاً من صفحة{" "}
+                      <Link
+                        href="/garages"
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        الشركات السياحية
+                      </Link>{" "}
+                      (زر السائقون).
+                    </p>
+                  )}
                 </div>
               )}
 

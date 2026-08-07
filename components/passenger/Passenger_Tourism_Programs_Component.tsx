@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   programs: TourismProgramPassengerRow[];
+  isLoggedIn?: boolean;
 };
 
 function formatWhen(iso: string) {
@@ -32,6 +33,7 @@ function shortText(raw: string | null | undefined, max = 140) {
 
 export default function Passenger_Tourism_Programs_Component({
   programs,
+  isLoggedIn = false,
 }: Props) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -272,7 +274,10 @@ export default function Passenger_Tourism_Programs_Component({
                           {p.availableSeats} مقعد متاح
                         </p>
                       </div>
-                      <PassengerTourismProgramBookButton programId={p.id} />
+                      <PassengerTourismProgramBookButton
+                        programId={p.id}
+                        isLoggedIn={isLoggedIn}
+                      />
                     </div>
                   </div>
                 </article>

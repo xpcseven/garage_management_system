@@ -33,7 +33,11 @@ const REGISTER_JOB_OPTIONS = [
 const fieldClass =
   "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground";
 
-const RegisterForm = () => {
+const RegisterForm = ({
+  garageOptions = [],
+}: {
+  garageOptions?: { id: string; name: string }[];
+}) => {
   const [error, setError] = useState<string | undefined>();
   const [success, setSuccess] = useState<string | undefined>();
   const [emailForResend, setEmailForResend] = useState("");
@@ -46,17 +50,36 @@ const RegisterForm = () => {
       name: "",
       role: "USER",
       jobTypes: [],
+      isIndependentDriver: false,
+      isCompanyDriver: false,
+      garageIds: [],
     },
   });
 
   const role = useWatch({ control: form.control, name: "role" });
+  const isCompanyDriver = useWatch({
+    control: form.control,
+    name: "isCompanyDriver",
+  });
   const showJobType = role === "GARAGE_OWNER" || role === "DRIVER";
+  const showDriverModes = role === "DRIVER";
 
   useEffect(() => {
     if (role === "USER") {
       form.setValue("jobTypes", []);
     }
+    if (role !== "DRIVER") {
+      form.setValue("isIndependentDriver", false);
+      form.setValue("isCompanyDriver", false);
+      form.setValue("garageIds", []);
+    }
   }, [role, form]);
+
+  useEffect(() => {
+    if (!isCompanyDriver) {
+      form.setValue("garageIds", []);
+    }
+  }, [isCompanyDriver, form]);
 
   async function onSubmit(values: z.infer<typeof RegisterSchema>) {
     setError("");
@@ -258,7 +281,7 @@ const RegisterForm = () => {
                               <option value="GARAGE_OWNER">
                                 مالك شركة سياحية
                               </option>
-                              <option value="DRIVER">سائق مستقل</option>
+                              <option value="DRIVER">سائق</option>
                               <option value="TOURISM_OWNER">
                                 مالك مكان سياحي
                               </option>
@@ -273,6 +296,109 @@ const RegisterForm = () => {
                         </FormItem>
                       )}
                     />
+
+                    {showDriverModes && (
+                      <div className="space-y-3 rounded-2xl bg-mist/70 p-3 ring-1 ring-plum/10 dark:bg-background dark:ring-orchid/15">
+                        <p className="text-sm font-medium text-dusk dark:text-foreground">
+                          نوع عمل السائق
+                        </p>
+                        <p className="text-xs text-dusk/55 dark:text-muted-foreground">
+                          يمكنك اختيار أحدهما أو الاثنين معاً.
+                        </p>
+
+                        <FormField
+                          control={form.control}
+                          name="isIndependentDriver"
+                          render={({ field }) => (
+                            <FormItem>
+                              <label className="flex cursor-pointer flex-row-reverse items-center gap-3 text-sm text-dusk dark:text-foreground">
+                                <Checkbox
+                                  disabled={isPending}
+                                  checked={field.value}
+                                  onCheckedChange={(c) =>
+                                    field.onChange(c === true)
+                                  }
+                                />
+                                <span>سائق رحلات مستقلة</span>
+                              </label>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="isCompanyDriver"
+                          render={({ field }) => (
+                            <FormItem>
+                              <label className="flex cursor-pointer flex-row-reverse items-center gap-3 text-sm text-dusk dark:text-foreground">
+                                <Checkbox
+                                  disabled={isPending}
+                                  checked={field.value}
+                                  onCheckedChange={(c) =>
+                                    field.onChange(c === true)
+                                  }
+                                />
+                                <span>سائق مرتبط بشركة سياحية</span>
+                              </label>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {isCompanyDriver && (
+                          <FormField
+                            control={form.control}
+                            name="garageIds"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-dusk dark:text-foreground">
+                                  اختر الشركة / الشركات
+                                </FormLabel>
+                                <FormDescription className="text-xs text-dusk/50 dark:text-muted-foreground">
+                                  ستُربط حسابك بهذه الشركات ويمكن لمالكها تعيينك
+                                  على مركباتها.
+                                </FormDescription>
+                                {garageOptions.length === 0 ? (
+                                  <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                                    لا توجد شركات سياحية نشطة حالياً للاختيار.
+                                  </p>
+                                ) : (
+                                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl bg-white p-2 ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20">
+                                    {garageOptions.map((g) => {
+                                      const list = field.value ?? [];
+                                      const checked = list.includes(g.id);
+                                      return (
+                                        <label
+                                          key={g.id}
+                                          className="flex cursor-pointer flex-row-reverse items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-dusk hover:bg-mist/80 dark:text-foreground dark:hover:bg-orchid/10"
+                                        >
+                                          <Checkbox
+                                            disabled={isPending}
+                                            checked={checked}
+                                            onCheckedChange={(c) => {
+                                              const on = c === true;
+                                              const next = on
+                                                ? [...new Set([...list, g.id])]
+                                                : list.filter((id) => id !== g.id);
+                                              field.onChange(next);
+                                            }}
+                                          />
+                                          <span className="flex-1 text-start">
+                                            {g.name}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    )}
 
                     {showJobType && (
                       <FormField

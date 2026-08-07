@@ -156,3 +156,127 @@ export async function updateGarage(formData: FormData) {
     return { error: "تعذر التحديث" };
   }
 }
+
+export type GarageDriverRow = {
+  membershipId: string;
+  userId: string;
+  name: string;
+  email: string;
+  joinedAt: string;
+};
+
+async function assertCanManageGarageDrivers(garageId: string) {
+  const session = await auth();
+  if (!session?.user) return { error: "غير مصرح" as const, session: null };
+
+  const garage = await prisma.garage.findFirst({
+    where: { id: garageId, isDeleted: false },
+  });
+  if (!garage) return { error: "الشركة غير موجودة" as const, session: null };
+
+  const allowed =
+    session.user.role === UserRole.SUPER_ADMIN ||
+    garage.ownerId === session.user.id ||
+    (await prisma.garageMember.findFirst({
+      where: {
+        garageId,
+        userId: session.user.id,
+        role: GarageRole.GARAGE_ADMIN,
+      },
+    }));
+
+  if (!allowed) return { error: "ليس لديك صلاحية" as const, session: null };
+  return { error: null, session, garage };
+}
+
+export async function getDriversLinkedToGarage(
+  garageId: string
+): Promise<GarageDriverRow[]> {
+  const access = await assertCanManageGarageDrivers(garageId);
+  if (access.error) return [];
+
+  const members = await prisma.garageMember.findMany({
+    where: { garageId, role: GarageRole.DRIVER },
+    orderBy: { joinedAt: "asc" },
+    include: {
+      user: { select: { id: true, name: true, email: true, role: true } },
+    },
+  });
+
+  return members
+    .filter((m) => m.user.role === UserRole.DRIVER)
+    .map((m) => ({
+      membershipId: m.id,
+      userId: m.user.id,
+      name: m.user.name,
+      email: m.user.email,
+      joinedAt: m.joinedAt.toISOString(),
+    }));
+}
+
+/** للشركات السياحية: ربط سائق مسجّل مسبقاً عبر بريده */
+export async function linkDriverToGarageByEmail(formData: FormData) {
+  const garageId = String(formData.get("garageId") ?? "").trim();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const access = await assertCanManageGarageDrivers(garageId);
+  if (access.error) return { error: access.error };
+  if (!email) return { error: "أدخل بريد السائق" };
+
+  const driver = await prisma.user.findFirst({
+    where: {
+      email,
+      role: UserRole.DRIVER,
+      isDeleted: false,
+      isActive: true,
+    },
+    include: { driverProfile: true },
+  });
+  if (!driver) {
+    return { error: "لا يوجد سائق مفعّل بهذا البريد" };
+  }
+
+  try {
+    await prisma.garageMember.upsert({
+      where: {
+        userId_garageId: { userId: driver.id, garageId },
+      },
+      create: {
+        userId: driver.id,
+        garageId,
+        role: GarageRole.DRIVER,
+      },
+      update: {
+        role: GarageRole.DRIVER,
+      },
+    });
+    revalidatePath("/garages");
+    revalidatePath("/vehicles");
+    return { success: true };
+  } catch {
+    return { error: "تعذر ربط السائق بالشركة" };
+  }
+}
+
+export async function unlinkDriverFromGarage(formData: FormData) {
+  const garageId = String(formData.get("garageId") ?? "").trim();
+  const userId = String(formData.get("userId") ?? "").trim();
+  const access = await assertCanManageGarageDrivers(garageId);
+  if (access.error) return { error: access.error };
+  if (!userId) return { error: "معرّف السائق مفقود" };
+
+  await prisma.garageMember.deleteMany({
+    where: { garageId, userId, role: GarageRole.DRIVER },
+  });
+
+  // فك تعيين المركبات المرتبطة بهذا السائق في الشركة
+  await prisma.vehicle.updateMany({
+    where: { garageId, driverId: userId },
+    data: { driverId: null, driverName: null },
+  });
+
+  revalidatePath("/garages");
+  revalidatePath("/vehicles");
+  return { success: true };
+}

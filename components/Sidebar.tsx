@@ -82,7 +82,55 @@ function SectionDivider({ label }: { label: string }) {
 export default function Sidebar({ user, className }: Props) {
   const role = user?.role;
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <aside
+        className={cn(
+          "flex h-full flex-col gap-1",
+          "border-s border-plum/10 dark:border-orchid/15",
+          "bg-white/70 dark:bg-dusk/70 backdrop-blur-md",
+          "px-3 py-4",
+          "w-56 shrink-0",
+          className
+        )}
+      >
+        <div className="mb-3 flex items-center justify-start gap-2.5 border-b border-plum/10 px-3 pb-3 dark:border-orchid/15">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-plum to-orchid shadow-orchid">
+            <span className="text-sm text-white">🚌</span>
+          </div>
+          <span className="font-display text-sm tracking-wide text-dusk dark:text-mist">
+            تصفّح آشور
+          </span>
+        </div>
+
+        <nav className="flex flex-col gap-0.5 overflow-y-auto" dir="rtl">
+          <NavLink href="/" label="الصفحة الرئيسية" icon="🏠" />
+          <SectionDivider label="اكتشف" />
+          <NavLink href="/passenger/hotels" label="فنادق" icon="🏨" />
+          <NavLink href="/passenger/restaurants" label="مطاعم" icon="🍽️" />
+          <NavLink href="/passenger/farms" label="مزارع" icon="🌿" />
+          <NavLink href="/tourism-places" label="معالم" icon="🏛️" />
+          <NavLink href="/passenger/trips" label="رحلات" icon="🗺️" />
+          <NavLink
+            href="/passenger/tourism-programs"
+            label="برامج سياحية"
+            icon="🧳"
+          />
+          <NavLink href="/passenger/garages" label="شركات" icon="🏢" />
+          <SectionDivider label="حسابك" />
+          <NavLink href="/auth/login" label="تسجيل الدخول" icon="🔑" />
+          <NavLink href="/auth/register" label="إنشاء حساب" icon="✨" />
+          <NavLink href="/bookings" label="حجوزاتي" icon="📋" />
+        </nav>
+
+        <div className="mt-auto border-t border-plum/10 pt-3 dark:border-orchid/15">
+          <p className="px-2 text-[11px] leading-5 text-dusk/50 dark:text-muted-foreground">
+            التصفّح متاح للجميع. الحجز يتطلب تسجيل الدخول.
+          </p>
+        </div>
+      </aside>
+    );
+  }
 
   const isSuperAdmin = role === UserRole.SUPER_ADMIN;
 

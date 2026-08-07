@@ -136,7 +136,7 @@ function NavBar({ user, onToggleSidebar }: Props) {
         </Link>
       </div>
 
-      <div className="relative z-10 flex items-center">
+      <div className="relative z-10 flex items-center gap-2">
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -197,7 +197,23 @@ function NavBar({ user, onToggleSidebar }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <div className="h-9 w-9" />
+          <>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-xl border border-white/15 bg-white/10 px-3 text-sm text-white hover:bg-white/20 hover:text-white"
+            >
+              <Link href="/auth/login">دخول</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              className="hidden h-9 rounded-xl border-0 bg-orchid px-3 text-sm text-white hover:bg-orchid-light sm:inline-flex"
+            >
+              <Link href="/auth/register">تسجيل</Link>
+            </Button>
+          </>
         )}
       </div>
     </header>

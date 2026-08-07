@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { VehicleRow } from "@/lib/actions/vehicle.actions";
+import type {
+  GarageDriverOption,
+  VehicleRow,
+} from "@/lib/actions/vehicle.actions";
 import { updateVehicle } from "@/lib/actions/vehicle.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +29,12 @@ import {
 import type { VehicleCategory } from "@prisma/client";
 import { SeatLayoutPreview } from "@/components/Shared/SeatMap";
 import Swal from "sweetalert2";
+import Link from "next/link";
 
-type Props = { vehicle: VehicleRow };
+type Props = {
+  vehicle: VehicleRow;
+  driverOptions: GarageDriverOption[];
+};
 
 const CATEGORIES = Object.keys(VEHICLE_CATEGORY_LABELS) as VehicleCategory[];
 const selectClass =
@@ -37,10 +44,11 @@ function initialModelId(vehicle: VehicleRow) {
   return findVehicleModel(vehicle.brand, vehicle.model)?.id ?? "";
 }
 
-export default function Vehicle_Update({ vehicle }: Props) {
+export default function Vehicle_Update({ vehicle, driverOptions }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
+  const [driverId, setDriverId] = useState(vehicle.driverId ?? "");
   const [category, setCategory] = useState<VehicleCategory | "">(
     vehicle.category
   );
@@ -91,6 +99,7 @@ export default function Vehicle_Update({ vehicle }: Props) {
     setCategory(vehicle.category);
     setBrand(vehicle.brand);
     setModelId(initialModelId(vehicle));
+    setDriverId(vehicle.driverId ?? "");
   }, [open, vehicle]);
 
   return (
@@ -255,15 +264,40 @@ export default function Vehicle_Update({ vehicle }: Props) {
             />
           </div>
           {vehicle.garageId && (
-            <div className="space-y-1">
-              <Label htmlFor={`vdn-${vehicle.id}`}>اسم السائق المعيّن</Label>
-              <Input
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor={`vdn-${vehicle.id}`}>السائق المعيّن</Label>
+              <select
                 id={`vdn-${vehicle.id}`}
-                name="driverName"
+                name="driverId"
+                value={driverId}
+                onChange={(e) => setDriverId(e.target.value)}
                 required
-                defaultValue={vehicle.driverName ?? ""}
-                placeholder="اسم السائق"
-              />
+                className={selectClass}
+                disabled={driverOptions.length === 0}
+              >
+                <option value="">
+                  {driverOptions.length === 0
+                    ? "— لا يوجد سائقون مرتبطون —"
+                    : "— اختر السائق —"}
+                </option>
+                {driverOptions.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.email})
+                  </option>
+                ))}
+              </select>
+              {driverOptions.length === 0 && (
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  اربط سائقاً من صفحة{" "}
+                  <Link
+                    href="/garages"
+                    className="font-semibold underline underline-offset-2"
+                  >
+                    الشركات السياحية
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
           )}
           <div className="space-y-1">

@@ -4,7 +4,22 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { toDisplayImageUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
+
+export type PassengerRestaurantMenuItem = {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+};
 
 export type PassengerRestaurantCard = {
   id: string;
@@ -18,6 +33,7 @@ export type PassengerRestaurantCard = {
   capacity: number;
   openHours: string | null;
   city: { name: string } | null;
+  menuItems?: PassengerRestaurantMenuItem[];
 };
 
 function cityLabel(r: PassengerRestaurantCard) {
@@ -29,6 +45,12 @@ function shortText(raw: string | null | undefined, max = 100) {
   const text = raw.trim();
   if (text.length <= max) return text;
   return `${text.slice(0, max).trim()}…`;
+}
+
+function formatPrice(raw: string) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return n.toLocaleString("en-US");
 }
 
 export default function PassengerRestaurantsList({
@@ -238,15 +260,21 @@ export default function PassengerRestaurantsList({
                   <span className="rounded-full bg-plum-soft px-2.5 py-1 font-data text-[11px] text-plum dark:bg-orchid/20 dark:text-orchid-light">
                     سعة {r.capacity}
                   </span>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
-                  >
-                    <Link href={`/passenger/restaurants/${r.id}`}>
-                      حجز المطعم
-                    </Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <RestaurantMenuButton
+                      restaurantName={r.name}
+                      items={r.menuItems ?? []}
+                    />
+                    <Button
+                      asChild
+                      size="sm"
+                      className="rounded-xl border-0 bg-plum text-white hover:bg-plum-light hover:text-white dark:bg-orchid dark:hover:bg-orchid-light"
+                    >
+                      <Link href={`/passenger/restaurants/${r.id}`}>
+                        حجز المطعم
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -254,6 +282,77 @@ export default function PassengerRestaurantsList({
         )}
       </section>
     </div>
+  );
+}
+
+function RestaurantMenuButton({
+  restaurantName,
+  items,
+}: {
+  restaurantName: string;
+  items: PassengerRestaurantMenuItem[];
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl border-plum/20 dark:border-orchid/30"
+        >
+          منيو
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl border-plum/10 dark:border-orchid/20 sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display text-start text-lg text-dusk dark:text-foreground">
+            قائمة طعام — {restaurantName}
+          </DialogTitle>
+        </DialogHeader>
+
+        {items.length === 0 ? (
+          <p className="py-8 text-center text-sm text-dusk/55 dark:text-muted-foreground">
+            لا توجد أصناف في القائمة حالياً.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {items.map((item) => {
+              const src =
+                toDisplayImageUrl(item.imageUrl) || item.imageUrl || "";
+              return (
+                <article
+                  key={item.id}
+                  className="overflow-hidden rounded-2xl bg-mist/50 ring-1 ring-plum/10 dark:bg-background dark:ring-orchid/15"
+                >
+                  {src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={src}
+                      alt={item.name}
+                      className="h-28 w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-20 items-center justify-center bg-mist text-xs text-dusk/40 dark:bg-muted dark:text-muted-foreground">
+                      بلا صورة
+                    </div>
+                  )}
+                  <div className="space-y-1 p-3 text-start">
+                    <h4 className="text-sm font-semibold text-dusk dark:text-foreground">
+                      {item.name}
+                    </h4>
+                    <p className="font-data text-sm tabular-nums text-orchid dark:text-orchid-light">
+                      {formatPrice(item.price)} د.ع
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

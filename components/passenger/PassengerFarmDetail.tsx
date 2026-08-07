@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
+import Tourism_Place_Detail_Gallery from "@/components/Tourism_Places/Tourism_Place_Detail_Gallery";
+import LoginToBookPrompt from "@/components/Shared/LoginToBookPrompt";
+import { toDisplayImageUrl } from "@/lib/media-url";
 import Swal from "sweetalert2";
+import { usePathname } from "next/navigation";
 
 export type PassengerFarmDetailData = {
   id: string;
@@ -28,10 +32,13 @@ const fieldClass =
 
 export default function PassengerFarmDetail({
   farm,
+  isLoggedIn = false,
 }: {
   farm: PassengerFarmDetailData;
+  isLoggedIn?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, start] = useTransition();
   const [occasionType, setOccasionType] = useState("FAMILY");
   const city = farm.city?.name?.trim() || "العراق";
@@ -41,6 +48,9 @@ export default function PassengerFarmDetail({
         .map((a) => a.trim())
         .filter(Boolean)
     : [];
+  const galleryImages = (farm.images ?? [])
+    .map((url) => toDisplayImageUrl(url) || url)
+    .filter(Boolean);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -143,6 +153,7 @@ export default function PassengerFarmDetail({
           </p>
         </div>
 
+        {isLoggedIn ? (
         <form
           className="mt-6 grid gap-3 sm:grid-cols-2"
           action={(fd) => {
@@ -251,7 +262,32 @@ export default function PassengerFarmDetail({
             </Button>
           </div>
         </form>
+        ) : (
+          <div className="mt-6">
+            <LoginToBookPrompt callbackPath={pathname} />
+          </div>
+        )}
       </section>
+
+      {galleryImages.length > 0 && (
+        <section className="space-y-4">
+          <div className="text-start">
+            <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+              الصور
+            </p>
+            <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
+              صور المزرعة
+            </h2>
+            <p className="mt-2 text-sm text-dusk/60 dark:text-muted-foreground">
+              اضغط على أي صورة لعرضها بحجم كامل
+            </p>
+          </div>
+          <Tourism_Place_Detail_Gallery
+            images={galleryImages}
+            alt={farm.name}
+          />
+        </section>
+      )}
     </div>
   );
 }

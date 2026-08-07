@@ -5,8 +5,10 @@ import DashboardShell from "@/components/DashboardShell";
 
 const Layout = async ({ children }: { children: React.ReactNode }) => {
   const session = await auth();
+
+  // الزائر يصل هنا فقط عبر المسارات العامة (middleware) — واجهة تصفّح بدون لوحة كاملة
   if (!session?.user) {
-    return <div>Loading...</div>;
+    return <DashboardShell user={null}>{children}</DashboardShell>;
   }
 
   const user = await currentUser();

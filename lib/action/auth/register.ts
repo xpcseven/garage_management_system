@@ -6,8 +6,18 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { getUserByEmail } from "../user.action";
-import { JobType, Role } from "@prisma/client";
+import { GarageRole, JobType, Role } from "@prisma/client";
 import { createAndSendVerificationToken } from "@/lib/action/auth/verify-email";
+
+export async function getActiveGaragesForDriverRegistration(): Promise<
+  { id: string; name: string }[]
+> {
+  return prisma.garage.findMany({
+    where: { isDeleted: false, isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+}
 
 export async function register(values: z.infer<typeof RegisterSchema>) {
   try {
@@ -17,13 +27,23 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
       const first = validateFields.error.flatten().fieldErrors;
       const msg =
         first.jobTypes?.[0] ||
+        first.garageIds?.[0] ||
+        first.isIndependentDriver?.[0] ||
         first.role?.[0] ||
         Object.values(first).flat()[0] ||
         "بيانات غير صالحة";
       return { error: msg };
     }
 
-    const { name, password, role, jobTypes } = validateFields.data;
+    const {
+      name,
+      password,
+      role,
+      jobTypes,
+      isIndependentDriver,
+      isCompanyDriver,
+      garageIds,
+    } = validateFields.data;
     const email = validateFields.data.email.trim().toLowerCase();
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -42,6 +62,21 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
 
     const prismaRole = role as Role;
     const uniqueJobTypes = [...new Set(jobTypes)] as JobType[];
+    const uniqueGarageIds = [...new Set(garageIds)];
+
+    if (prismaRole === Role.DRIVER && isCompanyDriver) {
+      const validGarages = await prisma.garage.findMany({
+        where: {
+          id: { in: uniqueGarageIds },
+          isDeleted: false,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+      if (validGarages.length !== uniqueGarageIds.length) {
+        return { error: "بعض الشركات السياحية المختارة غير صالحة" };
+      }
+    }
 
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -69,7 +104,7 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
         const profile = await tx.driverProfile.create({
           data: {
             userId: created.id,
-            isFreelancer: true,
+            isFreelancer: Boolean(isIndependentDriver),
             isVerified: false,
             isActive: true,
           },
@@ -82,6 +117,17 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
           })),
           skipDuplicates: true,
         });
+
+        if (isCompanyDriver && uniqueGarageIds.length > 0) {
+          await tx.garageMember.createMany({
+            data: uniqueGarageIds.map((garageId) => ({
+              userId: created.id,
+              garageId,
+              role: GarageRole.DRIVER,
+            })),
+            skipDuplicates: true,
+          });
+        }
       }
 
       return created;
@@ -98,7 +144,6 @@ export async function register(values: z.infer<typeof RegisterSchema>) {
       error: !mailed.ok ? mailed.error : undefined,
     });
 
-    // الحساب أُنشئ — لا نُرجع error حتى لا يعتقد المستخدم أن التسجيل فشل ويعيد المحاولة
     if (!mailed.ok) {
       return {
         success:

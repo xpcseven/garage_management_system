@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
 import Swal from "sweetalert2";
+import { usePathname } from "next/navigation";
+import { loginWithCallback } from "@/routes";
 
 const ROOM_TYPE_LABELS: Record<string, string> = {
   SINGLE: "فردية",
@@ -55,8 +57,15 @@ function priceText(p: Room["pricePerNight"]) {
 const fieldClass =
   "h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground";
 
-export default function PassengerHotelDetail({ hotel }: { hotel: Hotel }) {
+export default function PassengerHotelDetail({
+  hotel,
+  isLoggedIn = false,
+}: {
+  hotel: Hotel;
+  isLoggedIn?: boolean;
+}) {
   const city = hotel.city?.name?.trim() || "العراق";
+  const pathname = usePathname();
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -204,7 +213,18 @@ export default function PassengerHotelDetail({ hotel }: { hotel: Hotel }) {
                 </div>
 
                 <div className="mt-auto pt-5">
-                  <BookRoomButton roomId={r.id} capacity={r.capacity} />
+                  {isLoggedIn ? (
+                    <BookRoomButton roomId={r.id} capacity={r.capacity} />
+                  ) : (
+                    <Button
+                      asChild
+                      className="w-full rounded-xl border-0 bg-plum text-white hover:bg-plum-light"
+                    >
+                      <Link href={loginWithCallback(pathname)}>
+                        سجّل الدخول للحجز
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </article>
             ))}

@@ -1,6 +1,7 @@
 import { currentUser } from "@/lib/auth";
 import {
   getGarageOptionsForVehicle,
+  getLinkedDriversForGarages,
   getVehiclesForUser,
 } from "@/lib/actions/vehicle.actions";
 import { canManageVehicles } from "@/lib/permissions";
@@ -16,10 +17,14 @@ export default async function VehiclesPage() {
     getVehiclesForUser(),
     getGarageOptionsForVehicle(),
   ]);
+  const driversByGarage = await getLinkedDriversForGarages(
+    garageOptions.map((g) => g.id)
+  );
   return (
     <Vehicle_Component
       vehicles={vehicles}
       garageOptions={garageOptions}
+      driversByGarage={driversByGarage}
       userRole={user.role}
     />
   );
