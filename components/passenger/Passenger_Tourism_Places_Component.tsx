@@ -6,11 +6,12 @@ import Link from "next/link";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/Shared/TablePagination";
+import Passenger_Tourism_Place_Suggest from "@/components/passenger/Passenger_Tourism_Place_Suggest";
 import { cn } from "@/lib/utils";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
-type Props = { places: TourismPlaceRow[] };
+type Props = { places: TourismPlaceRow[]; canSuggest?: boolean };
 
 function placeCaption(p: TourismPlaceRow) {
   if (p.governorate) return p.governorate;
@@ -30,7 +31,10 @@ function shortBlurb(raw: string | null | undefined, max = 110) {
   return `${text.slice(0, max).trim()}…`;
 }
 
-export default function Passenger_Tourism_Places_Component({ places }: Props) {
+export default function Passenger_Tourism_Places_Component({
+  places,
+  canSuggest = false,
+}: Props) {
   const regions = useMemo(() => {
     const set = new Set<string>();
     for (const p of places) set.add(placeCaption(p));
@@ -94,14 +98,18 @@ export default function Passenger_Tourism_Places_Component({ places }: Props) {
               الأماكن السياحية
             </h1>
             <p className="mt-3 text-sm leading-8 text-white/70 sm:text-base dark:text-muted-foreground">
-              تصفّح المعالم المعتمدة، ثم أكمل رحلتك عبر برنامج سياحي أو حجز مقعد.
+              تصفّح المعالم المعتمدة، أو أضف مكاناً زرته ليظهر بعد موافقة الإدارة.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Passenger_Tourism_Place_Suggest
+              isLoggedIn={canSuggest}
+              callbackPath="/passenger/tourism-places"
+            />
             <Button
               asChild
-              className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
+              className="rounded-xl border-0 bg-white/15 text-white hover:bg-white/25"
             >
               <Link href="/passenger/tourism-programs">البرامج السياحية</Link>
             </Button>

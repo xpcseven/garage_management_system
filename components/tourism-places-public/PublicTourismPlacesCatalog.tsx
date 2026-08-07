@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { Button } from "@/components/ui/button";
+import Passenger_Tourism_Place_Suggest from "@/components/passenger/Passenger_Tourism_Place_Suggest";
 import { cn } from "@/lib/utils";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
@@ -29,9 +30,13 @@ function shortBlurb(raw: string | null | undefined, max = 110) {
 
 type Props = {
   places: TourismPlaceRow[];
+  canSuggest?: boolean;
 };
 
-export default function PublicTourismPlacesCatalog({ places }: Props) {
+export default function PublicTourismPlacesCatalog({
+  places,
+  canSuggest = false,
+}: Props) {
   const regions = useMemo(() => {
     const set = new Set<string>();
     for (const p of places) {
@@ -82,11 +87,16 @@ export default function PublicTourismPlacesCatalog({ places }: Props) {
               <span className="mt-2 block text-orchid-light">للزيارة والاستكشاف</span>
             </h1>
             <p className="mt-4 text-sm leading-8 text-white/70 sm:text-base">
-              تصفّح الوجهات المعتمدة، ثم أكمل رحلتك عبر شركة سياحية أو باقة
-              إقامة وضيافة على منصة آشور.
+              تصفّح الوجهات المعتمدة، وشارك مكاناً زرته ليظهر بعد موافقة الإدارة —
+              ثم أكمل رحلتك عبر شركة سياحية أو باقة إقامة على منصة آشور.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Button asChild className="rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light">
+              <Passenger_Tourism_Place_Suggest
+                isLoggedIn={canSuggest}
+                callbackPath="/tourism-places"
+                triggerLabel="أضف مكاناً زرته"
+              />
+              <Button asChild className="rounded-xl border-0 bg-white/15 text-white hover:bg-white/25">
                 <Link href="/passenger/trips">احجز رحلة</Link>
               </Button>
               <Button

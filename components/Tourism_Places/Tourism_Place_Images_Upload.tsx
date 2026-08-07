@@ -20,6 +20,7 @@ type Props = {
   onChange: (items: PlaceImageItem[]) => void;
   disabled?: boolean;
   idPrefix?: string;
+  maxImages?: number;
 };
 
 export default function Tourism_Place_Images_Upload({
@@ -27,8 +28,10 @@ export default function Tourism_Place_Images_Upload({
   onChange,
   disabled = false,
   idPrefix = "tp",
+  maxImages,
 }: Props) {
   const objectUrlsRef = useRef<string[]>([]);
+  const limit = maxImages && maxImages > 0 ? maxImages : Infinity;
 
   useEffect(() => {
     return () => {
@@ -40,8 +43,10 @@ export default function Tourism_Place_Images_Upload({
 
   const addFiles = (fileList: FileList | null) => {
     if (!fileList?.length) return;
+    const room = Math.max(0, limit - items.length);
+    if (room === 0) return;
     const added: PlaceImageItem[] = [];
-    for (const file of Array.from(fileList)) {
+    for (const file of Array.from(fileList).slice(0, room)) {
       const preview = URL.createObjectURL(file);
       objectUrlsRef.current.push(preview);
       added.push({ preview, file });
@@ -66,13 +71,18 @@ export default function Tourism_Place_Images_Upload({
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <Label htmlFor={`${idPrefix}-files`}>صور المكان (يمكن اختيار أكثر من صورة)</Label>
+        <Label htmlFor={`${idPrefix}-files`}>
+          صور المكان
+          {Number.isFinite(limit)
+            ? ` (حتى ${limit} صور — ${items.length}/${limit})`
+            : " (يمكن اختيار أكثر من صورة)"}
+        </Label>
         <Input
           id={`${idPrefix}-files`}
           type="file"
           accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/bmp"
           multiple
-          disabled={disabled}
+          disabled={disabled || items.length >= limit}
           onChange={(e) => {
             addFiles(e.target.files);
             e.target.value = "";
