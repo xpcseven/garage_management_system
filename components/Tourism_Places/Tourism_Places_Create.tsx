@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createTourismPlace } from "@/lib/actions/tourism_places.actions";
-import { IRAQI_GOVERNORATES } from "@/lib/constants/iraqi-governorates";
+import type { CityRow } from "@/lib/actions/city.actions";
+import City_Country_Select_Fields from "@/components/Shared/City_Country_Select_Fields";
 import Tourism_Place_Images_Upload, {
   appendPlaceImagesToFormData,
   type PlaceImageItem,
@@ -20,7 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import Swal from "sweetalert2";
 
-export default function Tourism_Places_Create() {
+type Props = {
+  cities: CityRow[];
+};
+
+export default function Tourism_Places_Create({ cities }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -120,29 +125,17 @@ export default function Tourism_Places_Create() {
             });
           }}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor="tp-name">الاسم</Label>
-              <Input id="tp-name" name="name" required placeholder="شلال..." />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="tp-governorate">المحافظة (العراق)</Label>
-              <select
-                id="tp-governorate"
-                name="governorate"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                defaultValue=""
-              >
-                <option value="">— اختر المحافظة —</option>
-                {IRAQI_GOVERNORATES.map((gov) => (
-                  <option key={gov} value={gov}>
-                    {gov}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor="tp-name">الاسم</Label>
+            <Input id="tp-name" name="name" required placeholder="شلال..." />
           </div>
+
+          <City_Country_Select_Fields
+            cities={cities}
+            idPrefix="tp"
+            cityRequired
+            countryRequired
+          />
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">

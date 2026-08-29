@@ -125,7 +125,7 @@ export async function fetchPublicTourismPlaceById(
 export async function fetchActiveCities() {
   return prisma.city.findMany({
     where: { isActive: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, region: true, isActive: true },
+    orderBy: [{ country: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, country: true, region: true, isActive: true },
   });
 }

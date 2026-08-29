@@ -4,7 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { suggestTourismPlaceByPassenger } from "@/lib/actions/tourism_places.actions";
-import { IRAQI_GOVERNORATES } from "@/lib/constants/iraqi-governorates";
+import type { CityRow } from "@/lib/actions/city.actions";
+import City_Country_Select_Fields from "@/components/Shared/City_Country_Select_Fields";
 import { MAX_TOURISM_PLACE_IMAGES } from "@/lib/tourism-place-images";
 import Tourism_Place_Images_Upload, {
   appendPlaceImagesToFormData,
@@ -25,6 +26,7 @@ import Swal from "sweetalert2";
 
 type Props = {
   isLoggedIn: boolean;
+  cities?: CityRow[];
   callbackPath?: string;
   triggerClassName?: string;
   triggerLabel?: string;
@@ -32,6 +34,7 @@ type Props = {
 
 export default function Passenger_Tourism_Place_Suggest({
   isLoggedIn,
+  cities = [],
   callbackPath = "/passenger/tourism-places",
   triggerClassName,
   triggerLabel = "أضف مكاناً زرته",
@@ -129,25 +132,13 @@ export default function Passenger_Tourism_Place_Suggest({
             <Input id="sug-name" name="name" required placeholder="مثال: قلعة أربيل" />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="sug-gov">المحافظة</Label>
-            <select
-              id="sug-gov"
-              name="governorate"
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                — اختر المحافظة —
-              </option>
-              {IRAQI_GOVERNORATES.map((gov) => (
-                <option key={gov} value={gov}>
-                  {gov}
-                </option>
-              ))}
-            </select>
-          </div>
+          <City_Country_Select_Fields
+            cities={cities}
+            idPrefix="sug"
+            cityRequired
+            countryRequired
+            manageCitiesHref={null}
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor="sug-desc">وصف المكان / تجربتك</Label>

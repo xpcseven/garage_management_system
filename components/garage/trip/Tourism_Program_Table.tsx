@@ -125,10 +125,11 @@ export default function Tourism_Program_Table({ rows, editPack }: Props) {
                     <div className="space-y-1">
                       {p.places.map((x) => (
                         <div
-                          key={x.id}
+                          key={`${x.kind}-${x.id}-${x.order}`}
                           className="text-xs text-dusk/70 dark:text-muted-foreground"
                         >
-                          {x.order}. {x.name}
+                          {x.order}. [{x.kind === "TRAVEL" ? "سفر" : "سياحة"}]{" "}
+                          {x.name}
                         </div>
                       ))}
                       {p.partners.length > 0 && (
@@ -155,7 +156,10 @@ export default function Tourism_Program_Table({ rows, editPack }: Props) {
                     className="p-3 font-data tabular-nums text-dusk dark:text-foreground"
                     data-label="السعر"
                   >
-                    {p.basePrice}
+                    {p.basePrice}{" "}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {p.currency === "USD" ? "دولار" : "دينار"}
+                    </span>
                   </td>
                   <td
                     className="p-3 font-data tabular-nums text-dusk/70 dark:text-muted-foreground"

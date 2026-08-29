@@ -168,6 +168,7 @@ export async function fetchTourismProgramsForPassenger() {
         select: {
           stopOrder: true,
           place: { select: { id: true, name: true } },
+          city: { select: { id: true, name: true, region: true, country: true } },
         },
       },
     },
@@ -188,7 +189,16 @@ export async function fetchTourismProgramsForPassenger() {
     availableSeats: p.availableSeats,
     status: p.status,
     places: p.places
-      .map((x) => ({ id: x.place.id, name: x.place.name, order: x.stopOrder }))
+      .map((x) => {
+        const cityName = x.city
+          ? [x.city.name, x.city.region, x.city.country].filter(Boolean).join(" — ")
+          : null;
+        return {
+          id: x.place?.id ?? x.city?.id ?? "",
+          name: x.place?.name ?? cityName ?? "—",
+          order: x.stopOrder,
+        };
+      })
       .sort((a, b) => a.order - b.order),
   }));
 }

@@ -40,9 +40,19 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [garageId, setGarageId] = useState(row.garageId);
-  const [placeIdToAdd, setPlaceIdToAdd] = useState(pack.places[0]?.id ?? "");
-  const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>(
-    [...row.places].sort((a, b) => a.order - b.order).map((p) => p.id)
+  const [stopKind, setStopKind] = useState<"TRAVEL" | "TOURISM">("TOURISM");
+  const [itemIdToAdd, setItemIdToAdd] = useState("");
+  const [selectedStops, setSelectedStops] = useState<
+    { kind: "TRAVEL" | "TOURISM"; id: string }[]
+  >(() =>
+    [...row.places]
+      .sort((a, b) => a.order - b.order)
+      .map((p) => ({
+        kind: (p.kind === "TRAVEL" ? "TRAVEL" : "TOURISM") as
+          | "TRAVEL"
+          | "TOURISM",
+        id: p.id,
+      }))
   );
   const [selectedPartnershipIds, setSelectedPartnershipIds] = useState<string[]>(
     row.partners.map((p) => p.partnershipId)
@@ -52,6 +62,35 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
     () => pack.garages.find((g) => g.id === garageId),
     [pack.garages, garageId]
   );
+
+  const cities = pack.cities ?? [];
+  const addOptions = useMemo(() => {
+    if (stopKind === "TRAVEL") {
+      return cities.map((c) => ({
+        id: c.id,
+        label: [c.name, c.region, c.country].filter(Boolean).join(" — "),
+      }));
+    }
+    return pack.places.map((p) => ({
+      id: p.id,
+      label: p.governorate ? `${p.name} — ${p.governorate}` : p.name,
+    }));
+  }, [stopKind, cities, pack.places]);
+
+  function stopLabel(stop: { kind: "TRAVEL" | "TOURISM"; id: string }) {
+    if (stop.kind === "TRAVEL") {
+      const c = cities.find((x) => x.id === stop.id);
+      return c
+        ? [c.name, c.region, c.country].filter(Boolean).join(" — ")
+        : stop.id;
+    }
+    const p = pack.places.find((x) => x.id === stop.id);
+    return p
+      ? p.governorate
+        ? `${p.name} — ${p.governorate}`
+        : p.name
+      : stop.id;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -67,11 +106,11 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
         <form
           className="grid gap-3 sm:grid-cols-2"
           action={(fd) => {
-            if (selectedPlaceIds.length === 0) {
+            if (selectedStops.length === 0) {
               Swal.fire({
                 icon: "warning",
-                title: "الأماكن السياحية مطلوبة",
-                text: "أضف مكاناً سياحياً واحداً على الأقل قبل الحفظ",
+                title: "المحطات مطلوبة",
+                text: "أضف محطة سفر أو سياحة واحدة على الأقل قبل الحفظ",
                 confirmButtonText: "حسناً",
               });
               return;
@@ -199,6 +238,19 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
             />
           </div>
           <div className="space-y-1">
+            <Label htmlFor={`tp-currency-${row.id}`}>العملة</Label>
+            <select
+              id={`tp-currency-${row.id}`}
+              name="currency"
+              required
+              defaultValue={row.currency ?? "IQD"}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="IQD">IQD</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <div className="space-y-1">
             <Label htmlFor={`tp-seats-${row.id}`}>عدد المقاعد</Label>
             <Input
               id={`tp-seats-${row.id}`}
@@ -237,18 +289,52 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
           </div>
 
           <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor={`tp-place-add-${row.id}`}>الأماكن السياحية (إدخال متعدد)</Label>
+            <Label>مسار البرنامج (محطات)</Label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStopKind("TRAVEL");
+                  setItemIdToAdd("");
+                }}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  stopKind === "TRAVEL"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-input bg-background"
+                }`}
+              >
+                سفر (مدن)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStopKind("TOURISM");
+                  setItemIdToAdd("");
+                }}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  stopKind === "TOURISM"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-input bg-background"
+                }`}
+              >
+                سياحة (أماكن سياحية)
+              </button>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <select
-                id={`tp-place-add-${row.id}`}
-                value={placeIdToAdd}
-                onChange={(e) => setPlaceIdToAdd(e.target.value)}
+                id={`tp-stop-add-${row.id}`}
+                value={itemIdToAdd}
+                onChange={(e) => setItemIdToAdd(e.target.value)}
                 className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                {pack.places.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.governorate ? ` — ${p.governorate}` : ""}
+                <option value="">
+                  {stopKind === "TRAVEL"
+                    ? "— اختر مدينة للسفر —"
+                    : "— اختر مكاناً سياحياً —"}
+                </option>
+                {addOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
                   </option>
                 ))}
               </select>
@@ -256,50 +342,65 @@ export default function Tourism_Program_Update({ row, pack }: Props) {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  if (!placeIdToAdd) return;
-                  setSelectedPlaceIds((prev) =>
-                    prev.includes(placeIdToAdd) ? prev : [...prev, placeIdToAdd]
+                  if (!itemIdToAdd) return;
+                  const key = `${stopKind}:${itemIdToAdd}`;
+                  setSelectedStops((prev) =>
+                    prev.some((s) => `${s.kind}:${s.id}` === key)
+                      ? prev
+                      : [...prev, { kind: stopKind, id: itemIdToAdd }]
                   );
+                  setItemIdToAdd("");
                 }}
               >
                 + إضافة
               </Button>
             </div>
             <div className="rounded-md border border-input p-2">
-              {selectedPlaceIds.length === 0 ? (
-                <p className="text-xs text-muted-foreground">لم يتم إضافة أماكن بعد.</p>
+              {selectedStops.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  لم تُضف محطات بعد.
+                </p>
               ) : (
                 <div className="space-y-2">
-                  {selectedPlaceIds.map((pid, idx) => {
-                    const place = pack.places.find((p) => p.id === pid);
-                    if (!place) return null;
-                    return (
-                      <div
-                        key={pid}
-                        className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1"
+                  {selectedStops.map((stop, idx) => (
+                    <div
+                      key={`${stop.kind}-${stop.id}`}
+                      className="flex items-center justify-between rounded-md bg-muted/40 px-2 py-1"
+                    >
+                      <span className="text-sm">
+                        {idx + 1}.{" "}
+                        <span className="text-[10px] text-muted-foreground">
+                          {stop.kind === "TRAVEL" ? "سفر" : "سياحة"}
+                        </span>{" "}
+                        {stopLabel(stop)}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setSelectedStops((prev) =>
+                            prev.filter(
+                              (s) =>
+                                !(s.kind === stop.kind && s.id === stop.id)
+                            )
+                          )
+                        }
                       >
-                        <span className="text-sm">
-                          {idx + 1}. {place.name}
-                          {place.governorate ? ` — ${place.governorate}` : ""}
-                        </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setSelectedPlaceIds((prev) => prev.filter((x) => x !== pid))
-                          }
-                        >
-                          حذف
-                        </Button>
-                      </div>
-                    );
-                  })}
+                        حذف
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {selectedPlaceIds.map((pid) => (
-              <input key={pid} type="hidden" name="placeIds" value={pid} />
+            {selectedStops.map((s) => (
+              <input
+                key={`${s.kind}:${s.id}`}
+                type="hidden"
+                name="stopEntries"
+                value={`${s.kind}:${s.id}`}
+              />
             ))}
           </div>
 

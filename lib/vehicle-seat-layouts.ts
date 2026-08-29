@@ -154,13 +154,24 @@ export function seatsForTripCreate(
   layout: SeatLayout,
   maxSeats: number
 ) {
+  return seatsForVehicleCreate({ tripId }, layout, maxSeats);
+}
+
+/** مقاعد قابلة للحجز لرحلة أو برنامج سياحي */
+export function seatsForVehicleCreate(
+  parent: { tripId: string } | { programId: string },
+  layout: SeatLayout,
+  maxSeats: number
+) {
   const bookable = layout.seats
     .filter((s) => !s.isDriver && s.n > 0)
     .sort((a, b) => a.n - b.n)
     .slice(0, maxSeats);
 
   return bookable.map((s, i) => ({
-    tripId,
+    ...("tripId" in parent
+      ? { tripId: parent.tripId }
+      : { programId: parent.programId }),
     seatNumber: i + 1,
     row: s.row,
     col: s.col,

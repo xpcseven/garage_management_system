@@ -7,13 +7,13 @@ import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { Button } from "@/components/ui/button";
 import Passenger_Tourism_Place_Suggest from "@/components/passenger/Passenger_Tourism_Place_Suggest";
 import { cn } from "@/lib/utils";
+import { placeLocationLabel } from "@/lib/place-location-label";
+import type { CityRow } from "@/lib/actions/city.actions";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
 function placeCaption(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "العراق";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p, "العراق");
 }
 
 function shortBlurb(raw: string | null | undefined, max = 110) {
@@ -30,11 +30,13 @@ function shortBlurb(raw: string | null | undefined, max = 110) {
 
 type Props = {
   places: TourismPlaceRow[];
+  cities?: CityRow[];
   canSuggest?: boolean;
 };
 
 export default function PublicTourismPlacesCatalog({
   places,
+  cities = [],
   canSuggest = false,
 }: Props) {
   const regions = useMemo(() => {
@@ -93,6 +95,7 @@ export default function PublicTourismPlacesCatalog({
             <div className="mt-6 flex flex-wrap gap-2">
               <Passenger_Tourism_Place_Suggest
                 isLoggedIn={canSuggest}
+                cities={cities}
                 callbackPath="/tourism-places"
                 triggerLabel="أضف مكاناً زرته"
               />

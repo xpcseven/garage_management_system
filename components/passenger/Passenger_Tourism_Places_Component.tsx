@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/Shared/TablePagination";
 import Passenger_Tourism_Place_Suggest from "@/components/passenger/Passenger_Tourism_Place_Suggest";
 import { cn } from "@/lib/utils";
+import { placeLocationLabel } from "@/lib/place-location-label";
+import type { CityRow } from "@/lib/actions/city.actions";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
-type Props = { places: TourismPlaceRow[]; canSuggest?: boolean };
+type Props = { places: TourismPlaceRow[]; cities?: CityRow[]; canSuggest?: boolean };
 
 function placeCaption(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "العراق";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p, "العراق");
 }
 
 function shortBlurb(raw: string | null | undefined, max = 110) {
@@ -33,6 +33,7 @@ function shortBlurb(raw: string | null | undefined, max = 110) {
 
 export default function Passenger_Tourism_Places_Component({
   places,
+  cities = [],
   canSuggest = false,
 }: Props) {
   const regions = useMemo(() => {
@@ -105,6 +106,7 @@ export default function Passenger_Tourism_Places_Component({
           <div className="flex flex-wrap gap-2">
             <Passenger_Tourism_Place_Suggest
               isLoggedIn={canSuggest}
+              cities={cities}
               callbackPath="/passenger/tourism-places"
             />
             <Button
