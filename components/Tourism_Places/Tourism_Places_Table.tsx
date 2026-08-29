@@ -4,13 +4,15 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { deleteTourismPlace } from "@/lib/actions/tourism_places.actions";
+import type { CityRow } from "@/lib/actions/city.actions";
 import Tourism_Places_Update from "./Tourism_Places_Update";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
 import TablePagination from "@/components/Shared/TablePagination";
 import { cn } from "@/lib/utils";
+import { placeLocationLabel } from "@/lib/place-location-label";
 
-type Props = { places: TourismPlaceRow[] };
+type Props = { places: TourismPlaceRow[]; cities: CityRow[] };
 
 type StatusFilter = "all" | "APPROVED" | "PENDING" | "REJECTED";
 
@@ -18,9 +20,7 @@ const chipIdle =
   "bg-mist text-dusk/70 ring-1 ring-plum/10 hover:bg-plum-soft dark:bg-muted dark:text-muted-foreground dark:ring-orchid/25 dark:hover:bg-orchid/15";
 
 function fmtCity(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "—";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p);
 }
 
 function statusLabel(s: TourismPlaceRow["approvalStatus"]) {
@@ -29,7 +29,7 @@ function statusLabel(s: TourismPlaceRow["approvalStatus"]) {
   return "مرفوض";
 }
 
-export default function Tourism_Places_Table({ places }: Props) {
+export default function Tourism_Places_Table({ places, cities }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [page, setPage] = useState(1);
@@ -42,7 +42,7 @@ export default function Tourism_Places_Table({ places }: Props) {
     return places.filter((p) => {
       if (status !== "all" && p.approvalStatus !== status) return false;
       if (!q) return true;
-      const hay = [p.name, p.description, p.governorate, p.cityName, fmtCity(p)]
+      const hay = [p.name, p.description, p.country, p.governorate, p.cityName, fmtCity(p)]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -203,7 +203,7 @@ export default function Tourism_Places_Table({ places }: Props) {
                     </td>
                     <td className="p-3" data-label="إجراءات">
                       <div className="flex flex-wrap gap-2">
-                        <Tourism_Places_Update place={p} />
+                        <Tourism_Places_Update place={p} cities={cities} />
                         <Button
                           type="button"
                           size="sm"

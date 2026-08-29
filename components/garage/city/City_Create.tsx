@@ -62,8 +62,20 @@ export default function City_Create() {
           }}
         >
           <div className="space-y-1.5">
+            <Label className="text-xs text-dusk/60 dark:text-muted-foreground" htmlFor="city-country">
+              الدولة
+            </Label>
+            <Input
+              id="city-country"
+              name="country"
+              required
+              placeholder="العراق"
+              className={fieldClass}
+            />
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-xs text-dusk/60 dark:text-muted-foreground" htmlFor="city-name">
-              الاسم
+              المدينة / المحافظة
             </Label>
             <Input
               id="city-name"
@@ -80,7 +92,7 @@ export default function City_Create() {
             <Input
               id="city-region"
               name="region"
-              placeholder="بغداد"
+              placeholder="مثال: وسط بغداد"
               className={fieldClass}
             />
           </div>

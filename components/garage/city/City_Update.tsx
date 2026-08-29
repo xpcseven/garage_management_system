@@ -73,9 +73,25 @@ export default function City_Update({ city }: Props) {
           <div className="space-y-1.5">
             <Label
               className="text-xs text-dusk/60 dark:text-muted-foreground"
+              htmlFor={`country-${city.id}`}
+            >
+              الدولة
+            </Label>
+            <Input
+              id={`country-${city.id}`}
+              name="country"
+              required
+              defaultValue={city.country ?? ""}
+              placeholder="العراق"
+              className={fieldClass}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label
+              className="text-xs text-dusk/60 dark:text-muted-foreground"
               htmlFor={`name-${city.id}`}
             >
-              الاسم
+              المدينة / المحافظة
             </Label>
             <Input
               id={`name-${city.id}`}
@@ -90,7 +106,7 @@ export default function City_Update({ city }: Props) {
               className="text-xs text-dusk/60 dark:text-muted-foreground"
               htmlFor={`region-${city.id}`}
             >
-              المنطقة
+              المنطقة (اختياري)
             </Label>
             <Input
               id={`region-${city.id}`}

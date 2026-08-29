@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
 import { MapPin, Images } from "lucide-react";
+import { placeLocationLabel } from "@/lib/place-location-label";
 
 type Props = {
   place: TourismPlaceRow;
@@ -13,9 +14,7 @@ type Props = {
 };
 
 function cityLabel(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "العراق";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p, "العراق");
 }
 
 function placeImages(place: TourismPlaceRow) {

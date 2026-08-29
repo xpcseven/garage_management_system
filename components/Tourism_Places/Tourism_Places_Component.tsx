@@ -1,6 +1,7 @@
 "use client";
 
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
+import type { CityRow } from "@/lib/actions/city.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Tourism_Places_Create from "./Tourism_Places_Create";
@@ -8,9 +9,10 @@ import Tourism_Places_Table from "./Tourism_Places_Table";
 
 type Props = {
   places: TourismPlaceRow[];
+  cities: CityRow[];
 };
 
-export default function Tourism_Places_Component({ places }: Props) {
+export default function Tourism_Places_Component({ places, cities }: Props) {
   const approved = places.filter((p) => p.approvalStatus === "APPROVED").length;
   const pending = places.filter((p) => p.approvalStatus === "PENDING").length;
 
@@ -41,7 +43,7 @@ export default function Tourism_Places_Component({ places }: Props) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Tourism_Places_Create />
+            <Tourism_Places_Create cities={cities} />
             <Button
               asChild
               variant="outline"
@@ -66,7 +68,7 @@ export default function Tourism_Places_Component({ places }: Props) {
         </div>
       </header>
 
-      <Tourism_Places_Table places={places} />
+      <Tourism_Places_Table places={places} cities={cities} />
     </div>
   );
 }

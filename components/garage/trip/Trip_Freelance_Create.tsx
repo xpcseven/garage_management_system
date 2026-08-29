@@ -8,6 +8,7 @@ import { createFreelanceTrip } from "@/lib/actions/trip.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import City_Route_Search_Select from "@/components/Shared/City_Route_Search_Select";
 import {
   Dialog,
   DialogContent,
@@ -118,23 +119,14 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
             >
               من
             </Label>
-            <select
+            <City_Route_Search_Select
               id="tf-from"
               name="fromCityId"
+              cities={cities}
               required
               className={fieldClass}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                — اختر —
-              </option>
-              {cities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.region ? ` — ${c.region}` : ""}
-                </option>
-              ))}
-            </select>
+              placeholder="ابحث عن دولة أو محافظة أو مدينة…"
+            />
           </div>
           <div className="space-y-1.5">
             <Label
@@ -143,23 +135,14 @@ export default function Trip_Freelance_Create({ cities, vehicles }: Props) {
             >
               إلى
             </Label>
-            <select
+            <City_Route_Search_Select
               id="tf-to"
               name="toCityId"
+              cities={cities}
               required
               className={fieldClass}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                — اختر —
-              </option>
-              {cities.map((c) => (
-                <option key={`t-${c.id}`} value={c.id}>
-                  {c.name}
-                  {c.region ? ` — ${c.region}` : ""}
-                </option>
-              ))}
-            </select>
+              placeholder="ابحث عن دولة أو محافظة أو مدينة…"
+            />
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">

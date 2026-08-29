@@ -22,6 +22,7 @@ import {
 export type TourismPlaceRow = {
   id: string;
   name: string;
+  country: string | null;
   governorate: string | null;
   description: string | null;
   address: string | null;
@@ -43,6 +44,7 @@ export type TourismPlaceRow = {
 type PlaceDbRow = {
   id: string;
   name: string;
+  country: string | null;
   governorate: string | null;
   description: string | null;
   address: string | null;
@@ -63,6 +65,7 @@ function mapTourismPlaceRow(p: PlaceDbRow): TourismPlaceRow {
   return {
     id: p.id,
     name: p.name,
+    country: p.country ?? null,
     governorate: p.governorate ?? null,
     description: p.description ?? null,
     address: p.address ?? null,
@@ -183,7 +186,6 @@ export async function createTourismPlace(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const governorate = String(formData.get("governorate") ?? "").trim() || null;
   const cityIdRaw = String(formData.get("cityId") ?? "").trim();
   const cityId = cityIdRaw || null;
   const description = String(formData.get("description") ?? "").trim() || null;
@@ -191,11 +193,19 @@ export async function createTourismPlace(
   const location = String(formData.get("location") ?? "").trim() || null;
 
   if (!name) return { error: "اسم المكان مطلوب" };
+  if (!cityId) return { error: "اختر الدولة ثم المدينة من قائمة المدن" };
 
-  if (cityId) {
-    const ok = await prisma.city.findFirst({ where: { id: cityId } });
-    if (!ok) return { error: "المدينة المختارة غير صالحة" };
+  const city = await prisma.city.findFirst({
+    where: { id: cityId, isActive: true },
+    select: { id: true, name: true, country: true, region: true },
+  });
+  if (!city) return { error: "المدينة المختارة غير صالحة" };
+  if (!city.country?.trim()) {
+    return { error: "المدينة بلا دولة — أضف الدولة من صفحة المدن أولاً" };
   }
+
+  const country = city.country.trim();
+  const governorate = city.region?.trim() || city.name;
 
   try {
     const resolved = await resolveImageUrlsFromFormData(
@@ -209,8 +219,9 @@ export async function createTourismPlace(
     const place = await prisma.tourismPlace.create({
       data: {
         name,
+        country,
         governorate,
-        cityId,
+        cityId: city.id,
         description,
         address,
         location,
@@ -272,13 +283,27 @@ export async function suggestTourismPlaceByPassenger(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const governorate = String(formData.get("governorate") ?? "").trim() || null;
+  const cityIdRaw = String(formData.get("cityId") ?? "").trim();
+  const cityId = cityIdRaw || null;
   const description = String(formData.get("description") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
   const location = String(formData.get("location") ?? "").trim() || null;
 
   if (!name) return { error: "اسم المكان مطلوب" };
+  if (!cityId) return { error: "اختر الدولة ثم المدينة من قائمة المدن" };
   if (!description) return { error: "أضف وصفاً قصيراً عن المكان الذي زرته" };
+
+  const city = await prisma.city.findFirst({
+    where: { id: cityId, isActive: true },
+    select: { id: true, name: true, country: true, region: true },
+  });
+  if (!city) return { error: "المدينة المختارة غير صالحة" };
+  if (!city.country?.trim()) {
+    return { error: "المدينة بلا دولة — أضف الدولة من صفحة المدن أولاً" };
+  }
+
+  const country = city.country.trim();
+  const governorate = city.region?.trim() || city.name;
 
   try {
     const resolved = await resolveImageUrlsFromFormData(
@@ -297,7 +322,9 @@ export async function suggestTourismPlaceByPassenger(
     await prisma.tourismPlace.create({
       data: {
         name,
+        country,
         governorate,
+        cityId: city.id,
         description,
         address,
         location,
@@ -341,7 +368,6 @@ export async function updateTourismPlace(
 
   const id = String(formData.get("id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
-  const governorate = String(formData.get("governorate") ?? "").trim() || null;
   const cityIdRaw = String(formData.get("cityId") ?? "").trim();
   const cityId = cityIdRaw || null;
   const description = String(formData.get("description") ?? "").trim() || null;
@@ -350,11 +376,19 @@ export async function updateTourismPlace(
   const isActive = formData.get("isActive") === "true";
 
   if (!id || !name) return { error: "بيانات غير كاملة" };
+  if (!cityId) return { error: "اختر الدولة ثم المدينة من قائمة المدن" };
 
-  if (cityId) {
-    const ok = await prisma.city.findFirst({ where: { id: cityId } });
-    if (!ok) return { error: "المدينة المختارة غير صالحة" };
+  const city = await prisma.city.findFirst({
+    where: { id: cityId, isActive: true },
+    select: { id: true, name: true, country: true, region: true },
+  });
+  if (!city) return { error: "المدينة المختارة غير صالحة" };
+  if (!city.country?.trim()) {
+    return { error: "المدينة بلا دولة — أضف الدولة من صفحة المدن أولاً" };
   }
+
+  const country = city.country.trim();
+  const governorate = city.region?.trim() || city.name;
 
   try {
     const existing = await prisma.tourismPlace.findUnique({
@@ -380,8 +414,9 @@ export async function updateTourismPlace(
       where: { id },
       data: {
         name,
+        country,
         governorate,
-        cityId,
+        cityId: city.id,
         description,
         address,
         location,

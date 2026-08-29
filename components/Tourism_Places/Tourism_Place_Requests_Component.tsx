@@ -11,15 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/Shared/TablePagination";
 import Swal from "sweetalert2";
+import { placeLocationLabel } from "@/lib/place-location-label";
 
 type Props = {
   requests: TourismPlaceRow[];
 };
 
 function fmtCity(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "—";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p);
 }
 
 export default function Tourism_Place_Requests_Component({ requests }: Props) {
@@ -33,7 +32,7 @@ export default function Tourism_Place_Requests_Component({ requests }: Props) {
     const q = search.trim().toLowerCase();
     if (!q) return requests;
     return requests.filter((p) => {
-      const hay = [p.name, p.description, p.governorate, p.cityName, fmtCity(p)]
+      const hay = [p.name, p.description, p.country, p.governorate, p.cityName, fmtCity(p)]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();

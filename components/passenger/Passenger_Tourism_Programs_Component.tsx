@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { TourismProgramPassengerRow } from "@/lib/actions/tourism_program.actions";
+import type { TourismCompanyBrowseRow } from "@/lib/actions/tourism_program.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import TablePagination from "@/components/Shared/TablePagination";
-import PassengerTourismProgramBookButton from "./PassengerTourismProgramBookButton";
+import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  programs: TourismProgramPassengerRow[];
-  isLoggedIn?: boolean;
+  companies: TourismCompanyBrowseRow[];
 };
 
-function formatWhen(iso: string) {
+function formatWhen(iso: string | null) {
+  if (!iso) return null;
   try {
     return new Date(iso).toLocaleString("ar-IQ", {
       dateStyle: "medium",
@@ -24,7 +24,7 @@ function formatWhen(iso: string) {
   }
 }
 
-function shortText(raw: string | null | undefined, max = 140) {
+function shortText(raw: string | null | undefined, max = 160) {
   if (!raw?.trim()) return null;
   const text = raw.trim();
   if (text.length <= max) return text;
@@ -32,8 +32,7 @@ function shortText(raw: string | null | undefined, max = 140) {
 }
 
 export default function Passenger_Tourism_Programs_Component({
-  programs,
-  isLoggedIn = false,
+  companies,
 }: Props) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -41,23 +40,21 @@ export default function Passenger_Tourism_Programs_Component({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return programs;
-    return programs.filter((p) => {
+    if (!q) return companies;
+    return companies.filter((c) => {
       const hay = [
-        p.title,
-        p.description,
-        p.garageName,
-        p.driverName,
-        p.vehicleLabel,
-        ...p.places.map((x) => x.name),
-        ...p.partners.map((x) => x.partnerName),
+        c.name,
+        c.description,
+        c.phone,
+        c.address,
+        c.nextProgramTitle,
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [programs, query]);
+  }, [companies, query]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = useMemo(
@@ -94,8 +91,7 @@ export default function Passenger_Tourism_Programs_Component({
               البرامج السياحية
             </h1>
             <p className="mt-3 text-sm leading-8 text-white/70 sm:text-base dark:text-muted-foreground">
-              برامج من الشركات المسجّلة تشمل مسار المعالم والشركاء — احجز مقعدك
-              بعدد الأفراد المناسب.
+              اختر الشركة ثم اطّلع على برامجها ورحلاتها واحجز من صفحة الشركة.
             </p>
           </div>
 
@@ -118,16 +114,16 @@ export default function Passenger_Tourism_Programs_Component({
 
         <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <label className="relative block min-w-0 flex-1">
-            <span className="sr-only">بحث في البرامج</span>
+            <span className="sr-only">بحث في الشركات</span>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="ابحث بعنوان البرنامج أو الشركة أو المعلم…"
+              placeholder="ابحث باسم الشركة أو البرنامج…"
               className="h-11 w-full rounded-2xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/45 outline-none ring-orchid/40 transition focus:bg-white/15 focus:ring-2 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground dark:focus:bg-background"
             />
           </label>
           <p className="font-data text-xs text-white/50 sm:whitespace-nowrap dark:text-muted-foreground">
-            {filtered.length} برنامج
+            {filtered.length} شركة
           </p>
         </div>
       </header>
@@ -135,22 +131,22 @@ export default function Passenger_Tourism_Programs_Component({
       <section className="space-y-4">
         <div className="text-start">
           <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
-            المتاح للحجز
+            الشركات
           </p>
           <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
-            برامج قادمة
+            شركات لديها برامج
           </h2>
         </div>
 
         {filtered.length === 0 ? (
           <div className="rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20">
             <p className="font-display text-2xl text-plum dark:text-orchid-light">
-              {programs.length === 0
-                ? "لا برامج متاحة حالياً"
+              {companies.length === 0
+                ? "لا شركات لديها برامج حالياً"
                 : "لا نتائج مطابقة"}
             </p>
             <p className="mt-2 text-sm text-dusk/60 dark:text-muted-foreground">
-              {programs.length === 0
+              {companies.length === 0
                 ? "يمكنك البحث عن رحلة مقعد أو تصفّح المعالم في الأثناء."
                 : "جرّب كلمة أخرى أو امسح البحث."}
             </p>
@@ -175,112 +171,79 @@ export default function Passenger_Tourism_Programs_Component({
           </div>
         ) : (
           <>
-            <div className="grid gap-3">
-              {paged.map((p) => (
-                <article
-                  key={p.id}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {paged.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/passenger/garages/${c.id}`}
                   className={cn(
-                    "rounded-3xl bg-white p-5 ring-1 ring-plum/10",
-                    "transition hover:shadow-orchid",
+                    "group block rounded-3xl bg-white p-5 text-start ring-1 ring-plum/10",
+                    "transition hover:-translate-y-0.5 hover:shadow-orchid",
                     "dark:bg-card dark:ring-orchid/20 dark:hover:ring-orchid/40"
                   )}
                 >
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 flex-1 space-y-4 text-start">
-                      <div>
-                        <span className="rounded-full bg-plum-soft px-2.5 py-0.5 font-data text-[10px] tracking-wide text-plum dark:bg-orchid/20 dark:text-orchid-light">
-                          {p.garageName}
+                  <p className="font-data text-[10px] uppercase tracking-[0.16em] text-orchid dark:text-orchid-light">
+                    شركة سياحية
+                  </p>
+                  <h3 className="mt-2 font-display text-xl text-dusk group-hover:text-plum dark:text-foreground dark:group-hover:text-orchid-light">
+                    {c.name}
+                  </h3>
+                  {shortText(c.description) && (
+                    <p className="mt-2 text-sm leading-7 text-dusk/65 dark:text-muted-foreground">
+                      {shortText(c.description)}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-dusk/60 dark:text-muted-foreground">
+                    {c.phone?.trim() && (
+                      <p>
+                        <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                          هاتف
+                        </span>{" "}
+                        {c.phone}
+                      </p>
+                    )}
+                    {c.address?.trim() && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                          الموقع
                         </span>
-                        <h3 className="mt-2 text-lg font-semibold text-dusk dark:text-foreground sm:text-xl">
-                          {p.title}
-                        </h3>
-                        {shortText(p.description) && (
-                          <p className="mt-2 text-sm leading-7 text-dusk/65 dark:text-muted-foreground">
-                            {shortText(p.description)}
-                          </p>
-                        )}
+                        <LocationMapIcon location={c.address} size="sm" />
                       </div>
-
-                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-dusk/60 dark:text-muted-foreground">
-                        <p>
-                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                            الانطلاق
-                          </span>{" "}
-                          {formatWhen(p.startAt)}
-                        </p>
-                        <p>
-                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                            المركبة
-                          </span>{" "}
-                          {p.vehicleLabel}
-                        </p>
-                        <p>
-                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                            السائق
-                          </span>{" "}
-                          {p.driverName}
-                        </p>
-                      </div>
-
-                      {p.places.length > 0 && (
-                        <div>
-                          <p className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                            مسار الأماكن
-                          </p>
-                          <ol className="mt-2 flex flex-wrap gap-2">
-                            {p.places.map((x) => (
-                              <li
-                                key={x.id}
-                                className="rounded-full bg-mist px-3 py-1 text-xs text-dusk/75 ring-1 ring-plum/10 dark:bg-background dark:text-muted-foreground dark:ring-orchid/20"
-                              >
-                                <span className="font-data text-orchid dark:text-orchid-light">
-                                  {x.order}.
-                                </span>{" "}
-                                {x.name}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      )}
-
-                      {p.partners.length > 0 && (
-                        <div>
-                          <p className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                            الشركاء المشمولون
-                          </p>
-                          <ul className="mt-2 flex flex-wrap gap-2">
-                            {p.partners.map((x) => (
-                              <li
-                                key={x.partnershipId}
-                                className="rounded-full bg-fuchsia-soft/60 px-3 py-1 text-xs text-dusk/75 dark:bg-orchid/15 dark:text-muted-foreground"
-                              >
-                                {x.order}. {x.partnerName}
-                                {Number(x.priceAddon) > 0
-                                  ? ` (+${x.priceAddon})`
-                                  : ""}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-plum/10 pt-4 dark:border-orchid/15 lg:w-44 lg:flex-col lg:items-end lg:border-t-0 lg:border-s lg:pt-0 lg:ps-6">
-                      <div className="text-start lg:text-end">
-                        <p className="font-data text-xl font-semibold tabular-nums text-plum dark:text-orchid-light">
-                          {p.basePrice}
-                        </p>
-                        <p className="mt-0.5 text-xs text-dusk/50 dark:text-muted-foreground">
-                          {p.availableSeats} مقعد متاح
-                        </p>
-                      </div>
-                      <PassengerTourismProgramBookButton
-                        programId={p.id}
-                        isLoggedIn={isLoggedIn}
-                      />
-                    </div>
+                    )}
                   </div>
-                </article>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-plum-soft px-3 py-1 font-data text-xs text-plum dark:bg-orchid/20 dark:text-orchid-light">
+                      {c.programsCount} برنامج
+                    </span>
+                    <span className="rounded-full bg-mist px-3 py-1 font-data text-xs text-dusk/70 ring-1 ring-plum/10 dark:bg-background dark:text-muted-foreground dark:ring-orchid/20">
+                      {c.tripsCount} رحلة
+                    </span>
+                  </div>
+
+                  {c.nextProgramTitle && (
+                    <p className="mt-4 border-t border-plum/10 pt-3 text-sm text-dusk/70 dark:border-orchid/15 dark:text-muted-foreground">
+                      <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                        أقرب برنامج
+                      </span>
+                      <br />
+                      <span className="font-semibold text-dusk dark:text-foreground">
+                        {c.nextProgramTitle}
+                      </span>
+                      {formatWhen(c.nextProgramAt) && (
+                        <span className="text-dusk/55 dark:text-muted-foreground">
+                          {" "}
+                          — {formatWhen(c.nextProgramAt)}
+                        </span>
+                      )}
+                    </p>
+                  )}
+
+                  <p className="mt-4 text-sm font-semibold text-orchid group-hover:underline dark:text-orchid-light">
+                    عرض الرحلات والبرامج ←
+                  </p>
+                </Link>
               ))}
             </div>
 

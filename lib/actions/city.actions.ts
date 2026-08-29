@@ -8,16 +8,25 @@ import { revalidatePath } from "next/cache";
 export type CityRow = {
   id: string;
   name: string;
+  country: string | null;
   region: string | null;
   isActive: boolean;
 };
+
+const citySelect = {
+  id: true,
+  name: true,
+  country: true,
+  region: true,
+  isActive: true,
+} as const;
 
 /** مدن نشطة للنماذج والبحث (عام بدون تسجيل) */
 export async function getActiveCitiesPublic(): Promise<CityRow[]> {
   const rows = await prisma.city.findMany({
     where: { isActive: true },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, region: true, isActive: true },
+    orderBy: [{ country: "asc" }, { name: "asc" }],
+    select: citySelect,
   });
   return rows;
 }
@@ -28,8 +37,8 @@ export async function getCities(): Promise<CityRow[]> {
     return [];
   }
   const rows = await prisma.city.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, region: true, isActive: true },
+    orderBy: [{ country: "asc" }, { name: "asc" }],
+    select: citySelect,
   });
   return rows;
 }
@@ -40,13 +49,16 @@ export async function createCity(formData: FormData) {
     return { error: "لا تملك صلاحية إضافة مدينة" };
   }
   const name = String(formData.get("name") ?? "").trim();
+  const country = String(formData.get("country") ?? "").trim() || null;
   const region = String(formData.get("region") ?? "").trim() || null;
   if (!name) return { error: "اسم المدينة مطلوب" };
+  if (!country) return { error: "الدولة مطلوبة" };
   try {
     await prisma.city.create({
-      data: { name, region, isActive: true },
+      data: { name, country, region, isActive: true },
     });
     revalidatePath("/cities");
+    revalidatePath("/tourism_places");
     revalidatePath("/home");
     revalidatePath("/trips");
     revalidatePath("/passenger/trips");
@@ -63,15 +75,18 @@ export async function updateCity(formData: FormData) {
   }
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const country = String(formData.get("country") ?? "").trim() || null;
   const region = String(formData.get("region") ?? "").trim() || null;
   const isActive = formData.get("isActive") === "true";
   if (!id || !name) return { error: "بيانات غير كاملة" };
+  if (!country) return { error: "الدولة مطلوبة" };
   try {
     await prisma.city.update({
       where: { id },
-      data: { name, region, isActive },
+      data: { name, country, region, isActive },
     });
     revalidatePath("/cities");
+    revalidatePath("/tourism_places");
     revalidatePath("/home");
     return { success: true };
   } catch {
@@ -99,6 +114,7 @@ export async function deleteCity(id: string) {
   try {
     await prisma.city.delete({ where: { id } });
     revalidatePath("/cities");
+    revalidatePath("/tourism_places");
     revalidatePath("/home");
     return { success: true };
   } catch {

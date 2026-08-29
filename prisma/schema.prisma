@@ -89,6 +89,11 @@ enum TourismProgramStatus {
   CANCELLED
 }
 
+enum TourismProgramStopKind {
+  TRAVEL
+  TOURISM
+}
+
 enum SeatStatus {
   AVAILABLE
   RESERVED
@@ -247,6 +252,7 @@ model UserJobPreference {
 model City {
   id       String  @id @default(uuid())
   name     String  @unique
+  country  String?
   region   String?
   isActive Boolean @default(true)
 
@@ -257,6 +263,9 @@ model City {
   hotels      Hotel[]
   restaurants Restaurant[]
   farms       Farm[]
+  programStops TourismProgramPlace[]
+
+  @@index([country])
 }
 
 // ============================================================
@@ -266,6 +275,7 @@ model City {
 model TourismPlace {
   id          String   @id @default(uuid())
   name        String
+  country     String?
   governorate String?
   description String?
   address     String?
@@ -575,6 +585,8 @@ model TourismProgram {
   endAt   DateTime?
 
   basePrice      Decimal @db.Decimal(10, 2)
+  /// IQD | USD
+  currency       String  @default("IQD")
   maxSeats       Int
   availableSeats Int
   status         TourismProgramStatus @default(SCHEDULED)
@@ -590,6 +602,7 @@ model TourismProgram {
   places   TourismProgramPlace[]
   bookings TourismProgramBooking[]
   partners TourismProgramPartner[]
+  seats    Seat[]
 
   @@index([garageId])
   @@index([vehicleId])
@@ -603,16 +616,20 @@ model TourismProgramPlace {
   id String @id @default(uuid())
 
   programId      String
-  tourismPlaceId String
+  stopKind       TourismProgramStopKind @default(TOURISM)
+  tourismPlaceId String?
+  cityId         String?
   stopOrder      Int
 
   program TourismProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
-  place   TourismPlace   @relation(fields: [tourismPlaceId], references: [id])
+  place   TourismPlace?  @relation(fields: [tourismPlaceId], references: [id])
+  city    City?          @relation(fields: [cityId], references: [id])
 
-  @@unique([programId, tourismPlaceId])
   @@unique([programId, stopOrder])
   @@index([programId])
   @@index([tourismPlaceId])
+  @@index([cityId])
+  @@index([stopKind])
 }
 
 model TourismProgramPartner {
@@ -644,6 +661,7 @@ model TourismProgramBooking {
 
   programId String
   userId    String
+  seatId    String? @unique
 
   status BookingStatus @default(PENDING)
   priceAtBooking Decimal @db.Decimal(10, 2)
@@ -654,8 +672,8 @@ model TourismProgramBooking {
 
   program TourismProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
   user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat    Seat?          @relation(fields: [seatId], references: [id])
 
-  @@unique([programId, userId])
   @@index([programId])
   @@index([userId])
   @@index([status])
@@ -684,7 +702,8 @@ model TripStop {
 
 model Seat {
   id           String     @id @default(uuid())
-  tripId       String
+  tripId       String?
+  programId    String?
   seatNumber   Int
   row          Int?
   col          Int?
@@ -692,11 +711,15 @@ model Seat {
   priceModifier Decimal    @default(0.0) @db.Decimal(10, 2)
   status       SeatStatus @default(AVAILABLE)
 
-  trip    Trip     @relation(fields: [tripId], references: [id])
-  booking Booking?
+  trip             Trip?                  @relation(fields: [tripId], references: [id])
+  program          TourismProgram?        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  booking          Booking?
+  programBooking   TourismProgramBooking?
 
   @@unique([tripId, seatNumber])
+  @@unique([programId, seatNumber])
   @@index([tripId])
+  @@index([programId])
   @@index([status])
 }
 

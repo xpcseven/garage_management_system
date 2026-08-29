@@ -201,13 +201,19 @@ function mapProgramBookingRow(b: {
   priceAtBooking: Prisma.Decimal;
   passengersCount: number;
   createdAt: Date;
+  seat?: { seatNumber: number; label: string | null } | null;
   program: {
     title: string;
     startAt: Date;
     garage: { name: string };
     vehicle: { brand: string; model: string; plateNumber: string };
     driver: { name: string };
-    places: { stopOrder: number; place: { name: string } }[];
+    places: {
+      stopOrder: number;
+      stopKind?: string | null;
+      place: { name: string } | null;
+      city?: { name: string; region?: string | null; country?: string | null } | null;
+    }[];
   };
 }): BookingRow {
   return {
@@ -224,14 +230,22 @@ function mapProgramBookingRow(b: {
     tripFromRegion: null,
     tripToCity: null,
     tripToRegion: null,
-    seatNumber: null,
+    seatNumber: b.seat?.seatNumber ?? null,
     luggage: [],
     programTitle: b.program.title,
     programGarageName: b.program.garage.name,
     programVehicleLabel: `${b.program.vehicle.brand} ${b.program.vehicle.model} — ${b.program.vehicle.plateNumber}`,
     programDriverName: b.program.driver.name,
     programPlaces: b.program.places
-      .map((p) => ({ name: p.place.name, order: p.stopOrder }))
+      .map((p) => {
+        const cityName = p.city
+          ? [p.city.name, p.city.region, p.city.country].filter(Boolean).join(" — ")
+          : null;
+        return {
+          name: p.place?.name ?? cityName ?? "—",
+          order: p.stopOrder,
+        };
+      })
       .sort((a, b2) => a.order - b2.order),
     placeName: null,
     detailLabel: null,
@@ -311,12 +325,20 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true, email: true } },
+          seat: { select: { seatNumber: true, label: true } },
           program: {
             include: {
               garage: { select: { name: true } },
               vehicle: { select: { brand: true, model: true, plateNumber: true } },
               driver: { select: { name: true } },
-              places: { include: { place: { select: { name: true } } } },
+              places: {
+                include: {
+                  place: { select: { name: true } },
+                  city: {
+                    select: { name: true, region: true, country: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -372,12 +394,20 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true, email: true } },
+          seat: { select: { seatNumber: true, label: true } },
           program: {
             include: {
               garage: { select: { name: true } },
               vehicle: { select: { brand: true, model: true, plateNumber: true } },
               driver: { select: { name: true } },
-              places: { include: { place: { select: { name: true } } } },
+              places: {
+                include: {
+                  place: { select: { name: true } },
+                  city: {
+                    select: { name: true, region: true, country: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -418,12 +448,20 @@ export async function getBookingsForUser(): Promise<BookingRow[]> {
         orderBy: { createdAt: "desc" },
         include: {
           user: { select: { name: true, email: true } },
+          seat: { select: { seatNumber: true, label: true } },
           program: {
             include: {
               garage: { select: { name: true } },
               vehicle: { select: { brand: true, model: true, plateNumber: true } },
               driver: { select: { name: true } },
-              places: { include: { place: { select: { name: true } } } },
+              places: {
+                include: {
+                  place: { select: { name: true } },
+                  city: {
+                    select: { name: true, region: true, country: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -705,6 +743,12 @@ export async function cancelBooking(bookingId: string) {
           where: { id: bookingId },
           data: { status: BookingStatus.CANCELLED },
         });
+        if (programBooking.seatId) {
+          await tx.seat.update({
+            where: { id: programBooking.seatId },
+            data: { status: SeatStatus.AVAILABLE },
+          });
+        }
         await tx.tourismProgram.update({
           where: { id: programBooking.programId },
           data: { availableSeats: { increment: programBooking.passengersCount } },

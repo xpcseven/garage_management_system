@@ -10,9 +10,169 @@ import {
   GarageRole,
   PartnershipStatus,
   Prisma,
+  SeatStatus,
+  TripStatus,
+  TourismProgramStopKind,
+  type VehicleCategory,
 } from "@prisma/client";
 import { createNotification, notifyAllPassengers } from "@/lib/actions/notification.actions";
 import { revalidatePath } from "next/cache";
+import {
+  parseSeatLayout,
+  seatsForVehicleCreate,
+} from "@/lib/vehicle-seat-layouts";
+import { resolveVehicleSeatLayout } from "@/lib/vehicle-models";
+import {
+  normalizeProgramCurrency,
+  type ProgramCurrency,
+} from "@/lib/program-currency";
+
+type VehicleSeatSource = {
+  brand: string;
+  model: string;
+  totalSeats: number;
+  seatLayoutJson: unknown;
+  category: VehicleCategory;
+};
+
+function resolveProgramVehicleLayout(vehicle: VehicleSeatSource) {
+  return (
+    parseSeatLayout(vehicle.seatLayoutJson) ??
+    resolveVehicleSeatLayout({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      category: vehicle.category,
+    })
+  );
+}
+
+async function createProgramSeatsInTx(
+  tx: Prisma.TransactionClient,
+  programId: string,
+  vehicle: VehicleSeatSource,
+  maxSeats: number
+) {
+  const layout = resolveProgramVehicleLayout(vehicle);
+  const rows = seatsForVehicleCreate({ programId }, layout, maxSeats).map(
+    (s) => ({
+      ...s,
+      status: SeatStatus.AVAILABLE,
+      priceModifier: new Prisma.Decimal(0),
+    })
+  );
+  if (rows.length > 0) {
+    await tx.seat.createMany({ data: rows });
+  }
+  return rows.length;
+}
+
+type ParsedProgramStop = {
+  kind: TourismProgramStopKind;
+  tourismPlaceId: string | null;
+  cityId: string | null;
+  key: string;
+};
+
+function parseProgramStopEntries(
+  formData: FormData
+): { stops: ParsedProgramStop[] } | { error: string } {
+  const rawEntries = formData
+    .getAll("stopEntries")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+
+  const legacyPlaceIds = formData
+    .getAll("placeIds")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+
+  const entries =
+    rawEntries.length > 0
+      ? rawEntries
+      : legacyPlaceIds.map((id) => `TOURISM:${id}`);
+
+  if (entries.length === 0) {
+    return { error: "أضف محطة سفر أو سياحة واحدة على الأقل" };
+  }
+
+  const stops: ParsedProgramStop[] = [];
+  const seen = new Set<string>();
+
+  for (const raw of entries) {
+    const sep = raw.indexOf(":");
+    if (sep <= 0) return { error: "بيانات المحطات غير صالحة" };
+    const kindRaw = raw.slice(0, sep).toUpperCase();
+    const id = raw.slice(sep + 1).trim();
+    if (!id) return { error: "بيانات المحطات غير صالحة" };
+
+    if (kindRaw === "TRAVEL") {
+      const key = `TRAVEL:${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      stops.push({
+        kind: TourismProgramStopKind.TRAVEL,
+        tourismPlaceId: null,
+        cityId: id,
+        key,
+      });
+    } else if (kindRaw === "TOURISM") {
+      const key = `TOURISM:${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      stops.push({
+        kind: TourismProgramStopKind.TOURISM,
+        tourismPlaceId: id,
+        cityId: null,
+        key,
+      });
+    } else {
+      return { error: "نوع المحطة غير صالح (سفر أو سياحة)" };
+    }
+  }
+
+  if (stops.length === 0) {
+    return { error: "أضف محطة سفر أو سياحة واحدة على الأقل" };
+  }
+  return { stops };
+}
+
+async function assertProgramStopsValid(
+  tx: Prisma.TransactionClient,
+  stops: ParsedProgramStop[]
+) {
+  const placeIds = stops
+    .filter((s) => s.kind === TourismProgramStopKind.TOURISM)
+    .map((s) => s.tourismPlaceId!)
+    .filter(Boolean);
+  const cityIds = stops
+    .filter((s) => s.kind === TourismProgramStopKind.TRAVEL)
+    .map((s) => s.cityId!)
+    .filter(Boolean);
+
+  if (placeIds.length > 0) {
+    const placesCount = await tx.tourismPlace.count({
+      where: { id: { in: placeIds }, isActive: true },
+    });
+    if (placesCount !== placeIds.length) throw new Error("places");
+  }
+  if (cityIds.length > 0) {
+    const citiesCount = await tx.city.count({
+      where: { id: { in: cityIds }, isActive: true },
+    });
+    if (citiesCount !== cityIds.length) throw new Error("cities");
+  }
+}
+
+function cityStopLabel(city: {
+  name: string;
+  country: string | null;
+  region: string | null;
+}) {
+  const parts = [city.name];
+  if (city.region?.trim()) parts.push(city.region.trim());
+  if (city.country?.trim()) parts.push(city.country.trim());
+  return parts.join(" — ");
+}
 
 export type TourismProgramCreatePack = {
   garages: {
@@ -27,6 +187,21 @@ export type TourismProgramCreatePack = {
     }[];
   }[];
   places: { id: string; name: string; governorate: string | null }[];
+  cities: {
+    id: string;
+    name: string;
+    country: string | null;
+    region: string | null;
+  }[];
+};
+
+export type TourismProgramStopKindValue = "TRAVEL" | "TOURISM";
+
+export type TourismProgramStopRow = {
+  id: string;
+  name: string;
+  order: number;
+  kind: TourismProgramStopKindValue;
 };
 
 export type TourismProgramPartnerRow = {
@@ -52,11 +227,12 @@ export type TourismProgramManageRow = {
   startAt: string;
   endAt: string | null;
   basePrice: string;
+  currency: ProgramCurrency;
   maxSeats: number;
   availableSeats: number;
   status: string;
   isActive: boolean;
-  places: { id: string; name: string; order: number }[];
+  places: TourismProgramStopRow[];
   partners: TourismProgramPartnerRow[];
 };
 
@@ -69,7 +245,7 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
     (session.user.role !== UserRole.SUPER_ADMIN &&
       session.user.role !== UserRole.GARAGE_OWNER)
   ) {
-    return { garages: [], places: [] };
+    return { garages: [], places: [], cities: [] };
   }
 
   const garageWhere =
@@ -77,7 +253,7 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
       ? { isDeleted: false, isActive: true }
       : { isDeleted: false, isActive: true, ownerId: session.user.id };
 
-  const [garages, places, acceptedPartnerships] = await Promise.all([
+  const [garages, places, cities, acceptedPartnerships] = await Promise.all([
     prisma.garage.findMany({
       where: garageWhere,
       orderBy: { name: "asc" },
@@ -101,10 +277,16 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
       },
     }),
     prisma.tourismPlace.findMany({
-      where: { isActive: true },
+      where: { isActive: true, approvalStatus: "APPROVED" },
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, governorate: true },
       take: 300,
+    }),
+    prisma.city.findMany({
+      where: { isActive: true },
+      orderBy: [{ country: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, country: true, region: true },
+      take: 500,
     }),
     prisma.businessPartnership.findMany({
       where: {
@@ -155,6 +337,7 @@ export async function getTourismProgramCreatePack(): Promise<TourismProgramCreat
       };
     }),
     places,
+    cities,
   };
 }
 
@@ -177,11 +360,13 @@ export async function createTourismProgram(formData: FormData) {
   const startAtRaw = String(formData.get("startAt") ?? "").trim();
   const endAtRaw = String(formData.get("endAt") ?? "").trim();
   const basePriceRaw = String(formData.get("basePrice") ?? "").trim();
+  const currency = normalizeProgramCurrency(
+    String(formData.get("currency") ?? "IQD")
+  );
   const maxSeats = Number(formData.get("maxSeats"));
-  const placeIds = formData
-    .getAll("placeIds")
-    .map((v) => String(v).trim())
-    .filter(Boolean);
+  const stopsParsed = parseProgramStopEntries(formData);
+  if ("error" in stopsParsed) return { error: stopsParsed.error };
+  const stops = stopsParsed.stops;
   const partnershipIds = formData
     .getAll("partnershipIds")
     .map((v) => String(v).trim())
@@ -195,9 +380,9 @@ export async function createTourismProgram(formData: FormData) {
     !startAtRaw ||
     !basePriceRaw ||
     !maxSeats ||
-    placeIds.length === 0
+    stops.length === 0
   ) {
-    return { error: "أكمل الحقول المطلوبة، وحدد مكاناً سياحياً واحداً على الأقل" };
+    return { error: "أكمل الحقول المطلوبة، وأضف محطة سفر أو سياحة واحدة على الأقل" };
   }
 
   const basePriceNum = Number(basePriceRaw.replace(/,/g, ""));
@@ -215,7 +400,6 @@ export async function createTourismProgram(formData: FormData) {
     return { error: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" };
   }
 
-  const uniquePlaceIds = Array.from(new Set(placeIds));
   const uniquePartnershipIds = Array.from(new Set(partnershipIds));
 
   try {
@@ -234,7 +418,14 @@ export async function createTourismProgram(formData: FormData) {
 
       const vehicle = await tx.vehicle.findFirst({
         where: { id: vehicleId, garageId: garage.id, isActive: true },
-        select: { id: true, totalSeats: true },
+        select: {
+          id: true,
+          totalSeats: true,
+          brand: true,
+          model: true,
+          seatLayoutJson: true,
+          category: true,
+        },
       });
       if (!vehicle) throw new Error("vehicle");
 
@@ -250,10 +441,7 @@ export async function createTourismProgram(formData: FormData) {
         }));
       if (!driverAllowed) throw new Error("driver");
 
-      const placesCount = await tx.tourismPlace.count({
-        where: { id: { in: uniquePlaceIds }, isActive: true },
-      });
-      if (placesCount !== uniquePlaceIds.length) throw new Error("places");
+      await assertProgramStopsValid(tx, stops);
 
       if (uniquePartnershipIds.length > 0) {
         const accepted = await tx.businessPartnership.findMany({
@@ -280,6 +468,7 @@ export async function createTourismProgram(formData: FormData) {
           startAt,
           endAt,
           basePrice: new Prisma.Decimal(basePriceNum.toFixed(2)),
+          currency,
           maxSeats,
           availableSeats: maxSeats,
           status: "SCHEDULED",
@@ -287,10 +476,13 @@ export async function createTourismProgram(formData: FormData) {
         },
       });
 
+      await createProgramSeatsInTx(tx, program.id, vehicle, maxSeats);
       await tx.tourismProgramPlace.createMany({
-        data: uniquePlaceIds.map((pid, idx) => ({
+        data: stops.map((s, idx) => ({
           programId: program.id,
-          tourismPlaceId: pid,
+          stopKind: s.kind,
+          tourismPlaceId: s.tourismPlaceId,
+          cityId: s.cityId,
           stopOrder: idx + 1,
         })),
       });
@@ -347,6 +539,7 @@ export async function createTourismProgram(formData: FormData) {
     if (msg === "vehicle") return { error: "المركبة غير مرتبطة بهذه الشركة" };
     if (msg === "driver") return { error: "السائق غير مصرح له لهذه الشركة" };
     if (msg === "places") return { error: "بعض الأماكن السياحية المحددة غير صالحة" };
+    if (msg === "cities") return { error: "بعض مدن السفر المحددة غير صالحة" };
     if (msg === "partners") return { error: "بعض الشركاء المحددين غير مقبولين لهذه الشركة" };
     if (msg === "seats") return { error: "عدد المقاعد يتجاوز سعة المركبة المختارة" };
     return { error: "تعذر إنشاء البرنامج السياحي" };
@@ -364,6 +557,7 @@ function mapProgramRow(p: {
   startAt: Date;
   endAt: Date | null;
   basePrice: Prisma.Decimal;
+  currency?: string | null;
   maxSeats: number;
   availableSeats: number;
   status: string;
@@ -373,7 +567,16 @@ function mapProgramRow(p: {
   driver: { name: string };
   places: {
     stopOrder: number;
-    place: { id: string; name: string };
+    stopKind?: TourismProgramStopKind | string | null;
+    tourismPlaceId?: string | null;
+    cityId?: string | null;
+    place: { id: string; name: string } | null;
+    city?: {
+      id: string;
+      name: string;
+      country: string | null;
+      region: string | null;
+    } | null;
   }[];
   partners?: {
     stopOrder: number;
@@ -404,16 +607,32 @@ function mapProgramRow(p: {
     startAt: p.startAt.toISOString(),
     endAt: p.endAt ? p.endAt.toISOString() : null,
     basePrice: String(p.basePrice),
+    currency: normalizeProgramCurrency(p.currency),
     maxSeats: p.maxSeats,
     availableSeats: p.availableSeats,
     status: p.status,
     isActive: p.isActive,
     places: p.places
-      .map((x) => ({
-        id: x.place.id,
-        name: x.place.name,
-        order: x.stopOrder,
-      }))
+      .map((x) => {
+        const kind: TourismProgramStopKindValue =
+          x.stopKind === TourismProgramStopKind.TRAVEL || x.stopKind === "TRAVEL"
+            ? "TRAVEL"
+            : "TOURISM";
+        if (kind === "TRAVEL" && x.city) {
+          return {
+            id: x.city.id,
+            name: cityStopLabel(x.city),
+            order: x.stopOrder,
+            kind,
+          };
+        }
+        return {
+          id: x.place?.id ?? x.tourismPlaceId ?? "",
+          name: x.place?.name ?? "—",
+          order: x.stopOrder,
+          kind: "TOURISM" as const,
+        };
+      })
       .sort((a, b) => a.order - b.order),
     partners: (p.partners ?? [])
       .map((x) => {
@@ -433,6 +652,17 @@ function mapProgramRow(p: {
       .sort((a, b) => a.order - b.order),
   };
 }
+
+const programStopInclude = {
+  stopOrder: true,
+  stopKind: true,
+  tourismPlaceId: true,
+  cityId: true,
+  place: { select: { id: true, name: true } },
+  city: {
+    select: { id: true, name: true, country: true, region: true },
+  },
+} as const;
 
 const programPartnerInclude = {
   stopOrder: true,
@@ -472,12 +702,7 @@ export async function getManagedTourismPrograms(): Promise<TourismProgramManageR
       garage: { select: { name: true } },
       vehicle: { select: { brand: true, model: true, plateNumber: true } },
       driver: { select: { name: true } },
-      places: {
-        select: {
-          stopOrder: true,
-          place: { select: { id: true, name: true } },
-        },
-      },
+      places: { select: programStopInclude },
       partners: { select: programPartnerInclude },
     },
   });
@@ -501,19 +726,209 @@ export async function getTourismProgramsForPassenger(): Promise<
       garage: { select: { name: true } },
       vehicle: { select: { brand: true, model: true, plateNumber: true } },
       driver: { select: { name: true } },
-      places: {
-        select: {
-          stopOrder: true,
-          place: { select: { id: true, name: true } },
-        },
-      },
+      places: { select: programStopInclude },
       partners: { select: programPartnerInclude },
     },
   });
   return rows.map(mapProgramRow);
 }
 
-export async function bookTourismProgram(programId: string, passengersCount: number) {
+export async function getTourismProgramsForGaragePassenger(
+  garageId: string
+): Promise<TourismProgramPassengerRow[]> {
+  const id = garageId.trim();
+  if (!id) return [];
+
+  const garageOk = await prisma.garage.findFirst({
+    where: { id, isDeleted: false, isActive: true },
+    select: { id: true },
+  });
+  if (!garageOk) return [];
+
+  const rows = await prisma.tourismProgram.findMany({
+    where: {
+      garageId: id,
+      isActive: true,
+      status: "SCHEDULED",
+      availableSeats: { gt: 0 },
+      startAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+    },
+    orderBy: { startAt: "asc" },
+    take: 100,
+    include: {
+      garage: { select: { name: true } },
+      vehicle: { select: { brand: true, model: true, plateNumber: true } },
+      driver: { select: { name: true } },
+      places: { select: programStopInclude },
+      partners: { select: programPartnerInclude },
+    },
+  });
+  return rows.map(mapProgramRow);
+}
+
+export type TourismCompanyBrowseRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  phone: string | null;
+  address: string | null;
+  programsCount: number;
+  tripsCount: number;
+  nextProgramTitle: string | null;
+  nextProgramAt: string | null;
+};
+
+/** شركات لديها برامج (أو رحلات) متاحة — لصفحة تصفّح البرامج */
+export async function getTourismCompaniesForPassengerBrowse(): Promise<
+  TourismCompanyBrowseRow[]
+> {
+  const since = new Date(Date.now() - 60 * 60 * 1000);
+  const programWhere = {
+    isActive: true,
+    status: "SCHEDULED" as const,
+    availableSeats: { gt: 0 },
+    startAt: { gte: since },
+  };
+  const tripWhere = {
+    status: TripStatus.SCHEDULED,
+    availableSeats: { gt: 0 },
+    departureTime: { gte: since },
+  };
+
+  const rows = await prisma.garage.findMany({
+    where: {
+      isDeleted: false,
+      isActive: true,
+      tourismPrograms: { some: programWhere },
+    },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      phone: true,
+      address: true,
+      tourismPrograms: {
+        where: programWhere,
+        orderBy: { startAt: "asc" },
+        take: 1,
+        select: { title: true, startAt: true },
+      },
+      _count: {
+        select: {
+          tourismPrograms: { where: programWhere },
+          trips: { where: tripWhere },
+        },
+      },
+    },
+  });
+
+  return rows.map((g) => ({
+    id: g.id,
+    name: g.name,
+    description: g.description,
+    phone: g.phone,
+    address: g.address,
+    programsCount: g._count.tourismPrograms,
+    tripsCount: g._count.trips,
+    nextProgramTitle: g.tourismPrograms[0]?.title ?? null,
+    nextProgramAt: g.tourismPrograms[0]
+      ? g.tourismPrograms[0].startAt.toISOString()
+      : null,
+  }));
+}
+
+export async function getProgramSeatsForMap(
+  programId: string
+): Promise<
+  {
+    id: string;
+    seatNumber: number;
+    row: number | null;
+    col: number | null;
+    label: string | null;
+    status: string;
+  }[]
+> {
+  const id = programId.trim();
+  if (!id) return [];
+
+  const program = await prisma.tourismProgram.findFirst({
+    where: { id, isActive: true, status: "SCHEDULED" },
+    select: {
+      id: true,
+      maxSeats: true,
+      vehicle: {
+        select: {
+          brand: true,
+          model: true,
+          totalSeats: true,
+          seatLayoutJson: true,
+          category: true,
+        },
+      },
+    },
+  });
+  if (!program) return [];
+
+  let seats = await prisma.seat.findMany({
+    where: { programId: id },
+    orderBy: { seatNumber: "asc" },
+    select: {
+      id: true,
+      seatNumber: true,
+      row: true,
+      col: true,
+      label: true,
+      status: true,
+    },
+  });
+
+  if (seats.length === 0) {
+    await prisma.$transaction(async (tx) => {
+      await createProgramSeatsInTx(
+        tx,
+        program.id,
+        program.vehicle,
+        program.maxSeats
+      );
+      const available = await tx.seat.count({
+        where: { programId: program.id, status: SeatStatus.AVAILABLE },
+      });
+      await tx.tourismProgram.update({
+        where: { id: program.id },
+        data: { availableSeats: available },
+      });
+    });
+    seats = await prisma.seat.findMany({
+      where: { programId: id },
+      orderBy: { seatNumber: "asc" },
+      select: {
+        id: true,
+        seatNumber: true,
+        row: true,
+        col: true,
+        label: true,
+        status: true,
+      },
+    });
+  }
+
+  return seats.map((s) => ({
+    id: s.id,
+    seatNumber: s.seatNumber,
+    row: s.row,
+    col: s.col,
+    label: s.label,
+    status: s.status,
+  }));
+}
+
+/** حجز مقعد أو أكثر على مركبة البرنامج السياحي */
+export async function bookSeatsOnTourismProgram(
+  programId: string,
+  seatIds: string[]
+) {
   const session = await auth();
   if (!session?.user || session.user.role !== UserRole.USER) {
     return { error: "الحجز متاح للمسافر فقط" };
@@ -521,12 +936,17 @@ export async function bookTourismProgram(programId: string, passengersCount: num
 
   const id = programId.trim();
   if (!id) return { error: "معرف البرنامج غير صالح" };
-  if (!Number.isInteger(passengersCount) || passengersCount < 1) {
-    return { error: "عدد الأفراد يجب أن يكون 1 أو أكثر" };
+
+  const uniqueSeatIds = [
+    ...new Set(seatIds.map((x) => String(x).trim()).filter(Boolean)),
+  ];
+  if (uniqueSeatIds.length === 0) {
+    return { error: "اختر مقعداً واحداً على الأقل" };
   }
 
   try {
     const notifyTargets: { userId: string; title: string; body: string }[] = [];
+    const passengersCount = uniqueSeatIds.length;
 
     await prisma.$transaction(async (tx) => {
       const p = await tx.tourismProgram.findFirst({
@@ -542,12 +962,24 @@ export async function bookTourismProgram(programId: string, passengersCount: num
           basePrice: true,
           startAt: true,
           endAt: true,
+          maxSeats: true,
+          vehicle: {
+            select: {
+              brand: true,
+              model: true,
+              totalSeats: true,
+              seatLayoutJson: true,
+              category: true,
+            },
+          },
           partners: {
             include: {
               partnership: {
                 include: {
                   hotel: { select: { id: true, ownerId: true, name: true } },
-                  restaurant: { select: { id: true, ownerId: true, name: true } },
+                  restaurant: {
+                    select: { id: true, ownerId: true, name: true },
+                  },
                   farm: { select: { id: true, ownerId: true, name: true } },
                 },
               },
@@ -558,15 +990,19 @@ export async function bookTourismProgram(programId: string, passengersCount: num
       });
       if (!p) throw new Error("program");
 
-      const exists = await tx.tourismProgramBooking.findFirst({
+      const seatCount = await tx.seat.count({ where: { programId: p.id } });
+      if (seatCount === 0) {
+        await createProgramSeatsInTx(tx, p.id, p.vehicle, p.maxSeats);
+      }
+
+      const seats = await tx.seat.findMany({
         where: {
+          id: { in: uniqueSeatIds },
           programId: p.id,
-          userId: session.user.id,
-          status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+          status: SeatStatus.AVAILABLE,
         },
-        select: { id: true },
       });
-      if (exists) throw new Error("duplicate");
+      if (seats.length !== uniqueSeatIds.length) throw new Error("seat");
 
       let totalAddon = new Prisma.Decimal(0);
       for (const link of p.partners) {
@@ -574,15 +1010,22 @@ export async function bookTourismProgram(programId: string, passengersCount: num
       }
       const priceAtBooking = p.basePrice.add(totalAddon);
 
-      await tx.tourismProgramBooking.create({
-        data: {
-          programId: p.id,
-          userId: session.user.id,
-          status: BookingStatus.PENDING,
-          priceAtBooking,
-          passengersCount,
-        },
-      });
+      for (const seat of seats) {
+        await tx.tourismProgramBooking.create({
+          data: {
+            programId: p.id,
+            userId: session.user.id,
+            seatId: seat.id,
+            status: BookingStatus.PENDING,
+            priceAtBooking,
+            passengersCount: 1,
+          },
+        });
+        await tx.seat.update({
+          where: { id: seat.id },
+          data: { status: SeatStatus.RESERVED },
+        });
+      }
 
       await tx.tourismProgram.update({
         where: { id: p.id },
@@ -594,7 +1037,7 @@ export async function bookTourismProgram(programId: string, passengersCount: num
         p.endAt && p.endAt > p.startAt
           ? p.endAt
           : new Date(p.startAt.getTime() + 24 * 60 * 60 * 1000);
-      const packageNote = `حجز ضمن الباقة السياحية: ${p.title}`;
+      const packageNote = `حجز ضمن الباقة السياحية: ${p.title} (${passengersCount} مقعد)`;
 
       for (const link of p.partners) {
         const ps = link.partnership;
@@ -675,17 +1118,29 @@ export async function bookTourismProgram(programId: string, passengersCount: num
     );
 
     revalidatePath("/passenger/tourism-programs");
+    revalidatePath("/passenger/garages");
     revalidatePath("/bookings");
     revalidatePath("/hotel-bookings");
     revalidatePath("/restaurant-bookings");
     revalidatePath("/farm-bookings");
     revalidatePath("/home");
-    return { success: true };
+    return { success: true, count: uniqueSeatIds.length };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
-    if (msg === "duplicate") return { error: "لقد حجزت هذا البرنامج مسبقاً" };
+    if (msg === "seat") return { error: "أحد المقاعد لم يعد متاحاً" };
+    if (msg === "program") return { error: "البرنامج غير متاح للحجز" };
     return { error: "تعذر الحجز على البرنامج السياحي" };
   }
+}
+
+/** @deprecated استخدم bookSeatsOnTourismProgram */
+export async function bookTourismProgram(
+  programId: string,
+  _passengersCount: number
+) {
+  return {
+    error: "اختر المقاعد من خريطة المركبة لإتمام الحجز",
+  };
 }
 
 export async function updateTourismProgram(formData: FormData) {
@@ -708,20 +1163,22 @@ export async function updateTourismProgram(formData: FormData) {
   const startAtRaw = String(formData.get("startAt") ?? "").trim();
   const endAtRaw = String(formData.get("endAt") ?? "").trim();
   const basePriceRaw = String(formData.get("basePrice") ?? "").trim();
+  const currency = normalizeProgramCurrency(
+    String(formData.get("currency") ?? "IQD")
+  );
   const maxSeats = Number(formData.get("maxSeats"));
   const status = String(formData.get("status") ?? "SCHEDULED");
   const isActive = String(formData.get("isActive") ?? "true") === "true";
-  const placeIds = formData
-    .getAll("placeIds")
-    .map((v) => String(v).trim())
-    .filter(Boolean);
+  const stopsParsed = parseProgramStopEntries(formData);
+  if ("error" in stopsParsed) return { error: stopsParsed.error };
+  const stops = stopsParsed.stops;
   const partnershipIds = formData
     .getAll("partnershipIds")
     .map((v) => String(v).trim())
     .filter(Boolean);
 
-  if (!id || !title || !garageId || !vehicleId || !driverId || !startAtRaw || !basePriceRaw || !maxSeats || placeIds.length === 0) {
-    return { error: "أكمل الحقول المطلوبة، وحدد مكاناً سياحياً واحداً على الأقل" };
+  if (!id || !title || !garageId || !vehicleId || !driverId || !startAtRaw || !basePriceRaw || !maxSeats || stops.length === 0) {
+    return { error: "أكمل الحقول المطلوبة، وأضف محطة سفر أو سياحة واحدة على الأقل" };
   }
 
   if (!["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"].includes(status)) {
@@ -743,14 +1200,19 @@ export async function updateTourismProgram(formData: FormData) {
     return { error: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" };
   }
 
-  const uniquePlaceIds = Array.from(new Set(placeIds));
   const uniquePartnershipIds = Array.from(new Set(partnershipIds));
 
   try {
     await prisma.$transaction(async (tx) => {
       const existing = await tx.tourismProgram.findUnique({
         where: { id },
-        select: { id: true, garageId: true, maxSeats: true, availableSeats: true },
+        select: {
+          id: true,
+          garageId: true,
+          vehicleId: true,
+          maxSeats: true,
+          availableSeats: true,
+        },
       });
       if (!existing) throw new Error("program");
 
@@ -768,11 +1230,27 @@ export async function updateTourismProgram(formData: FormData) {
 
       const vehicle = await tx.vehicle.findFirst({
         where: { id: vehicleId, garageId: garage.id, isActive: true },
-        select: { id: true, totalSeats: true },
+        select: {
+          id: true,
+          totalSeats: true,
+          brand: true,
+          model: true,
+          seatLayoutJson: true,
+          category: true,
+        },
       });
       if (!vehicle) throw new Error("vehicle");
 
-      const bookedSeats = existing.maxSeats - existing.availableSeats;
+      const reservedSeats = await tx.seat.count({
+        where: {
+          programId: existing.id,
+          status: { not: SeatStatus.AVAILABLE },
+        },
+      });
+      const bookedSeats = Math.max(
+        reservedSeats,
+        existing.maxSeats - existing.availableSeats
+      );
       if (maxSeats < bookedSeats || maxSeats > vehicle.totalSeats) {
         throw new Error("seats");
       }
@@ -785,10 +1263,7 @@ export async function updateTourismProgram(formData: FormData) {
         }));
       if (!driverAllowed) throw new Error("driver");
 
-      const placesCount = await tx.tourismPlace.count({
-        where: { id: { in: uniquePlaceIds }, isActive: true },
-      });
-      if (placesCount !== uniquePlaceIds.length) throw new Error("places");
+      await assertProgramStopsValid(tx, stops);
 
       let acceptedPartners: { id: string; partnerType: BusinessPartnerType }[] =
         [];
@@ -806,6 +1281,23 @@ export async function updateTourismProgram(formData: FormData) {
         }
       }
 
+      const seatCount = await tx.seat.count({
+        where: { programId: existing.id },
+      });
+      const layoutChanged =
+        existing.vehicleId !== vehicle.id || existing.maxSeats !== maxSeats;
+
+      if (seatCount === 0) {
+        await createProgramSeatsInTx(tx, existing.id, vehicle, maxSeats);
+      } else if (layoutChanged && reservedSeats === 0) {
+        await tx.seat.deleteMany({ where: { programId: existing.id } });
+        await createProgramSeatsInTx(tx, existing.id, vehicle, maxSeats);
+      }
+
+      const availableSeats = await tx.seat.count({
+        where: { programId: existing.id, status: SeatStatus.AVAILABLE },
+      });
+
       await tx.tourismProgram.update({
         where: { id: existing.id },
         data: {
@@ -818,8 +1310,12 @@ export async function updateTourismProgram(formData: FormData) {
           startAt,
           endAt,
           basePrice: new Prisma.Decimal(basePriceNum.toFixed(2)),
+          currency,
           maxSeats,
-          availableSeats: maxSeats - bookedSeats,
+          availableSeats:
+            seatCount === 0 || (layoutChanged && reservedSeats === 0)
+              ? availableSeats
+              : Math.max(0, maxSeats - bookedSeats),
           status: status as "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED",
           isActive,
         },
@@ -827,9 +1323,11 @@ export async function updateTourismProgram(formData: FormData) {
 
       await tx.tourismProgramPlace.deleteMany({ where: { programId: existing.id } });
       await tx.tourismProgramPlace.createMany({
-        data: uniquePlaceIds.map((pid, idx) => ({
+        data: stops.map((s, idx) => ({
           programId: existing.id,
-          tourismPlaceId: pid,
+          stopKind: s.kind,
+          tourismPlaceId: s.tourismPlaceId,
+          cityId: s.cityId,
           stopOrder: idx + 1,
         })),
       });
@@ -860,6 +1358,7 @@ export async function updateTourismProgram(formData: FormData) {
     if (msg === "vehicle") return { error: "المركبة غير مرتبطة بهذه الشركة" };
     if (msg === "driver") return { error: "السائق غير مصرح له لهذه الشركة" };
     if (msg === "places") return { error: "بعض الأماكن السياحية المحددة غير صالحة" };
+    if (msg === "cities") return { error: "بعض مدن السفر المحددة غير صالحة" };
     if (msg === "partners") return { error: "بعض الشركاء المحددين غير مقبولين لهذه الشركة" };
     if (msg === "seats") return { error: "عدد المقاعد غير صالح مقارنة بالحجوزات أو سعة المركبة" };
     return { error: "تعذر تعديل البرنامج السياحي" };

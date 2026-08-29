@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { updateTourismPlace } from "@/lib/actions/tourism_places.actions";
-import { IRAQI_GOVERNORATES } from "@/lib/constants/iraqi-governorates";
+import type { CityRow } from "@/lib/actions/city.actions";
+import City_Country_Select_Fields from "@/components/Shared/City_Country_Select_Fields";
 import Tourism_Place_Images_Upload, {
   appendPlaceImagesToFormData,
   type PlaceImageItem,
@@ -37,9 +38,10 @@ import Swal from "sweetalert2";
 
 type Props = {
   place: TourismPlaceRow;
+  cities: CityRow[];
 };
 
-export default function Tourism_Places_Update({ place }: Props) {
+export default function Tourism_Places_Update({ place, cities }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
@@ -47,11 +49,6 @@ export default function Tourism_Places_Update({ place }: Props) {
   const [locating, setLocating] = useState(false);
   const [imageItems, setImageItems] = useState<PlaceImageItem[]>(() =>
     placeToImageItems(place)
-  );
-
-  const defaultGovernorate = useMemo(
-    () => place.governorate ?? "",
-    [place.governorate]
   );
 
   const detectCurrentLocation = () => {
@@ -148,36 +145,24 @@ export default function Tourism_Places_Update({ place }: Props) {
             });
           }}
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor={`tp-name-${place.id}`}>الاسم</Label>
-              <Input
-                id={`tp-name-${place.id}`}
-                name="name"
-                required
-                defaultValue={place.name}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor={`tp-governorate-${place.id}`}>
-                المحافظة (العراق)
-              </Label>
-              <select
-                id={`tp-governorate-${place.id}`}
-                name="governorate"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                defaultValue={defaultGovernorate}
-              >
-                <option value="">— اختر المحافظة —</option>
-                {IRAQI_GOVERNORATES.map((gov) => (
-                  <option key={gov} value={gov}>
-                    {gov}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor={`tp-name-${place.id}`}>الاسم</Label>
+            <Input
+              id={`tp-name-${place.id}`}
+              name="name"
+              required
+              defaultValue={place.name}
+            />
           </div>
+
+          <City_Country_Select_Fields
+            cities={cities}
+            idPrefix={`tp-${place.id}`}
+            defaultCityId={place.cityId}
+            defaultCountry={place.country}
+            cityRequired
+            countryRequired
+          />
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">

@@ -2,13 +2,13 @@ import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { placeLocationLabel } from "@/lib/place-location-label";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
 function placeCaption(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return null;
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  const label = placeLocationLabel(p, "");
+  return label === "" ? null : label;
 }
 
 const Dashboard_Tourism_Places = ({

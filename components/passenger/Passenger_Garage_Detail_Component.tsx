@@ -5,24 +5,28 @@ import type {
   PassengerTripRow,
   PublicGarageRow,
 } from "@/lib/actions/passenger.actions";
+import type { TourismProgramPassengerRow } from "@/lib/actions/tourism_program.actions";
 import type { PartnershipRow } from "@/lib/actions/partnership.actions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import PassengerTripBookButton from "./PassengerTripBookButton";
+import PassengerTourismProgramBookButton from "./PassengerTourismProgramBookButton";
 import PassengerGaragePartners from "./PassengerGaragePartners";
 import TripRouteArrow from "@/components/Shared/TripRouteArrow";
 import TablePagination from "@/components/Shared/TablePagination";
 import { LocationMapIcon } from "@/components/Shared/LocationMapIcon";
 import { cn } from "@/lib/utils";
+import { formatProgramPrice } from "@/lib/program-currency";
 
 type Props = {
   garage: PublicGarageRow;
   trips: PassengerTripRow[];
+  programs?: TourismProgramPassengerRow[];
   partners?: PartnershipRow[];
   isLoggedIn?: boolean;
 };
 
-function formatDeparture(iso: string) {
+function formatWhen(iso: string) {
   try {
     return new Date(iso).toLocaleString("ar-IQ", {
       dateStyle: "medium",
@@ -33,23 +37,44 @@ function formatDeparture(iso: string) {
   }
 }
 
+function shortText(raw: string | null | undefined, max = 140) {
+  if (!raw?.trim()) return null;
+  const text = raw.trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trim()}…`;
+}
+
 export default function Passenger_Garage_Detail_Component({
   garage,
   trips,
+  programs = [],
   partners = [],
   isLoggedIn = false,
 }: Props) {
-  const [page, setPage] = useState(1);
+  const [tripPage, setTripPage] = useState(1);
+  const [programPage, setProgramPage] = useState(1);
   const PAGE_SIZE = 8;
-  const totalPages = Math.max(1, Math.ceil(trips.length / PAGE_SIZE));
+
+  const tripTotalPages = Math.max(1, Math.ceil(trips.length / PAGE_SIZE));
+  const programTotalPages = Math.max(1, Math.ceil(programs.length / PAGE_SIZE));
+
   const pagedTrips = useMemo(
-    () => trips.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [trips, page]
+    () => trips.slice((tripPage - 1) * PAGE_SIZE, tripPage * PAGE_SIZE),
+    [trips, tripPage]
+  );
+  const pagedPrograms = useMemo(
+    () =>
+      programs.slice((programPage - 1) * PAGE_SIZE, programPage * PAGE_SIZE),
+    [programs, programPage]
   );
 
   useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+    if (tripPage > tripTotalPages) setTripPage(tripTotalPages);
+  }, [tripPage, tripTotalPages]);
+
+  useEffect(() => {
+    if (programPage > programTotalPages) setProgramPage(programTotalPages);
+  }, [programPage, programTotalPages]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -105,6 +130,12 @@ export default function Passenger_Garage_Detail_Component({
                 </span>{" "}
                 {trips.length} متاحة
               </p>
+              <p>
+                <span className="font-data text-[10px] uppercase tracking-wider text-orchid-light">
+                  البرامج
+                </span>{" "}
+                {programs.length} متاحة
+              </p>
             </div>
           </div>
 
@@ -127,6 +158,122 @@ export default function Passenger_Garage_Detail_Component({
       </header>
 
       <PassengerGaragePartners partners={partners} />
+
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3 text-start">
+          <div>
+            <p className="font-data text-[11px] uppercase tracking-[0.18em] text-orchid dark:text-orchid-light">
+              البرامج السياحية
+            </p>
+            <h2 className="mt-1 font-display text-2xl text-dusk dark:text-foreground">
+              برامج هذه الشركة
+            </h2>
+          </div>
+          <p className="font-data text-sm text-dusk/50 dark:text-muted-foreground">
+            {programs.length} برنامج
+          </p>
+        </div>
+
+        {programs.length === 0 ? (
+          <div className="rounded-3xl bg-white px-6 py-10 text-center ring-1 ring-plum/10 dark:bg-card dark:ring-orchid/20">
+            <p className="font-display text-xl text-plum dark:text-orchid-light">
+              لا برامج متاحة حالياً
+            </p>
+            <p className="mt-2 text-sm text-dusk/60 dark:text-muted-foreground">
+              يمكنك تصفّح كل البرامج على المنصة أو العودة لاحقاً.
+            </p>
+            <Button
+              asChild
+              className="mt-5 rounded-xl border-0 bg-orchid text-white hover:bg-orchid-light"
+            >
+              <Link href="/passenger/tourism-programs">كل البرامج</Link>
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-3">
+              {pagedPrograms.map((p) => (
+                <article
+                  key={p.id}
+                  className={cn(
+                    "rounded-3xl bg-white p-5 ring-1 ring-plum/10",
+                    "transition hover:shadow-orchid",
+                    "dark:bg-card dark:ring-orchid/20 dark:hover:ring-orchid/40"
+                  )}
+                >
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1 space-y-3 text-start">
+                      <h3 className="text-lg font-semibold text-dusk dark:text-foreground sm:text-xl">
+                        {p.title}
+                      </h3>
+                      {shortText(p.description) && (
+                        <p className="text-sm leading-7 text-dusk/65 dark:text-muted-foreground">
+                          {shortText(p.description)}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-dusk/60 dark:text-muted-foreground">
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            الانطلاق
+                          </span>{" "}
+                          {formatWhen(p.startAt)}
+                        </p>
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            المركبة
+                          </span>{" "}
+                          {p.vehicleLabel}
+                        </p>
+                        <p>
+                          <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                            السائق
+                          </span>{" "}
+                          {p.driverName}
+                        </p>
+                      </div>
+                      {p.places.length > 0 && (
+                        <ol className="flex flex-wrap gap-2">
+                          {p.places.map((x) => (
+                            <li
+                              key={`${x.kind}-${x.id}-${x.order}`}
+                              className="rounded-full bg-mist px-3 py-1 text-xs text-dusk/75 ring-1 ring-plum/10 dark:bg-background dark:text-muted-foreground dark:ring-orchid/20"
+                            >
+                              {x.order}.{" "}
+                              <span className="font-data text-[10px] text-orchid dark:text-orchid-light">
+                                {x.kind === "TRAVEL" ? "سفر" : "سياحة"}
+                              </span>{" "}
+                              {x.name}
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-plum/10 pt-4 dark:border-orchid/15 lg:w-44 lg:flex-col lg:items-end lg:border-t-0 lg:border-s lg:pt-0 lg:ps-6">
+                      <div className="text-start lg:text-end">
+                        <p className="font-data text-xl font-semibold tabular-nums text-plum dark:text-orchid-light">
+                          {formatProgramPrice(p.basePrice, p.currency)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-dusk/50 dark:text-muted-foreground">
+                          {p.availableSeats} مقعد متاح
+                        </p>
+                      </div>
+                      <PassengerTourismProgramBookButton
+                        programId={p.id}
+                        isLoggedIn={isLoggedIn}
+                      />
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <TablePagination
+              page={programPage}
+              totalPages={programTotalPages}
+              onPageChange={setProgramPage}
+            />
+          </>
+        )}
+      </section>
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3 text-start">
@@ -185,7 +332,7 @@ export default function Passenger_Garage_Detail_Component({
                           <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
                             المغادرة
                           </span>{" "}
-                          {formatDeparture(t.departureTime)}
+                          {formatWhen(t.departureTime)}
                         </p>
                         <p>
                           <span className="font-data text-[10px] uppercase tracking-wider text-orchid dark:text-orchid-light">
@@ -227,9 +374,9 @@ export default function Passenger_Garage_Detail_Component({
             </div>
 
             <TablePagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
+              page={tripPage}
+              totalPages={tripTotalPages}
+              onPageChange={setTripPage}
             />
           </>
         )}

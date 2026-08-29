@@ -32,8 +32,9 @@ export default function City_Table({ cities }: Props) {
       if (status === "inactive" && c.isActive) return false;
       if (!q) return true;
       const name = c.name.toLowerCase();
+      const country = (c.country ?? "").toLowerCase();
       const region = (c.region ?? "").toLowerCase();
-      return name.includes(q) || region.includes(q);
+      return name.includes(q) || country.includes(q) || region.includes(q);
     });
   }, [cities, search, status]);
 
@@ -73,7 +74,7 @@ export default function City_Table({ cities }: Props) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث باسم المدينة أو المنطقة…"
+              placeholder="ابحث بالدولة أو المدينة أو المنطقة…"
               className="h-11 w-full rounded-2xl border border-plum/15 bg-white px-4 text-sm text-dusk outline-none transition placeholder:text-dusk/40 focus:border-orchid focus:ring-2 focus:ring-orchid/30 dark:border-orchid/25 dark:bg-background dark:text-foreground dark:placeholder:text-muted-foreground dark:focus:border-orchid-light dark:focus:ring-orchid/40"
             />
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -111,7 +112,10 @@ export default function City_Table({ cities }: Props) {
                   #
                 </th>
                 <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
-                  الاسم
+                  الدولة
+                </th>
+                <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
+                  المدينة / المحافظة
                 </th>
                 <th className="p-3 font-data text-[11px] uppercase tracking-wider text-orchid dark:text-orchid-light">
                   المنطقة
@@ -137,8 +141,14 @@ export default function City_Table({ cities }: Props) {
                     {(page - 1) * PAGE_SIZE + index + 1}
                   </td>
                   <td
+                    className="p-3 text-dusk/70 dark:text-muted-foreground"
+                    data-label="الدولة"
+                  >
+                    {c.country?.trim() || "—"}
+                  </td>
+                  <td
                     className="p-3 font-semibold text-dusk dark:text-foreground"
-                    data-label="الاسم"
+                    data-label="المدينة / المحافظة"
                   >
                     {c.name}
                   </td>
@@ -209,7 +219,7 @@ export default function City_Table({ cities }: Props) {
               {filteredCities.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="p-10 text-center text-dusk/50 dark:text-muted-foreground"
                   >
                     {cities.length === 0

@@ -30,14 +30,46 @@ export default function Tourism_Program_Create({ pack }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [garageId, setGarageId] = useState(pack.garages[0]?.id ?? "");
-  const [placeIdToAdd, setPlaceIdToAdd] = useState(pack.places[0]?.id ?? "");
-  const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([]);
+  const [stopKind, setStopKind] = useState<"TRAVEL" | "TOURISM">("TOURISM");
+  const [itemIdToAdd, setItemIdToAdd] = useState("");
+  const [selectedStops, setSelectedStops] = useState<
+    { kind: "TRAVEL" | "TOURISM"; id: string }[]
+  >([]);
   const [selectedPartnershipIds, setSelectedPartnershipIds] = useState<string[]>([]);
 
   const selectedGarage = useMemo(
     () => pack.garages.find((g) => g.id === garageId),
     [pack.garages, garageId]
   );
+
+  const cities = pack.cities ?? [];
+  const addOptions = useMemo(() => {
+    if (stopKind === "TRAVEL") {
+      return cities.map((c) => ({
+        id: c.id,
+        label: [c.name, c.region, c.country].filter(Boolean).join(" — "),
+      }));
+    }
+    return pack.places.map((p) => ({
+      id: p.id,
+      label: p.governorate ? `${p.name} — ${p.governorate}` : p.name,
+    }));
+  }, [stopKind, cities, pack.places]);
+
+  function stopLabel(stop: { kind: "TRAVEL" | "TOURISM"; id: string }) {
+    if (stop.kind === "TRAVEL") {
+      const c = cities.find((x) => x.id === stop.id);
+      return c
+        ? [c.name, c.region, c.country].filter(Boolean).join(" — ")
+        : stop.id;
+    }
+    const p = pack.places.find((x) => x.id === stop.id);
+    return p
+      ? p.governorate
+        ? `${p.name} — ${p.governorate}`
+        : p.name
+      : stop.id;
+  }
 
   if (pack.garages.length === 0) {
     return null;
@@ -59,11 +91,11 @@ export default function Tourism_Program_Create({ pack }: Props) {
         <form
           className="grid gap-3 text-start sm:grid-cols-2"
           action={(fd) => {
-            if (selectedPlaceIds.length === 0) {
+            if (selectedStops.length === 0) {
               Swal.fire({
                 icon: "warning",
-                title: "الأماكن السياحية مطلوبة",
-                text: "أضف مكاناً سياحياً واحداً على الأقل قبل الحفظ",
+                title: "المحطات مطلوبة",
+                text: "أضف محطة سفر أو سياحة واحدة على الأقل قبل الحفظ",
                 confirmButtonText: "حسناً",
               });
               return;
@@ -202,6 +234,21 @@ export default function Tourism_Program_Create({ pack }: Props) {
             />
           </div>
           <div className="space-y-1.5">
+            <Label className={labelClass} htmlFor="tp-currency">
+              العملة
+            </Label>
+            <select
+              id="tp-currency"
+              name="currency"
+              required
+              defaultValue="IQD"
+              className={fieldClass}
+            >
+              <option value="IQD">IQD</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
             <Label className={labelClass} htmlFor="tp-seats">
               عدد المقاعد
             </Label>
@@ -216,20 +263,53 @@ export default function Tourism_Program_Create({ pack }: Props) {
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
-            <Label className={labelClass} htmlFor="tp-place-add">
-              الأماكن السياحية (إدخال متعدد)
-            </Label>
+            <Label className={labelClass}>مسار البرنامج (محطات)</Label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStopKind("TRAVEL");
+                  setItemIdToAdd("");
+                }}
+                className={`rounded-xl px-3 py-2 text-sm transition ${
+                  stopKind === "TRAVEL"
+                    ? "bg-plum text-white"
+                    : "bg-mist text-dusk ring-1 ring-plum/15 dark:bg-muted dark:text-foreground dark:ring-orchid/25"
+                }`}
+              >
+                سفر (مدن)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStopKind("TOURISM");
+                  setItemIdToAdd("");
+                }}
+                className={`rounded-xl px-3 py-2 text-sm transition ${
+                  stopKind === "TOURISM"
+                    ? "bg-orchid text-white"
+                    : "bg-mist text-dusk ring-1 ring-plum/15 dark:bg-muted dark:text-foreground dark:ring-orchid/25"
+                }`}
+              >
+                سياحة (أماكن سياحية)
+              </button>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <select
-                id="tp-place-add"
-                value={placeIdToAdd}
-                onChange={(e) => setPlaceIdToAdd(e.target.value)}
+                id="tp-stop-add"
+                value={itemIdToAdd}
+                onChange={(e) => setItemIdToAdd(e.target.value)}
                 className={`flex-1 ${fieldClass}`}
               >
-                {pack.places.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.governorate ? ` — ${p.governorate}` : ""}
+                <option value="">
+                  {stopKind === "TRAVEL"
+                    ? "— اختر مدينة للسفر —"
+                    : "— اختر مكاناً سياحياً —"}
+                </option>
+                {addOptions.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
                   </option>
                 ))}
               </select>
@@ -238,57 +318,70 @@ export default function Tourism_Program_Create({ pack }: Props) {
                 variant="outline"
                 className="rounded-xl border-plum/20 dark:border-orchid/30 dark:text-foreground dark:hover:bg-orchid/15"
                 onClick={() => {
-                  if (!placeIdToAdd) return;
-                  setSelectedPlaceIds((prev) =>
-                    prev.includes(placeIdToAdd) ? prev : [...prev, placeIdToAdd]
+                  if (!itemIdToAdd) return;
+                  const key = `${stopKind}:${itemIdToAdd}`;
+                  setSelectedStops((prev) =>
+                    prev.some((s) => `${s.kind}:${s.id}` === key)
+                      ? prev
+                      : [...prev, { kind: stopKind, id: itemIdToAdd }]
                   );
+                  setItemIdToAdd("");
                 }}
               >
                 + إضافة
               </Button>
             </div>
+
             <div className="rounded-2xl border border-plum/15 p-2 dark:border-orchid/25">
-              {selectedPlaceIds.length === 0 ? (
+              {selectedStops.length === 0 ? (
                 <p className="text-xs text-dusk/50 dark:text-muted-foreground">
-                  لم يتم إضافة أماكن بعد.
+                  لم تُضف محطات بعد — اختر سفر أو سياحة ثم أضف.
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {selectedPlaceIds.map((pid, idx) => {
-                    const place = pack.places.find((p) => p.id === pid);
-                    if (!place) return null;
-                    return (
-                      <div
-                        key={pid}
-                        className="flex items-center justify-between rounded-xl bg-mist px-2 py-1 dark:bg-muted"
-                      >
-                        <span className="text-sm text-dusk dark:text-foreground">
-                          {idx + 1}. {place.name}
-                          {place.governorate ? ` — ${place.governorate}` : ""}
-                        </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            setSelectedPlaceIds((prev) =>
-                              prev.filter((x) => x !== pid)
+                  {selectedStops.map((stop, idx) => (
+                    <div
+                      key={`${stop.kind}-${stop.id}`}
+                      className="flex items-center justify-between rounded-xl bg-mist px-2 py-1 dark:bg-muted"
+                    >
+                      <span className="text-sm text-dusk dark:text-foreground">
+                        {idx + 1}.{" "}
+                        <span className="font-data text-[10px] text-orchid dark:text-orchid-light">
+                          {stop.kind === "TRAVEL" ? "سفر" : "سياحة"}
+                        </span>{" "}
+                        {stopLabel(stop)}
+                      </span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setSelectedStops((prev) =>
+                            prev.filter(
+                              (s) =>
+                                !(s.kind === stop.kind && s.id === stop.id)
                             )
-                          }
-                        >
-                          حذف
-                        </Button>
-                      </div>
-                    );
-                  })}
+                          )
+                        }
+                      >
+                        حذف
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {selectedPlaceIds.map((pid) => (
-              <input key={pid} type="hidden" name="placeIds" value={pid} />
+            {selectedStops.map((s) => (
+              <input
+                key={`${s.kind}:${s.id}`}
+                type="hidden"
+                name="stopEntries"
+                value={`${s.kind}:${s.id}`}
+              />
             ))}
             <p className="text-xs text-dusk/50 dark:text-muted-foreground">
-              يمكنك إضافة أكثر من مكان. الترتيب يعتمد على ترتيب الإضافة.
+              السفر = مدن من صفحة المدن · السياحة = أماكن سياحية. الترتيب حسب
+              الإضافة.
             </p>
           </div>
 

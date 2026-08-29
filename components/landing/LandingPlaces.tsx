@@ -2,13 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import type { TourismPlaceRow } from "@/lib/actions/tourism_places.actions";
 import { Button } from "@/components/ui/button";
+import { placeLocationLabel } from "@/lib/place-location-label";
 
 const FALLBACK_IMG = "/System/Tourism_Images/all-hadar_01.png";
 
 function placeCaption(p: TourismPlaceRow) {
-  if (p.governorate) return p.governorate;
-  if (!p.cityName) return "العراق";
-  return p.cityRegion ? `${p.cityName} — ${p.cityRegion}` : p.cityName;
+  return placeLocationLabel(p, "العراق");
 }
 
 /** اقتباس عربي قصير للواجهة — بدون فقرات إنجليزية طويلة */

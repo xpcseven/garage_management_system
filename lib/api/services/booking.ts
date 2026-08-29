@@ -115,7 +115,14 @@ export async function fetchBookingsForUser(userId: string) {
             garage: { select: { name: true } },
             vehicle: { select: { brand: true, model: true, plateNumber: true } },
             driver: { select: { name: true } },
-            places: { include: { place: { select: { name: true } } } },
+            places: {
+              include: {
+                place: { select: { name: true } },
+                city: {
+                  select: { name: true, region: true, country: true },
+                },
+              },
+            },
           },
         },
       },
@@ -167,7 +174,15 @@ export async function fetchBookingsForUser(userId: string) {
     programVehicleLabel: `${b.program.vehicle.brand} ${b.program.vehicle.model} — ${b.program.vehicle.plateNumber}`,
     programDriverName: b.program.driver.name,
     programPlaces: b.program.places
-      .map((p) => ({ name: p.place.name, order: p.stopOrder }))
+      .map((p) => {
+        const cityName = p.city
+          ? [p.city.name, p.city.region, p.city.country].filter(Boolean).join(" — ")
+          : null;
+        return {
+          name: p.place?.name ?? cityName ?? "—",
+          order: p.stopOrder,
+        };
+      })
       .sort((a, b2) => a.order - b2.order),
   }));
 
